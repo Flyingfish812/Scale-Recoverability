@@ -1,0 +1,23 @@
+# Dataset: sst_weekly — Sea Surface Temperature
+# =============================================
+# 180×360 spatial grid, single channel
+
+[dataset]
+name = "sst_weekly"
+label = "sst_weekly (SST)"
+data_array = "data/sst_weekly.npy"
+
+[dataset.artifacts]
+vcnn_roots = []
+pod_sweep_root = "artifacts/pod_model_sweep_sst_1024"
+pod_bundle = "artifacts/pod_bases/sst_weekly/pod_base_bundle.npz"
+band_pod_bundle = "artifacts/wavelet_pod_sst_2000/band_pod_bundle.npz"
+
+[dataset.wavelet]
+name = "db2"
+level = 4
+mode = "periodization"
+
+[dataset.mask]
+dir = "masks2"
+pattern = "sst_weekly_180x360_random_avoid_nan_inc_n{num:03d}.csv"

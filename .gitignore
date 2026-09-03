@@ -1,0 +1,129 @@
+#=============================================================================
+# Luna — .gitignore
+# 本仓库作为论文 (Scale Recoverability) 的 Code Availability 源码链接。
+# 原则: 只保留运行时代码与可复现输入/配置; 剔除所有中间产物、大型二进制与论文源码。
+# 更新: 2026-08-13
+#=============================================================================
+
+#---------------------------------------------------------------------------
+# 大型中间产物 / 运行输出 (不可提交)
+#---------------------------------------------------------------------------
+artifacts/
+artifacts_*
+_legacy/
+data/*.npy
+# data/ 下的本地工作文档 (如数据溯源报告), 不随代码链接发布
+data/*.md
+# 论文源码独立仓 (含 thesis_src_planA/ 与 thesis_src_planB/): 仅本地写作/编译使用, 不随代码仓同步
+thesis_work/
+figures/
+results/
+logs/
+environment/*
+!environment/environment.yml
+draft.txt
+thesis
+references
+*.tar.gz
+
+#---------------------------------------------------------------------------
+# applications/paper_* 内的生成输出 (代码保留, 输出剔除)
+# 注意: figures/ 与 tables/ 目录内含 .py 生成脚本(代码), 不能整目录忽略;
+#       生成产物集中在 build/ 下, 另按扩展名兜底.
+#---------------------------------------------------------------------------
+applications/**/results/
+applications/**/reports/
+applications/**/build/
+applications/**/figures/*.pdf
+applications/**/figures/*.png
+applications/**/figures/*.jpg
+applications/**/tables/*.tex
+applications/**/tables/*.csv
+
+#---------------------------------------------------------------------------
+# Python 字节码 / 构建产物
+#---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+
+# 测试 / 类型检查缓存
+.pytest_cache/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / 编辑器 (本地设置不随源码链接发布)
+.vscode/
+.idea/
+
+# OS / 备份文件
+.DS_Store
+Thumbs.db
+*~
+
+# 日志与临时文件
+*.log
+*.tmp
+*.temp
+
+# 训练检查点 / 中间数组
+*.pt
+*.ckpt
+*.npz
+
+# 内部工作文档 (不随源码链接发布)
+agent-docs/
+# 外部独立仓库克隆 (SNL-UCSB/paper-writing-skill), 不随代码仓同步
+paper-writing-skill/
+.github/skills/
+
+# 掩码 / 数据目录 / 目录清单 (本地生成, 不随源码链接发布)
+masks/
+masks2/
+masks_expand/
+masks_families/
+data_catalog/
+notebooks/
+logs/
+results*/
+figures_expand/
+
+# 内部工具与旧编排层 (本地保留, 不随源码链接发布)
+tools/
+tools_active/
+pipelines/
+
+# 仅 paper_main 作为公开复现入口; 其余 application 层不随源码链接发布
+applications/paper_expand/
+applications/paper_supplementary/
+
+# 论文发布 / 内部比对辅助 (不随源码链接发布)
+applications/paper_main/figures/publish_figures.py
+applications/paper_main/figures/build_figure_03.py
+applications/paper_main/manifests/
+applications/paper_main/README.md
+
+# 其他大型二进制兜底
+*.nc
+*.h5
+*.hdf5
+*.mat
+*.onnx
+*.pth

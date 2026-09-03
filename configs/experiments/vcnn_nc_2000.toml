@@ -1,0 +1,53 @@
+# VCNN Sweep Experiment: NC dataset, 2000-epoch convergence
+# ===========================================================
+# Corresponds to: configs/vcnn_sweep_cylinder_mask2_convergence_2000_stable_config.json
+
+[data]
+array_path = "data/cylinder2d_q1.npy"
+
+[mask]
+mode = "csv"
+mask_dir = "masks2"
+mask_names = [
+    "cylinder2d_80x160_random_inc_n010",
+    "cylinder2d_80x160_random_inc_n015",
+    "cylinder2d_80x160_random_inc_n020",
+    "cylinder2d_80x160_random_inc_n030",
+    "cylinder2d_80x160_random_inc_n050",
+]
+
+[vcnn]
+hidden_channels = 48
+num_layers = 8
+kernel_size = 7
+input_representation = "voronoi"
+include_mask_channel = true
+
+[train]
+batch_size = 32
+num_epochs = 2000
+val_ratio = 0.1
+test_ratio = 0.2
+lr = 0.001
+min_lr = 0.00001
+warmup_epochs = 5
+use_cosine_schedule = true
+early_stop = false
+weight_decay = 0.0
+device = "auto"
+seed = 0
+loss_type = "mse"
+obs_weight = 1.0
+normalize_mean_std = true
+progress_every = 50
+
+[sweep]
+train_noise_sigma = 0.0
+test_noise_sigmas = [0.0, 0.001, 0.01, 0.1]
+mask_seeds = [0]
+
+[checkpoint]
+out_dir = "artifacts/vcnn_sweep_nc_2000"
+save_best_only = true
+save_last = true
+prefix = "vcnn"

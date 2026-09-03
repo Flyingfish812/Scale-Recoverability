@@ -1,0 +1,27 @@
+# Dataset: cylinder2d_q1 (NC) — Numerical Cylinder Wake
+# ======================================================
+# 80×160 spatial grid, single channel (vorticity)
+
+[dataset]
+name = "nc"
+label = "cylinder2d_q1 (NC)"
+data_array = "data/cylinder2d_q1.npy"
+
+[dataset.artifacts]
+vcnn_roots = [
+    "artifacts/vcnn_results/vcnn_sweep_nc_2000",
+    "artifacts/vcnn_results/vcnn_sweep_nc_2000_seed101",
+    "artifacts/vcnn_results/vcnn_sweep_nc_2000_seed202",
+]
+pod_sweep_root = "artifacts/pod_model_sweep_nc"
+pod_bundle = "artifacts/pod_bases/cylinder2d_q1/pod_base_bundle.npz"
+band_pod_bundle = "artifacts/wavelet_pod_nc_2000/band_pod_bundle.npz"
+
+[dataset.wavelet]
+name = "db2"
+level = 4
+mode = "periodization"
+
+[dataset.mask]
+dir = "masks2"
+pattern = "cylinder2d_80x160_random_inc_n{num:03d}.csv"

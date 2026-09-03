@@ -1,0 +1,25 @@
+# Dataset: rdb_h5 (B) — Turbulent Channel Flow
+# =============================================
+# 128×128 spatial grid, single channel
+
+[dataset]
+name = "rdb_h5"
+label = "rdb_h5 (B)"
+data_array = "data/rdb_h5.npy"
+
+[dataset.artifacts]
+vcnn_roots = [
+    "artifacts/vcnn_results/vcnn_sweep_rdb_2000_seed000",
+]
+pod_sweep_root = "artifacts/pod_model_sweep_h5"
+pod_bundle = "artifacts/pod_bases/rdb_h5/pod_base_bundle.npz"
+band_pod_bundle = "artifacts/wavelet_pod_rdb_2000/band_pod_bundle.npz"
+
+[dataset.wavelet]
+name = "db2"
+level = 4
+mode = "periodization"
+
+[dataset.mask]
+dir = "masks2"
+pattern = "rdb_h5_128x128_radial_inc_n{num:03d}.csv"
