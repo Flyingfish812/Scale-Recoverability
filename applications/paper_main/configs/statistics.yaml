@@ -1,0 +1,13 @@
+# 统计配置
+bootstrap:
+  type: snapshot_cluster
+  n_resamples: 10000
+  seed: 20260804
+
+statistics:
+  equal_ger:
+    ger_tolerance_pct: 5
+    min_s_full_gap: 2
+  correlation:
+    method: spearman
+    scope: within_config

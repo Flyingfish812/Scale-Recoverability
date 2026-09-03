@@ -1,0 +1,15 @@
+# 指标配置
+bands: [A4, W4, W3, W2, W1]
+tau: 0.05          # 每频带误差阈值
+eta: 0.99          # 频带 POD 能量保留
+robust_threshold: 0.01   # tau/5
+
+# 三层误差
+three_layer:
+  denominator: total_field_energy
+  triangle_inequality: true
+
+# 恢复率/相位判据
+recovery:
+  ger_threshold: 0.03
+  s_full_pass: 3

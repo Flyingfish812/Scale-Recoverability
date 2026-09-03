@@ -1,0 +1,39 @@
+# main 数据集配置 (NC)
+dataset:
+  name: nc
+  grid: [80, 160]
+  grid_h: 80
+  grid_w: 160
+  raw_file: data/cylinder2d_q1.npy
+  split: chronological
+  test_snapshots: 300
+  unique_test_snapshots: 300
+
+# 传感器配置
+sensors:
+  nested_sequence_id: nc_mask_primary
+  counts: [10, 15, 20, 30, 50]
+
+# 噪声配置
+noise:
+  train_sigma: 0.0
+  test_sigmas: [0.0, 0.001, 0.01, 0.1]
+  realization_policy: fixed_per_snapshot_config
+
+# POD 配置
+pod:
+  main_rank: 128
+  oracle_ranks: [16, 32, 64, 128]
+
+# 小波配置
+wavelet:
+  family: db2
+  level: 4
+  boundary_mode: periodization
+
+# 模型
+models:
+  ridge: {type: closed_form, deterministic: true}
+  mlp: {type: mlp, seeds: [0, 101, 202], units: 256}
+  vcnn: {type: vcnn, seeds: [0, 101, 202]}
+  gappy_pod: {type: gappy_pod, rank: 32, rank_policy: min_rank_le_M}

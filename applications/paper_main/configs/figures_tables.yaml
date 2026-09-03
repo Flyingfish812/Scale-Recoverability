@@ -1,0 +1,20 @@
+# 图表构建配置
+output:
+  build_dir: applications/paper_main/build
+  figures_dir: applications/paper_main/build/figures
+  tables_dir: applications/paper_main/build/generated/tables
+  numbers_file: applications/paper_main/build/generated/paper_numbers.tex
+  metadata: true        # 每图/表输出 metadata.json
+  pdf_and_png: true
+
+# thesis_src 只读引用 (用于比对)
+thesis_reference:
+  figures_dir: thesis_src/figures
+  tables_dir: thesis_src/generated/tables
+  numbers_file: thesis_src/generated/paper_numbers.tex
+
+# 表生成器 (只读调用, 不修改)
+table_generator: thesis_src/tools/generate_paper_tables.py
+numbers_generator: thesis_src/tools/generate_paper_numbers.py
+facts_file: thesis_src/data/paper_facts.yaml
+consistency_checker: thesis_src/tools/check_paper_consistency.py
