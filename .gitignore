@@ -16,9 +16,9 @@ data/*.npy
 data/*.md
 # 论文源码独立仓 (含 thesis_src_planA/ 与 thesis_src_planB/): 仅本地写作/编译使用, 不随代码仓同步
 thesis_work/
-figures/
-results/
-logs/
+/figures/
+/results/
+/logs/
 environment/*
 !environment/environment.yml
 draft.txt
@@ -95,20 +95,19 @@ paper-writing-skill/
 .github/skills/
 
 # 掩码 / 数据目录 / 目录清单 (本地生成, 不随源码链接发布)
-masks/
-masks2/
-masks_expand/
-masks_families/
-data_catalog/
-notebooks/
-logs/
-results*/
-figures_expand/
+/masks/
+/masks2/
+/masks_expand/
+/masks_families/
+/data_catalog/
+/notebooks/
+/results*/
+/figures_expand/
 
 # 内部工具与旧编排层 (本地保留, 不随源码链接发布)
-tools/
-tools_active/
-pipelines/
+/tools/
+/tools_active/
+/pipelines/
 
 # 仅 paper_main 作为公开复现入口; 其余 application 层不随源码链接发布
 applications/paper_expand/
