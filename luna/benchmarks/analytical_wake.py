@@ -1,5 +1,5 @@
 """
-NC-inspired analytical multiscale wake benchmark (P0-1).
+NC-inspired analytical multiscale wake benchmark.
 
 This module provides a fully analytical, ground-truth-controlled multiscale
 field that mimics the cylinder-wake structure of the NC dataset (80x160

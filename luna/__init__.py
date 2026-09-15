@@ -2,16 +2,17 @@
 Luna — Scale-Resolved Field Reconstruction Evaluation Framework
 ==============================================================
 
-公共层 (Common Layer): 核心数据结构、小波操作、POD 分解、模型定义、配置管理。
-不包含任何可执行脚本逻辑，只提供可复用的函数和类。
+Common layer: core data structures, wavelet operations, POD decomposition, model
+definitions, and configuration management. It contains no executable script logic,
+only reusable functions and classes.
 
 Layer architecture:
-    luna/core       — 基础类型与常量
-    luna/data       — 数据 IO、数据集注册、掩码生成
-    luna/wavelet    — 小波变换、频带分解、误差度量
-    luna/pod        — POD 分解、投影、频带 POD
-    luna/models     — 神经网络模型定义 (VCNN, Ridge, MLP)
-    luna/config     — 配置 schema 与加载器
+    luna/core       — base types and constants
+    luna/data       — data IO, dataset registry, mask generation
+    luna/wavelet    — wavelet transform, band decomposition, error metrics
+    luna/pod        — POD decomposition, projection, band-wise POD
+    luna/models     — neural network model definitions (VCNN, Ridge, MLP)
+    luna/config     — configuration schema and loaders
 """
 
 __version__ = "2.0.0"

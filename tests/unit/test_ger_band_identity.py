@@ -1,8 +1,8 @@
-"""GER 频带恒等式测试 (P0-6 §10.2)。
+"""GER band-identity tests.
 
-验证: GER² = Σ_b ω_b E_direct(b)²
+Verifies: GER² = Σ_b ω_b E_direct(b)²
     GER         = ‖u−û‖₂ / ‖u‖₂
-    ω_b         = ‖W_b u‖₂² / ‖u‖₂²   (频带能量占比)
+    ω_b         = ‖W_b u‖₂² / ‖u‖₂²   (band energy fraction)
     E_direct(b) = ‖W_b(u−û)‖₂ / ‖W_b u‖₂
 """
 
@@ -32,16 +32,16 @@ def test_ger_band_identity(shape):
         wb = float(np.sum(u_bands[b].astype(np.float64) ** 2))
         omega = wb / (total_energy + 1e-12)
         ed = band_error(u_bands[b], u_bands[b] - d_bands[b])  # ‖W_b(u−v)‖/‖W_b u‖
-        # 注意: d_bands[b] = W_b(u−v), 所以 W_b(u) − W_b(v) = W_b(u) − d_bands[b]
+        # Note: d_bands[b] = W_b(u−v), hence W_b(u) − W_b(v) = W_b(u) − d_bands[b]
         rhs += omega * ed ** 2
 
     rel_diff = abs(lhs - rhs) / (lhs + 1e-12)
-    assert rel_diff < 1e-4, f"GER 恒等式残差 {rel_diff:.2e}"
+    assert rel_diff < 1e-4, f"GER identity residual {rel_diff:.2e}"
 
 
 def test_ger_is_energy_weighted_average():
-    """GER 是能量加权频带误差: 平滑场上 A4(粗) 主导能量."""
-    # 平滑场: 低频结构 → 近似分量 (A4) 承载大部分能量
+    """GER is the energy-weighted band error: on smooth fields the coarse A4 dominates."""
+    # Smooth field: low-frequency structure, so A4 (approximation) carries most energy
     yy, xx = np.mgrid[0:80, 0:160]
     u = np.sin(2 * np.pi * xx / 80) + 0.5 * np.cos(2 * np.pi * yy / 40)
     u_bands = decompose_field_2d(u, DEFAULT_WAVELET, DEFAULT_LEVEL, DEFAULT_MODE)

@@ -1,14 +1,9 @@
 """
 Wavelet transform utilities for 2D fields.
 
-This is the **single authoritative implementation** of wavelet decomposition.
-Previously duplicated in:
-    tools/oracle_and_baseline_comparison.py
-    tools/run_baselines_efficient.py
-    tools/run_controlled_scale_validation.py
-    tools/_legacy/wavelet_batch_analysis.py
-    tools/plot_per_band_residual.py
-    tools/plot_supplementary_figures.py
+This is the **single authoritative implementation** of wavelet decomposition:
+`decompose_field_2d` maps a 2D field onto the multilevel A4/W4/W3/W2/W1 sub-band
+components, and `recompose_field_2d` inverts that mapping.
 """
 
 from __future__ import annotations

@@ -10,11 +10,10 @@ Per band b:
     coh_err_b = || (yc - tc) @ U_b^T || / ( || tc @ U_b^T || + eps )
     S_coh = max k such that coh_err_{A4..band_k} <= tau (contiguous)
 
-This matches _legacy/scripts_main/20260719-2/p15_scoh_full_recomputation.py
-(analyze_sample) and the thesis facts (e.g. M=30 sigma=0 sample 49: Ridge=2,
-VCNN=5). luna.compute_S_coh (2D single-channel, reconstruction-domain) is a
-separate P0 implementation used for unit tests; this module is the paper
-definition used by supplementary paired statistics.
+This matches the thesis facts (e.g. M=30 sigma=0 sample 49: Ridge=2, VCNN=5).
+luna.compute_S_coh (2D single-channel, reconstruction-domain) is a separate
+implementation used for unit tests; this module is the paper definition used by
+supplementary paired statistics.
 """
 
 from __future__ import annotations

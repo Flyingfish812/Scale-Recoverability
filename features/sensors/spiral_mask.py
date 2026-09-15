@@ -37,12 +37,15 @@ def generate_radial_spiral_mask_hw(
     max_radius_frac: float = 0.875,
 ) -> np.ndarray:
     """
-    在 H×W 网格上生成“径向螺旋式”观测 mask。
+    Generate a "radial spiral" observation mask on an H×W grid.
 
-    规则：
-    - 采样半径从中心开始均匀增加，最大到 max_radius_frac * min(H, W) / 2
-    - 每个半径对应一个独立的随机角度，使采样点不会全部落在同一射线上
-    - 若离散化后发生重复点，则在相近半径处回退到最近的未使用网格点
+    Rules:
+    - The sampling radius grows uniformly from the center, up to
+      max_radius_frac * min(H, W) / 2
+    - Each radius gets an independent random angle, so the sampled points do not
+      all fall on the same ray
+    - If discretization produces duplicate points, fall back to the nearest unused
+      grid point at a nearby radius
     """
     num_points = H * W
     num_obs = _resolve_num_obs(num_points, mask_rate, mask_num)

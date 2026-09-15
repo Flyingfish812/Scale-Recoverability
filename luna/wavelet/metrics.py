@@ -10,7 +10,6 @@ This module is the **single authoritative implementation** of:
     - Oracle audit table (rank sweep for band-wise representation sufficiency)
 
 Key references:
-    - 20260710 feedback: "截断误差与预测误差千万不能混淆"
     - S_full defined as contiguous bands with band_error ≤ τ, counting from A4 downward
 """
 
@@ -190,63 +189,82 @@ def compute_S_coh(
     return contiguous_recoverable_index(np.array(coherent_errors), tau)
 
 
-# ── Three-layer error decomposition (导师反馈 2026-07-10) ──────────
+# ── Band-wise error decomposition ──────────────────────────────────
 
-def compute_three_layer_errors(
+def band_error_decomposition(
     target: np.ndarray,
     pred: np.ndarray,
-    oracle: np.ndarray,
+    reference: np.ndarray,
     wavelet: str = DEFAULT_WAVELET,
     level: int = DEFAULT_LEVEL,
     mode: str = DEFAULT_MODE,
 ) -> dict[str, dict[str, float]]:
-    """Compute the three-layer error decomposition for each wavelet band.
+    """Split the band-wise reconstruction error into a representation part
+    and an estimation part.
 
-    Per the advisor's feedback (2026-07-10):
+    The reconstruction error decomposes exactly as
 
-        u - û = (u - u_oracle) + (u_oracle - û)
+        u - û = (u - u_ref) + (u_ref - û)
 
-    Three layers:
-        E_total(b) = ‖W_b(u) − W_b(û)‖₂ / ‖W_b(u)‖₂
-            Complete system error (representation + prediction).
-        E_trunc(b) = ‖W_b(u) − W_b(u_oracle)‖₂ / ‖W_b(u)‖₂
-            Truncation/representation error — how well can the POD basis
-            represent this band?
-        E_pred(b)  = ‖W_b(u_oracle) − W_b(û)‖₂ / ‖W_b(u_oracle)‖₂
-            Prediction error — how well does the model predict the
-            representable component?
+    and this function evaluates the norm of each term inside every wavelet
+    band. All three terms use the **same** denominator, ‖W_b(u)‖₂:
+
+        total(b)      = ‖W_b(u) − W_b(û)‖₂      / ‖W_b(u)‖₂
+        truncation(b) = ‖W_b(u) − W_b(u_ref)‖₂  / ‖W_b(u)‖₂
+        prediction(b) = ‖W_b(u_ref) − W_b(û)‖₂  / ‖W_b(u)‖₂
+
+    With a shared denominator the decomposition is consistent with the
+    triangle inequality, band by band:
+
+        total(b) ≤ truncation(b) + prediction(b)
+
+    Normalising the prediction term by ‖W_b(u_ref)‖₂ instead (an earlier
+    variant of this analysis) breaks that inequality, so it is not used.
 
     Args:
-        target: Ground truth 2D field u.
-        pred: Model prediction û.
-        oracle: POD oracle reconstruction u_oracle.
+        target: Ground-truth field u.
+        pred: Reconstructed field û.
+        reference: Representation reference u_ref (here the rank-r POD
+            truncation of the same field).
         wavelet, level, mode: Wavelet parameters.
 
     Returns:
-        {band: {'E_total': ..., 'E_trunc': ..., 'E_pred': ...}}
+        ``{band: {"total": …, "truncation": …, "prediction": …}}`` for the
+        bands A4, W4, W3, W2, W1 (coarse to fine).
     """
     target_bands = decompose_field_2d(target, wavelet, level, mode)
     pred_bands = decompose_field_2d(pred, wavelet, level, mode)
-    oracle_bands = decompose_field_2d(oracle, wavelet, level, mode)
+    ref_bands = decompose_field_2d(reference, wavelet, level, mode)
 
     result: dict[str, dict[str, float]] = {}
     for b in BANDS_CF:
         t = target_bands[b]
-        p = pred_bands[b]
-        o = oracle_bands[b]
-
-        e_total = band_error(t, p)
-        e_trunc = band_error(t, o)
-        # E_pred uses oracle as reference (denominator = ‖oracle‖)
-        e_pred = band_error(o, p)
-
+        denominator = np.linalg.norm(t.ravel()) + EPS
         result[b] = {
-            "E_total": e_total,
-            "E_trunc": e_trunc,
-            "E_pred": e_pred,
+            "total": float(np.linalg.norm((t - pred_bands[b]).ravel()) / denominator),
+            "truncation": float(np.linalg.norm((t - ref_bands[b]).ravel()) / denominator),
+            "prediction": float(np.linalg.norm((ref_bands[b] - pred_bands[b]).ravel()) / denominator),
         }
 
     return result
+
+
+def global_error(
+    target: np.ndarray,
+    pred: np.ndarray,
+    eps: float = EPS,
+) -> float:
+    """Global error ratio (GER) of a reconstruction.
+
+    Defined on the **full state** (all components stacked), which is the
+    convention used for the reported GER throughout the paper:
+
+        GER = ‖u − û‖₂ / ‖u‖₂
+
+    Scale-resolved quantities (band errors, S_full, S_coh) are evaluated on
+    the streamwise component alone; see the paper's Methods for the rationale.
+    """
+    return rel_l2(pred, target, eps=eps)
 
 
 # ── Oracle audit table (rank sweep) ────────────────────────────────

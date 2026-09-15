@@ -1,12 +1,12 @@
 """
 Supplementary — POD model sweep core (MLP training / closed-form Ridge / Gappy POD).
 
-Replicates the P0 training & NPZ protocol exactly (same split via
+Replicates the reference training and NPZ protocol exactly (same split via
 torch.Generator().manual_seed(seed), same noise protocol, same test_raw.npz
 schema) but parameterizes the sensor-mask family so the 5 supplementary families
 share the SAME test snapshots per seed (cross-family comparability).
 
-Protocol notes (locked to P0):
+Protocol notes (locked to the reference runs):
   - split: random_split with torch.Generator().manual_seed(training_seed);
     test_ratio=0.2, val_ratio=0.1  -> 300 test / 120 val / 1081 train
   - noise: physical-domain Gaussian via RandomState(42) (closed-form Ridge);
@@ -36,7 +36,7 @@ from luna.models.pod_mlp import build_pod_mlp_model
 
 EPS = 1e-12
 
-# P0 权威 test 划分（MLP seed0 的 300 测试快照）；Ridge/Gappy 复用
+# Authoritative test split (300-sample snapshot of MLP seed0); reused by Ridge/Gappy
 MLP_SEED0_TEST_NPZ = (
     Path(__file__).resolve().parents[2]
     / "artifacts/pod_model_sweep_nc/mlp_n0010/seed000/tests/s0000/test_raw.npz"
@@ -58,7 +58,7 @@ def compute_channel_mean_std(fields_thwc: np.ndarray) -> tuple[np.ndarray, np.nd
 class PODObservationDataset(Dataset):
     """Maps sparse observations at mask points to POD coefficients.
 
-    Identical protocol to the P0 training code (mask sampling, per-sample
+    Identical protocol to the reference training code (mask sampling, per-sample
     noise seed = base_seed + idx, per-channel normalization).
     """
 
@@ -109,7 +109,7 @@ class PODObservationDataset(Dataset):
 
 
 def split_indices(n_total: int, seed: int, test_ratio: float = 0.2, val_ratio: float = 0.1) -> dict[str, np.ndarray]:
-    """Reproduce P0's random_split with torch.Generator().manual_seed(seed)."""
+    """Reproduce the reference run's random_split with torch.Generator().manual_seed(seed)."""
     n_test = max(1, min(int(round(n_total * test_ratio)), n_total - 2))
     remain = n_total - n_test
     n_val = max(1, min(int(round(remain * val_ratio)), remain - 1))
@@ -124,7 +124,7 @@ def split_indices(n_total: int, seed: int, test_ratio: float = 0.2, val_ratio: f
 
 
 def split_like_p0_seed0(n_total: int, mlp_seed0_test_npz: Path) -> dict[str, np.ndarray]:
-    """P0 closed-form Ridge / Gappy split (compute_ridge_closed_form.py):
+    """Closed-form Ridge / Gappy split of the reference protocol (compute_ridge_closed_form.py):
 
         test      = MLP seed0 test indices (300, sorted)
         train_val = remaining 1201 (sorted)
@@ -150,11 +150,11 @@ def _resolve_split(
     test_indices: Optional[np.ndarray],
     n_total: int,
 ) -> dict[str, np.ndarray]:
-    """Ridge/Gappy 的 split 解析（paper-expand 用）：
+    """Split resolution for Ridge/Gappy (used by paper-expand):
 
-    - test_indices 为 None 时回退 NC 默认（split_like_p0_seed0）；
-    - 否则构造与 split_like_p0_seed0 同构的 split：
-      test = 给定 indices（sorted），val = RandomState(42) 选 10%，余为 train。
+    - when test_indices is None, fall back to the NC default (split_like_p0_seed0);
+    - otherwise build a split isomorphic to split_like_p0_seed0:
+      test = the given indices (sorted), val = 10% drawn by RandomState(42), rest train.
     """
     if test_indices is None:
         return split_like_p0_seed0(n_total, MLP_SEED0_TEST_NPZ)
@@ -194,7 +194,7 @@ def train_model_route(
     progress_every: int = 50,
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """P0 training protocol: AdamW, no scheduler, early stop on val loss."""
+    """Reference training protocol: AdamW, no scheduler, early stop on val loss."""
     loss_fn = nn.MSELoss()
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     best_val = float("inf")
@@ -253,7 +253,7 @@ def train_model_route(
 
 
 # ══════════════════════════════════════════════════════════════════
-# Evaluation & NPZ saving (same schema as P0)
+# Evaluation & NPZ saving (same schema as the reference runs)
 # ══════════════════════════════════════════════════════════════════
 
 def reconstruct_field(pod_coeff: np.ndarray, pod_basis: np.ndarray, mean_field: np.ndarray) -> np.ndarray:
@@ -346,7 +346,7 @@ def run_mlp_case(
            "case_dir": str(case_dir), "npz_paths": {}}
 
     split = split_indices(T, training_seed)
-    test_idx = np.sort(split["test"])  # sorted order = P0 protocol
+    test_idx = np.sort(split["test"])  # sorted order = reference protocol
     if expected_test is not None and len(test_idx) != expected_test:
         print(f"  [warn] test split = {len(test_idx)} (expected {expected_test})")
 
@@ -438,16 +438,18 @@ def run_ridge_closed_form_case(
     but parameterized by mask family; uses training_seed=0 split & noise seed 42.
 
     paper-expand:
-      - phys_mean/phys_std 覆盖物理域噪声参数（默认 NC）;
-      - test_indices 覆盖测试集（默认 NC MLP seed0 的 300）;
-      - noise_domain: "normalized"（默认，NC：数据标准化域，反标准化加噪再标准化）
-        | "physical"（数据本身在物理域，噪声直接加，如 RDB）;
-      - obs_normalize_from_mask: True 时观测 mean/std 严格按 mask 点位置计算
-        （RDB 网格展平前 n_obs 含恒定点会令 obs_std≈1e-8 导致数值爆炸；
-        NC 默认 False 保持与 compute_ridge_closed_form/s05 一致）。"""
+      - phys_mean/phys_std override the physical-domain noise parameters (NC default);
+      - test_indices overrides the test set (NC default: the 300 samples of MLP seed0);
+      - noise_domain: "normalized" (default, NC: data live in the standardized domain,
+        noise is added in the physical domain and standardized back)
+        | "physical" (the data themselves are physical, noise added directly, e.g. RDB);
+      - obs_normalize_from_mask: when True the observation mean/std are computed strictly
+        from the mask positions (for RDB the first n_obs entries of the flattened grid
+        include constant points, giving obs_std≈1e-8 and numerical blow-up;
+        NC keeps the default False, consistent with compute_ridge_closed_form)."""
     if lambda_grid is None:
         lambda_grid = np.logspace(-8, 2, 21)
-    fields = np.load(str(data_path), mmap_mode="r")  # float32 (P0 protocol)
+    fields = np.load(str(data_path), mmap_mode="r")  # float32 (reference protocol)
     T, H, W, C = fields.shape
     pod = np.load(str(pod_bundle_path))
     basis_4d = np.asarray(pod["pod_basis"], dtype=np.float64)[:n_modes]
@@ -468,7 +470,8 @@ def run_ridge_closed_form_case(
             o[i] = fields_sel[i, obs_idx[:, 0], obs_idx[:, 1], :].ravel()
         return o
 
-    # 观测标准化参数（NC 历史协议：网格展平前 n_obs；RDB：按 mask 点位置）
+    # Observation normalization parameters (NC protocol: first n_obs entries of the
+    # flattened grid; RDB: mask positions)
     tr_obs_raw = obs_matrix(train_f)
     if obs_normalize_from_mask:
         obs_mean_m = tr_obs_raw.mean(axis=0)
@@ -505,7 +508,7 @@ def run_ridge_closed_form_case(
     out = {"family": family, "model": "ridge", "M": M, "training_seed": 0,
            "case_dir": str(case_dir), "npz_paths": {}, "best_val_loss": best_loss}
 
-    # deterministic noise (RandomState(42)) on physical domain — same as P0
+    # deterministic noise (RandomState(42)) on physical domain — same as the reference runs
     if phys_mean is None:
         phys_mean = np.asarray([1.0004944, -0.00017817653], dtype=np.float64)
     if phys_std is None:
@@ -523,11 +526,11 @@ def run_ridge_closed_form_case(
         if sigma == 0.0:
             te_f = test_f
         elif noise_domain == "physical":
-            # 数据本身在物理域（如 RDB）：噪声直接加在原始值上
+            # The data themselves are physical (e.g. RDB): noise is added to the raw values
             noise = np.random.RandomState(42).randn(*test_f.shape).astype(np.float64) * sigma
             te_f = test_f + noise
         else:
-            # NC 协议：标准化域 → 物理域加噪 → 标准化回来
+            # NC protocol: standardized domain → add noise in the physical domain → standardize back
             phys = test_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
             noise = np.random.RandomState(42).randn(*phys.shape).astype(np.float64) * sigma
             te_f = (phys + noise - mean_v[None, None, None, :]) / std_v[None, None, None, :]
@@ -567,9 +570,10 @@ def run_gappy_case(
     """Gappy POD (deterministic) — replicates compute_s23_gappy: rank<=M chosen
     on validation set; uses seed0 split.
 
-    paper-expand: phys_mean/phys_std 覆盖物理域噪声参数（默认 NC），
-    test_indices 覆盖测试集（默认 NC MLP seed0 的 300），
-    noise_domain: "normalized"（默认，NC）| "physical"（数据本身物理域，直接加噪）。"""
+    paper-expand: phys_mean/phys_std override the physical-domain noise parameters (NC
+    default), test_indices overrides the test set (NC default: the 300 samples of MLP
+    seed0), noise_domain: "normalized" (default, NC) | "physical" (physical data, noise
+    added directly)."""
     fields = np.load(str(data_path), mmap_mode="r").astype(np.float64, copy=False)
     T, H, W, C = fields.shape
     pod = np.load(str(pod_bundle_path))

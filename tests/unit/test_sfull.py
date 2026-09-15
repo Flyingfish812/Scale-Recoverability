@@ -1,7 +1,7 @@
-"""S_full 测试 (P0-6 §10.3)。
+"""S_full tests.
 
-覆盖: 全通过 / A4 失败 / 中间失败 / 后续 band 重新通过 / threshold 等于边界 /
-NaN 与零分母 / 不同 decomposition level。
+Covers: all pass / A4 fails / middle failure / a later band passes again / error
+exactly at the threshold / NaN and zero denominator / different decomposition levels.
 """
 
 import numpy as np
@@ -22,17 +22,17 @@ def test_a4_fail():
 
 
 def test_middle_fail():
-    # 第三个频带失败 → 只有前 2 个可恢复
+    # Third band fails → only the first 2 are recoverable
     assert contiguous_recoverable_index([0.01, 0.01, 0.06, 0.01, 0.01], tau=0.05) == 2
 
 
 def test_repass_after_fail_stops():
-    # A4 通过后 W4 失败, 后续 W3 重新通过也不会计数 (连续判定)
+    # A4 passes, then W4 fails; a later W3 pass still does not count (contiguous rule)
     assert contiguous_recoverable_index([0.01, 0.06, 0.01, 0.01, 0.01], tau=0.05) == 1
 
 
 def test_threshold_boundary_inclusive():
-    # 误差 == tau 视为通过 (≤)
+    # error == tau counts as passing (≤)
     assert contiguous_recoverable_index([0.05, 0.05, 0.05, 0.05, 0.05], tau=0.05) == 5
     assert contiguous_recoverable_index([0.0500001, 0.01, 0.01, 0.01, 0.01], tau=0.05) == 0
 
@@ -46,14 +46,14 @@ def test_inf_stops():
 
 
 def test_zero_denominator_guard():
-    # 零/近零分母由 eps 保护, 不抛异常; 若产生 inf 则停止计数
+    # Zero/near-zero denominators are protected by eps, no exception is raised; inf stops counting
     arr = np.array([0.01, 0.01, np.inf, np.inf, np.inf])
     assert contiguous_recoverable_index(arr, tau=0.05) == 2
 
 
 def _field_from_bands(band_energies, shape=(64, 64)):
-    """构造: target = Σ ω_b·band, pred = target + error 只注入指定频带."""
-    # 生成随机小波分量: 通过 decompose 一个随机场得到 5 个 band
+    """Build: target = Σ ω_b·band, pred = target + error injected only into given bands."""
+    # Random wavelet components: decompose a random field to obtain 5 bands
     base = rng.standard_normal(shape)
     base_bands = decompose_field_2d(base, "db2", 4, "periodization")
     comps = {b: base_bands[b] * np.sqrt(w) for b, w in band_energies.items()}
@@ -61,10 +61,11 @@ def _field_from_bands(band_energies, shape=(64, 64)):
 
 
 def test_compute_sfull_on_fields():
-    """用构造场验证 compute_S_full: 只在 W1 注入频带受限误差 → S_full=4."""
+    """Validate compute_S_full on constructed fields: band-limited error injected in W1
+    only → S_full=4."""
     energies = {"A4": 10.0, "W4": 5.0, "W3": 3.0, "W2": 2.0, "W1": 1.0}
     target = _field_from_bands(energies)
-    # pred = target, 仅 W1 注入"频带受限"扰动 (取随机场的 W1 分量)
+    # pred = target plus a band-limited perturbation in W1 only (random field's W1 part)
     noise = rng.standard_normal(target.shape)
     noise_w1 = decompose_field_2d(noise, "db2", 4, "periodization")["W1"]
     w1_scale = float(np.linalg.norm(decompose_field_2d(target, "db2", 4, "periodization")["W1"]))
@@ -75,7 +76,7 @@ def test_compute_sfull_on_fields():
     bands_p["W1"] = bands_p["W1"] + noise_w1
     pred = recompose_field_2d(bands_p, "db2", 4, "periodization")
     sfull = compute_S_full(target, pred, tau=0.05)
-    assert sfull == 4, f"期望 S_full=4, 实际 {sfull}"
+    assert sfull == 4, f"expected S_full=4, got {sfull}"
 
 
 def test_compute_sfull_perfect():

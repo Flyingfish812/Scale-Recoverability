@@ -1,6 +1,6 @@
 # Scale-Recoverability — one-click entrypoints
 # ENV selects the conda environment (default: luna).
-ENV ?= luna
+ENV ?= sana
 PY := conda run -n $(ENV) python
 
 .PHONY: env demo test check reproduce data help
@@ -18,7 +18,7 @@ env:
 	conda env create -f environment/environment.yml -n $(ENV)
 
 demo:
-	$(PY) applications/paper_main/analyses/_canonical/compute_p0_analytical.py
+	$(PY) -m applications.statistics.analytical_benchmark
 
 test:
 	$(PY) -m pytest tests/unit -q

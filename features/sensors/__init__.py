@@ -1,8 +1,9 @@
-"""
-Luna Sensors Layer — sensor mask generation, registry and provenance.
+"""Sensor masks and observations.
 
-Sub-modules:
-    features.sensors.spiral_mask  — radial-spiral mask generator (ported from
-                                    Ena backend/sampling/masks.py)
-    features.sensors.mask_registry — supplementary mask family registry
+Modules
+    observations.py   mask generation (random / grid / CSV) and the observation
+                      features built from a mask, plus field normalisation
+    spiral_mask.py    radial-spiral mask generator
+    mask_registry.py  the five strictly-nested sensor families used for the
+                      sensor-placement analysis
 """

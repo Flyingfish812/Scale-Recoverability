@@ -1,1 +1,1 @@
-"""applications 包 — 正式论文应用层。"""
+"""Application layer of the paper pipeline."""

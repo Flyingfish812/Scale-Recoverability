@@ -1,4 +1,4 @@
-"""Supplementary statistics tests (P1-2): temporal dependence & block bootstrap."""
+"""Supplementary statistics tests : temporal dependence & block bootstrap."""
 
 import numpy as np
 

@@ -1,7 +1,7 @@
-"""S_coh 测试 (P0-6 §10.4)。
+"""S_coh tests.
 
-验证: P_b = U_b U_bᵀ 正交投影; P_b² = P_b; 捕获率 γ_b ∈ [0,1];
-不假设 S_coh ≥ S_full。
+Verifies: P_b = U_b U_bᵀ is an orthogonal projector; P_b² = P_b; capture rate
+γ_b ∈ [0,1]; no assumption that S_coh ≥ S_full.
 """
 
 import numpy as np
@@ -15,7 +15,7 @@ rng = np.random.default_rng(23)
 
 def _orthonormal_basis(d, r):
     q, _ = np.linalg.qr(rng.standard_normal((d, r)))
-    return q.T  # (r, D), 行正交归一
+    return q.T  # (r, D), orthonormal rows
 
 
 def test_projector_idempotent():
@@ -30,7 +30,7 @@ def test_projector_idempotent():
 
 
 def test_capture_rate_in_unit_interval():
-    """捕获率 γ_b = ‖U_bᵀ x‖/‖x‖ ∈ [0,1] (行正交归一时)."""
+    """Capture rate γ_b = ‖U_bᵀ x‖/‖x‖ ∈ [0,1] (for orthonormal rows)."""
     for _ in range(5):
         D, r = 80, np.random.randint(1, 12)
         basis = _orthonormal_basis(D, r)
@@ -40,13 +40,14 @@ def test_capture_rate_in_unit_interval():
 
 
 def _make_field_and_models(shape=(64, 64), n_bands_kept=5, r=6):
-    """构造 target 场 + band_pod_models: 每个频带一个可捕捉大部分能量的 POD 子空间."""
+    """Build a target field plus band_pod_models: one POD subspace per band that
+    captures most of the energy."""
     u = rng.standard_normal(shape)
     bands = decompose_field_2d(u, "db2", 4, "periodization")
     models = {}
     for b in bands:
         x = bands[b].ravel().astype(np.float64)
-        # 子空间 = 前 r 个主成分 (用 QR 近似正交基捕捉主能量)
+        # Subspace = first r principal components (QR basis of the main energy)
         basis = _orthonormal_basis(x.size, r)
         mean = x * 0.0
         models[b] = {"mean": mean, "basis": basis}
@@ -54,33 +55,34 @@ def _make_field_and_models(shape=(64, 64), n_bands_kept=5, r=6):
 
 
 def test_scoh_perfect_model_all_bands():
-    """模型完全捕捉目标 → S_coh=5."""
+    """Model captures the target exactly → S_coh=5."""
     u, models = _make_field_and_models()
-    # pred = target (完全一致)
+    # pred = target (exact match)
     s_coh = compute_S_coh(u, u, models, tau=0.05)
     assert s_coh == 5
 
 
 def test_scoh_missing_model_band_inf():
-    """缺失频带模型 → 该频带误差 inf → 连续判定停止."""
+    """Missing band model → infinite error for that band → contiguous count stops."""
     u, models = _make_field_and_models()
     del models["W1"]
     s_coh = compute_S_coh(u, u, models, tau=0.05)
-    assert s_coh <= 4  # 最多数到 W2
+    assert s_coh <= 4  # can count at most up to W2
 
 
 def test_scoh_can_be_less_than_sfull():
-    """不假设 S_coh ≥ S_full: 构造相干子空间只捕捉极小部分目标的模型.
+    """No assumption that S_coh ≥ S_full: build a model whose coherent subspace
+    captures only a tiny part of the target.
 
-    target = a_big(⊥子空间) + 0.001·u(在子空间内, 极小)
-    pred   = target + 0.01·u (误差沿子空间方向)
-    直接误差 ≈ 0.01 < τ → S_full=5; 相干误差 = 0.01/0.001 = 10 > τ → S_coh=0。
+    target = a_big (⊥ subspace) + 0.001·u (inside the subspace, tiny)
+    pred   = target + 0.01·u (error along the subspace direction)
+    direct error ≈ 0.01 < τ → S_full=5; coherent error = 0.01/0.001 = 10 > τ → S_coh=0.
     """
     shape = (64, 64)
     u = rng.standard_normal(shape)
-    u = u / np.linalg.norm(u)  # 子空间方向
+    u = u / np.linalg.norm(u)  # subspace direction
     a_big = rng.standard_normal(shape)
-    a_big = a_big - (a_big.ravel() @ u.ravel()) * u  # 与 u 正交
+    a_big = a_big - (a_big.ravel() @ u.ravel()) * u  # orthogonal to u
     a_big = a_big / np.linalg.norm(a_big)
 
     models = {}

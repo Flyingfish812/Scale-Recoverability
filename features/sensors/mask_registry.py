@@ -3,7 +3,7 @@ Mask-family registry (supplementary analysis).
 
 Loads the 5 independent strictly-nested mask families from `masks_families/`.
 Supplementary analysis/experiment scripts MUST load masks through this module —
-never hard-code `masks2/` (which is the frozen P0 authoritative source).
+never hard-code `masks2/` (the authoritative source).
 
 Canonical seeds:
     family_01 = 20260522  (identical to masks2/, frozen)

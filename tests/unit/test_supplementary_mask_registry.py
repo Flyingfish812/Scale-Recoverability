@@ -1,4 +1,4 @@
-"""Supplementary mask registry tests (P1-0)."""
+"""Supplementary mask registry tests ."""
 
 import numpy as np
 import pytest

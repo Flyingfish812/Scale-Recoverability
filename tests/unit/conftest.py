@@ -1,4 +1,4 @@
-"""pytest 公共配置: 将仓库根加入 sys.path, 使 `import luna` 可用。"""
+"""Shared pytest configuration: add the repository root to sys.path so `import luna` works."""
 import sys
 from pathlib import Path
 

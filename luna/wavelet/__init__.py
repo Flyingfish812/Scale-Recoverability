@@ -16,7 +16,8 @@ from luna.wavelet.metrics import (
     contiguous_recoverable_index,
     compute_S_full,
     compute_S_coh,
-    compute_three_layer_errors,
+    band_error_decomposition,
+    global_error,
     compute_oracle_audit_table,
 )
 
@@ -37,6 +38,7 @@ __all__ = [
     "contiguous_recoverable_index",
     "compute_S_full",
     "compute_S_coh",
-    "compute_three_layer_errors",
+    "band_error_decomposition",
+    "global_error",
     "compute_oracle_audit_table",
 ]

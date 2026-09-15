@@ -38,22 +38,33 @@ Reconstruction methods evaluated in the paper:
 
 ```
 luna/                            core library (no script dependencies)
-  wavelet/                       DWT decomposition, bands, three-layer metrics (GER, S_full, S_coh)
-  pod/                           POD decomposition, oracle reconstruction, band-POD
+  wavelet/                       DWT decomposition, bands, scale-count metrics (GER, S_full, S_coh)
+  pod/                           POD decomposition, truncation reference, band-POD
   models/                        POD-Ridge, POD-MLP, VCNN
   data/                          I/O + dataset registry + mask loading
-  benchmarks/                    NC-inspired analytical multiscale wake benchmark
-features/                        domain feature library (training, analysis, statistics, metrics, sensors)
-applications/paper_main/         main-paper reproduction pipeline
-  analyses/_canonical/           canonical statistics computations (incl. analytical benchmark)
-  figures/_canonical/            canonical figure scripts
-  pipelines/                     orchestration: statistics -> data pools -> tables -> figures
-configs/                         dataset & experiment definitions (TOML)
+  benchmarks/                    analytical multiscale wake benchmark
+features/                        domain library
+  sensors/                       sensor masks and the observations built from them
+  training/                      training and evaluation of the estimators
+  metrics/                       band-wise metric variants
+  statistics/                    resampling and temporal-dependence statistics
+applications/                    paper pipeline
+  pipelines/                     entry points: train -> statistics -> figures
+  statistics/                    one module per statistic of the paper
+  figures/                       one module per figure of the paper
+  configs/, config.py            experiment definitions (YAML)
+configs/                         dataset definitions (TOML)
 environment/                     conda environment definition
-tests/unit/                      pytest unit tests (metric identities, DWT orthogonality, …)
+tests/unit/                      pytest unit tests (metric identities, DWT orthogonality, ...)
 scripts/                         helper scripts (data fetch, full reproduction)
+tools/                           contributor tools (hygiene gate, baseline hashes)
 Makefile                         one-click entrypoints
 ```
+
+Every statistic lives in `artifacts/statistics/` and is written by one module in
+`applications/statistics/`; every figure lives in `artifacts/figures/` and is
+drawn by one module in `applications/figures/`. `TRACEABILITY.md` maps each
+reported number and figure to those modules.
 
 ## Datasets
 
@@ -71,8 +82,7 @@ processing notes).
 The experimental arrays (cropped / normalized npy snapshots, sensor
 masks, POD bases) and all trained models are **not** distributed in this
 repository. They are regenerated locally into git-ignored directories
-(`data/`, `masks*/`, `artifacts/`, `applications/paper_main/build/`) —
-see *Reproducing the paper* below.
+(`data/`, `masks*/`, `artifacts/`) — see *Reproducing the paper* below.
 
 ## Installation
 
@@ -94,11 +104,11 @@ strictly known. It is fully self-contained and is the recommended
 starting point:
 
 ```bash
-make demo            # runs applications/.../compute_p0_analytical.py
+make demo            # runs applications.statistics.analytical_benchmark
 ```
 
-This writes `artifacts/derived/main/statistics/analytical_benchmark.{json,csv}`
-and a figure PDF under `applications/paper_main/build/figures/`.
+This writes `artifacts/statistics/analytical_benchmark.json` and prints the six
+benchmark cases together with the scale count the construction prescribes.
 
 Run the unit tests (metric identities, DWT orthogonality, S_full /
 S_coh consistency, three-layer error decomposition, ridge closed form,
@@ -110,8 +120,8 @@ make test            # pytest tests/unit
 
 ## Reproducing the paper
 
-The full pipeline regenerates the statistics, data pools, tables and
-figures reported in the paper:
+The full pipeline regenerates the statistics and the figures reported in
+the paper:
 
 ```bash
 make reproduce       # = scripts/reproduce_all.sh
@@ -122,7 +132,7 @@ Prerequisites, in order:
 1. **Raw data** — fetch and prepare the three dataset arrays into
    `data/` (see `scripts/download_data.sh`).
 2. **Trained models / POD bases** — the learned estimators (POD-Ridge,
-   POD-MLP, VCNN) and band-POD bases are produced by the training code
+   POD-MLP, VCNN) and the band-POD bases are produced by the training code
    under `features/training/` and stored under `artifacts/`. Because
    training all configurations is compute-intensive, the paper's
    published numbers were generated from these artifacts; the pipeline
@@ -130,14 +140,13 @@ Prerequisites, in order:
 3. **Run the pipeline**
 
    ```bash
-   conda run -n luna python -m applications.paper_main.pipelines.build_all
+   python applications/pipelines/03_train_estimators.py --check   # verify the runs on disk
+   python applications/pipelines/05_compute_statistics.py        # every statistic
+   python -m applications.figures.make_all_figures               # every figure
    ```
 
-   This runs the canonical analyses (statistics builders, 42k / 6k / 70
-   record pools, sample closure audit), rebuilds the manuscript tables
-   (automatically skipped — with a message — when the private
-   `thesis_src/` manuscript tree is not present) and redraws every paper
-   figure into `applications/paper_main/build/figures*`.
+   The statistics step runs the producers of `applications/statistics/`
+   in dependency order (`--list` shows them, `--only` runs a subset).
 
 Outputs are written to git-ignored directories; they are never
 committed.

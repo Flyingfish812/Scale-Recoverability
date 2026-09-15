@@ -2,7 +2,7 @@
 Analytical benchmarks for metric validation.
 
   analytical_wake — NC-inspired analytical multiscale wake field with
-                    known ground-truth scale content (P0-1).
+                    known ground-truth scale content.
 """
 from luna.benchmarks.analytical_wake import (
     WakeParams,

@@ -1,8 +1,10 @@
 """
 Luna Features Layer — domain-specific capabilities built on the common layer.
 
-Sub-packages:
-    features.training   — VCNN & POD model training loops
-    features.analysis   — Oracle, baseline, sensitivity, audit analysis
-    features.viz        — Visualization components & styling
+Atomic tools used by the applications layer:
+
+    features.sensors      sensor masks and the observations built from them
+    features.training     training of the estimators compared in the paper
+    features.metrics      band-wise metric variants
+    features.statistics   resampling and temporal-dependence statistics
 """

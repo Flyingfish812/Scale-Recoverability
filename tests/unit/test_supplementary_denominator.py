@@ -1,4 +1,4 @@
-"""Supplementary denominator audit tests (P1-1)."""
+"""Supplementary denominator audit tests ."""
 
 import numpy as np
 import pywt
@@ -21,7 +21,7 @@ def test_energy_fractions_sum_to_one():
     u = rng.standard_normal((80, 160))
     norms = band_coefficient_norms(u)
     q = energy_fractions(norms)
-    assert abs(sum(q.values()) - 1.0) < 1e-6  # Parseval (系数域)
+    assert abs(sum(q.values()) - 1.0) < 1e-6  # Parseval (coefficient domain)
 
 
 def test_band_norms_match_coefficient_domain():

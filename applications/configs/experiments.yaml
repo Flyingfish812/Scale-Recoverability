@@ -1,0 +1,51 @@
+# Experiment definition of the main paper.
+#
+# These values are read by applications/config.py and used by the training
+# pipeline and by every statistics producer, so that the experiment grid and the
+# metric conventions are defined in one place. Values that are properties of the
+# data (the grid, the sensor layout) rather than of the experiment are not
+# repeated here.
+
+dataset_nc:
+  sensors:
+    # Nested sequence of sensor locations, as a fraction of the field.
+    counts: [10, 15, 20, 30, 50]
+  noise:
+    # Test-time noise levels; the estimators are trained on clean measurements.
+    test_sigmas: [0.0, 0.001, 0.01, 0.1]
+  pod:
+    main_rank: 128
+    audit_ranks: [16, 32, 64, 128]
+  wavelet:
+    family: db2
+    level: 4
+    boundary_mode: periodization
+  models:
+    mlp:
+      seeds: [0, 101, 202]
+    vcnn:
+      seeds: [0, 101, 202]
+  mask_families: [family_01, family_02, family_03, family_04, family_05]
+
+metrics:
+  # Wavelet bands, from the coarsest to the finest.
+  bands: [A4, W4, W3, W2, W1]
+  # Threshold on the relative band error, and the stricter quantile criterion.
+  tau: 0.05
+  eta: 0.99
+  robust_threshold: 0.01
+  denominator_audit:
+    eps_abs: 1.0e-8
+    eps_rel: 1.0e-6
+
+statistics:
+  block_bootstrap:
+    method: moving_block
+    n_resamples: 10000
+    seed: 20260806
+    # 62 snapshots is the shedding period of the flow.
+    candidate_block_lengths: [10, 20, 30, 50, 62, 125]
+    prefer_physical_period: true
+  snapshot_cluster:
+    n_resamples: 10000
+    seed: 20260806
