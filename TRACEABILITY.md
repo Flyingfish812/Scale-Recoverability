@@ -399,3 +399,28 @@ Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
 SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures,
 traceability clean, 27 figures identical to the manuscript, tectonic 27 pages
 with no unresolved reference.
+
+### 6.8 Seventh external-review round (v5-10 → v5-11, 2026-09-16)
+
+| # | Item | Fix |
+|---|---|---|
+| 1 | the 18,000 MLP-VCNN pairs were still called "observations", a word the paper reserves for sensor measurements ($m_obs$) | all three places (Sec. 7.2, Appendix D.4, Fig. S8 caption) now say "18,000 matched **reconstruction records**" |
+| 2 | "three seeds pooled" did not say over how many values the statistics are taken | Fig. 8 caption: "300 held-out snapshots; learned-model bars pool three seeds, i.e. 900 reconstruction records each". Fig. 9 caption: "mean ± one standard deviation over the 900 reconstruction records of that configuration (300 held-out snapshots × three seeds); Ridge is deterministic, so its bar uses the 300 held-out snapshots" — verified against `records.py`/`fig08`/`fig09`, which pool every matching record |
+| 3 | Sec. 7.2 quoted "cross-run SD ≤ 0.18" without defining the statistic (the pooled-mean shift is only 0.045) | now "shift the pooled mean by at most ... and leave the SD of the **per-seed means** at ≤ ...", which is what `seed_audit.json` reports (`S_full_sd_across_seeds_3` = 0.175 for the clean case) |
+| 4 | Ridge `M = 50` lacked the noise level | now "at $(M,\sigma) = (50, 0)$" |
+| 5 | Appendix Section C was titled "VCNN Phase Diagram" although its figure shows Ridge and VCNN | renamed "Additional Model Phase Diagrams"; the section body now cites both the figure and the table. Float ordering is still left to the JFM template |
+
+Two follow-ups from the sweep:
+
+- The figure captions needed the number 900, which the consistency gate correctly
+  rejected as a hard-coded literal. It is now the derived entry
+  `experiment_config.records_per_learned_config` (300 snapshots × 3 seeds, source
+  `definition`) exported as `\FRecordsPerConfig`.
+- Sec. 4.3's "20 % of the wavelet-truncated cases" became "20 % of the
+  wavelet-domain test cases", since that 20 % is carried by the untruncated
+  `k = 5` case.
+
+Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
+SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures, the
+traceability gate resolves every value-layer source (0 unproduced), 27 figures
+identical, tectonic 27 pages.
