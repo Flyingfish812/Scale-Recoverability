@@ -5,8 +5,8 @@ fig05_wavelet_vs_fourier.py — Fig. 5 scale diagnostics vs Fourier (v3-3, 2026-
 
 Two panels:
   (a) S_full (wavelet) vs S_FFT (Fourier dyadic) scatter + count labels
-  (b) controlled-truncation agreement: detection accuracy for wavelet- vs
-      Fourier-truncated reconstructions (S_full / S_FFT)
+  (b) controlled transform-domain test cases: detection accuracy for wavelet- vs
+      transform-domain test cases (S_full / S_FFT accuracy)
 Data sources (verified):
   - artifacts/statistics/fourier_band_baseline.{csv,json}
   - artifacts/statistics/transform_symmetry_check.json
@@ -108,8 +108,10 @@ def main() -> int:
         ax.text(xi + width / 2, v + 2, f"{v:.0f}%", ha="center", fontsize=7,
                 color=ps.MODEL_COLORS["MLP"])
     ax.set_xticks(xpos)
-    ax.set_xticklabels(["Wavelet-truncated\nreconstructions",
-                        "Fourier-annulus-\ntruncated reconstructions"], fontsize=7.5)
+    # Axis labels name the test-case families, not "truncated
+    # reconstructions": the counted cases include the untruncated k=5 level.
+    ax.set_xticklabels(["Wavelet-domain\ntest cases",
+                        "Fourier-annulus-domain\ntest cases"], fontsize=7.5)
     ax.set_ylabel("accuracy (%)")
     ax.set_ylim(0, 118)
     ax.set_xlim(-0.6, 1.6)

@@ -424,3 +424,17 @@ Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
 SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures, the
 traceability gate resolves every value-layer source (0 unproduced), 27 figures
 identical, tectonic 27 pages.
+
+### 6.9 Eighth external-review round (v5-11 → v5-12, 2026-09-16)
+
+Two content items; the float ordering is again left to the JFM migration.
+
+| # | Item | Fix |
+|---|---|---|
+| 1 | Fig. 5(b) called the counted groups "wavelet-truncated reconstructions", although the cross-domain statistic covers levels `k = 1..5`, and the only correct `S_FFT` wavelet-domain case is the *untruncated* `k = 5` — the 20 % came entirely from it | the figure axis labels and the caption now say "Wavelet-domain test cases" and "Fourier-annulus-domain test cases"; the caption also states the population (100 fields, `k = 1..5`, empty `k = 0` excluded). Sec. 4.3's "Fourier-annulus truncations" became "Fourier-annulus test cases". No numbers were recomputed |
+| 2 | Sec. 3.5 pointed at Appendix B for both rank adequacy and error attribution, but Appendix B only holds the rank-adequacy audit | now "Rank adequacy is tested in Appendix B, and error attribution in Sec. 6.2 and Appendix D.7" (`app:three_layer_fig`), i.e. the appendix section holding Fig. S4 / Table S9 |
+
+Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
+SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures,
+traceability 0 unproduced sources, 27 figures identical to the manuscript,
+tectonic 27 pages with no unresolved reference.
