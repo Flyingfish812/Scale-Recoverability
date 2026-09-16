@@ -438,3 +438,21 @@ Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
 SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures,
 traceability 0 unproduced sources, 27 figures identical to the manuscript,
 tectonic 27 pages with no unresolved reference.
+
+### 6.10 Ninth external-review round — v5 series frozen (v5-12 → v5-13, 2026-09-16)
+
+One item: Sec. 7.2 said "no band has a near-zero denominator", but the audit in
+Appendix F.2 checks the $\\Edirect$ denominators ($\\|\\mathcal{W}_b u\\|_2$ and the
+band energy fraction) only, whereas $\\Ecoh$ divides by $\\|P_b\\mathcal{W}_b u\\|_2$.
+
+- Sec. 7.2 now reads "no $\\Edirect(b)$ denominator is near zero".
+- Appendix F.2 states that the audited norms are the $\\Edirect$ denominators
+  and that the $\\Ecoh$ denominator is the smaller projected norm
+  $\\|P_b\\mathcal{W}_bu\\|_2$, whose retained energy is quantified in
+  Appendix D.5 (`app:co_energy`).
+
+With this the reviewer closed the review: no further data or logic conflicts
+were found, and the v5 series is frozen as the pre-JFM baseline
+(paper commit `8ffb2a3` + this round; figures, gates and the value layer are
+consistent).  Remaining work is the JFM template/voice migration, which must
+re-check appendix heading vs. figure/table ordering after the class change.
