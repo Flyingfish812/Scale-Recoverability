@@ -12,6 +12,11 @@ Grid
     noise levels    0, 1e-3, 1e-2, 1e-1, applied to the test measurements only
     training seeds  0, 101, 202 (the least-squares map is deterministic)
 
+Pipeline
+    previous  scripts/download_data.sh (raw fields under data/)
+    this step trains the estimators into artifacts/
+    next      applications/pipelines/05_compute_statistics.py
+
 Each run writes ``tests/<noise code>/test_raw.npz`` holding the target fields, the
 reconstructions, the test snapshot indices and the noise level. For a given
 training seed every estimator is evaluated on the same test snapshots, which is

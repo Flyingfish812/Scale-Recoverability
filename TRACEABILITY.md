@@ -85,27 +85,29 @@ module in `applications/statistics/`. The whole layer is rebuilt with one comman
 | `seed_stability.json` | `applications/statistics/seed_stability.py` | ✅ | §7.2 |
 | `tau_pairwise_checks.json` | `applications/statistics/tau_pairwise_checks.py` | ✅ | App. B, §7.5 |
 | `wavelet_family_sensitivity.json` | `applications/statistics/wavelet_family_sensitivity.py` | ✅ | Table S13 |
+| `low_ger_analysis.json` | `applications/statistics/low_ger_analysis.py` | ✅ | Table S16 |
+| `gappy_band_errors.json` | `applications/statistics/gappy_band_errors.py` | ✅ | Table S15 |
+| `per_mode_nrmse.json` | `applications/statistics/per_mode_nrmse.py` | ✅ | Tables S8, S11 |
+| `excess_error_recompute.json` | `applications/statistics/excess_error_recompute.py` | ✅ | Tables S8, S15 |
+| `within_config_physics_bootstrap.json` | `applications/statistics/within_config_physics_bootstrap.py` | ✅ | Table S17 |
+| `seed_audit.json` | `applications/statistics/seed_audit.py` | ✅ | §7.2 |
+| `boundary_sensitivity.json` | `applications/statistics/boundary_sensitivity.py` | ✅ | §7.5 |
+| `band_pod_energy_sensitivity.json` | `applications/statistics/band_pod_energy_sensitivity.py` | ✅ | §3.3 |
 
-### 3.2 statistics with no public producer yet
+### 3.2 statistics without a producer here
 
-These paper results are still read from files that no module in this repository writes.
-The pre-refactor scripts are archived outside the public tree; each row is a backlog item.
+Every value-layer entry now names either an artifact of this repository (108 of 143),
+raw data or a definition (34), or a module and a data directory (1). What is left
+outside is small and deliberate:
 
 | Statistics file | Status | Consumed by |
 |---|---|---|
-| `s021_gappy_pod_wavelet.json` | ❌ no producer | Table S15 |
-| `s26_pass_probability.json` | ❌ no producer | Figs 6b, 6c, 7, S2b; Tables 4, 6 (pass-probability columns) |
-| `s08b_low_ger_final.json` | ❌ no producer | Table S16 |
-| `ger_fits_v5.json` | ❌ no producer | §5.1 scaling exponents |
-| `s02_recomputed_values.json` | ❌ no producer | Tables S15, S8 |
-| `seed_audit_3v5.{json,csv}` | ❌ no producer | §7.2 seed stability |
-| `s21_nrmse_full.json` | ❌ file absent | Table S8 (decile) |
-| `within_config_physics_bootstrap.json` | ❌ no producer | Table S17 |
-| `oracle_audit_refined.json` | ❌ superseded by `truncation_reference_audit.json` | Table S1 (dataset metadata) |
-| `thesis_data_audit.json` | ❌ legacy | 14 truth-layer entries still marked `source: ua` |
-| `equal_ger_68_pairs_full.json` | ❌ superseded by `equal_ger_pairs.json` | — |
-| `s28_boundary_sensitivity.json` | ❌ legacy | §3.7 (not in the submitted figure/table set) |
-| `rossby_wavelet_sensitivity.*` | ⚠️ experiment not in the paper | out of scope |
+| `equal_ger_68_pairs_full.json` | retired: the disjoint 68-pair set is superseded by the 1 249 within-configuration pairs | — |
+| `ger_fits_v5.json` | retired with the scaling-exponent paragraph (five sensor counts do not support a power law) | — |
+| `rossby_wavelet_sensitivity.*` | the experiment is not in the paper | out of scope |
+
+`python tools/check_traceability.py` prints the same accounting from the value layer
+itself, so the claim can be re-checked after any edit.
 
 ### 3.3 supplementary analyses
 
@@ -248,11 +250,10 @@ parameters.
 
 | Gap | Affected paper objects | State |
 |---|---|---|
-| Statistics whose producer was never migrated: pass-probability phase table, low-GER analysis, per-mode RMSE, recomputed excess-error values, fixed-rank gappy baseline, dataset metadata table | Tables S1, S2, S8, S15–S17; Figs 6b, 6c, 7, S2b | open — the files are read from the pre-refactor tree, listed in §3.2 |
-| The value layer `paper_facts.yaml` is maintained by hand and its `source:` fields are only partly machine-checkable | all 26 tables and all numeric macros | open — the consistency gate now verifies it against `artifacts/statistics/` |
+| The value layer `paper_facts.yaml` is maintained by hand; its `source:` fields are checked mechanically but its numbers are not generated | all 26 tables and all numeric macros | open by design: `tools/check_traceability.py` and the paper's consistency gate verify the links, the values stay hand-written |
 | The table generator and the value layer live in the paper repository, not here | all 26 tables | open by design: the statistics layer is shipped, the manuscript is not |
-| Per-mode NRMSE table | Table S8 | open — the intermediate file is absent from `artifacts/` |
+| Three results were retired rather than reproduced: the disjoint 68-pair equal-GER set, the power-law scaling exponents, and the Rossby-wavelet experiment | none in the submitted figure and table set | closed as retired |
 
 **Acceptance for the statistics layer**: every producer in `applications/statistics/`
-recomputes its artifact from `artifacts/`, and the paper's value layer carries a
-`source:` that resolves to `artifacts/statistics/`.
+recomputes its artifact from `artifacts/`, the value layer points at those artifacts,
+and `tools/check_traceability.py` reports no source without a producer.

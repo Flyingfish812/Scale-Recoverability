@@ -10,6 +10,12 @@ failed.
 Prerequisites
     trained runs under artifacts/ (see applications/pipelines/03_train_estimators.py)
     the POD bases under artifacts/pod_bases/
+
+Pipeline
+    previous  applications/pipelines/03_train_estimators.py
+    this step writes artifacts/statistics/
+    next      applications/figures/make_all_figures.py
+
 Outputs
     artifacts/statistics/*.json  (one file per producer, see the docstrings)
     artifacts/statistics/sensor_family/*.csv
@@ -40,6 +46,9 @@ PRODUCERS = [
     "applications.statistics.analytical_benchmark",
     "applications.statistics.band_error_decomposition",
     "applications.statistics.band_error_records",
+    "applications.statistics.low_ger_analysis",
+    "applications.statistics.per_mode_nrmse",
+    "applications.statistics.excess_error_recompute",
     "applications.statistics.sensor_noise_phase",
     "applications.statistics.mode_scale_energy",
     "applications.statistics.level_sensitivity",
@@ -50,13 +59,18 @@ PRODUCERS = [
     "applications.statistics.paired_model_comparison",
     "applications.statistics.sensor_family_summary",
     "applications.statistics.gappy_pod_baseline",
+    "applications.statistics.gappy_band_errors",
     "applications.statistics.fourier_band_baseline",
     "applications.statistics.transform_symmetry_check",
     "applications.statistics.threshold_sensitivity",
     "applications.statistics.wavelet_sensitivity",
     "applications.statistics.equal_ger_pairs",
     "applications.statistics.ger_band_correlation",
+    "applications.statistics.within_config_physics_bootstrap",
     "applications.statistics.seed_stability",
+    "applications.statistics.seed_audit",
+    "applications.statistics.boundary_sensitivity",
+    "applications.statistics.band_pod_energy_sensitivity",
     "applications.statistics.tau_pairwise_checks",
     "applications.statistics.wavelet_family_sensitivity",
     "applications.statistics.scoh_vs_sfull",
