@@ -98,3 +98,27 @@ def np_std(values: list[float]) -> float:
         return 0.0
     mean = sum(values) / n
     return (sum((v - mean) ** 2 for v in values) / n) ** 0.5
+
+
+def truncation_global_error() -> float:
+    """Mean global error of the rank-128 POD truncation over the test snapshots."""
+    raw = json.loads(RECORDS.read_text(encoding="utf-8"))["records"]
+    per_snapshot = {r["snapshot_index"]: r["truncation_global_error"] for r in raw}
+    values = list(per_snapshot.values())
+    return float(sum(values) / len(values)) if values else 0.0
+
+
+def truncation_scale_count() -> float:
+    """Scale count of the rank-128 POD truncation, read from the audit table."""
+    audit = json.loads((ROOT / "artifacts" / "statistics"
+                        / "truncation_reference_audit.json").read_text(encoding="utf-8"))
+    nc = next(s for s in audit["summaries"] if s["dataset"] == "nc")
+    bands = nc["table"]["128"]["bands"]
+    tau = audit["tau"]
+    count = 0
+    for band in BANDS:
+        if float(bands[band]["mean"]) <= tau:
+            count += 1
+        else:
+            break
+    return float(count)

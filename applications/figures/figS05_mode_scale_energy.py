@@ -82,7 +82,7 @@ def main() -> int:
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
     ax.set_xlabel("POD mode $r$ (log)")
     ax.set_ylabel("Fraction of mode energy in band\n"
-                  r"$E_b(\phi_r)/E(\phi_r)$  (0$-$1)")
+                  r"$E_b(\phi_r^{(u)})/E(\phi_r^{(u)})$  (0$-$1)")
     ax.legend(fontsize=7, ncol=3, loc="upper right")
     ps.panel_label(ax, "b", x=-0.18, y=1.04)
 

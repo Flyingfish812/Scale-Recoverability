@@ -54,7 +54,8 @@ def main() -> int:
                       if r["mask_num"] == 20 and r["sigma"] == 0.0), 0.0333)
     gappy_sf = 0.53  # fixed value from paper_facts (original method S_full)
 
-    oracle_ger, oracle_sf = 0.0006, 5.0
+    oracle_ger = records.truncation_global_error()
+    oracle_sf = records.truncation_scale_count()
 
     models = [("POD trunc.", oracle_ger, oracle_sf, ps.MODEL_COLORS["Oracle"]),
               ("MLP", mlp_ger, mlp_sf, ps.MODEL_COLORS["MLP"]),

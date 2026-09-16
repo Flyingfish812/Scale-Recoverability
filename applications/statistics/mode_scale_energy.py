@@ -138,7 +138,8 @@ def main() -> int:
         "band_energy_per_mode": {band: energy[band].tolist() for band in BANDS_CF},
         "cumulative_coverage": {band: coverage[band].tolist() for band in BANDS_CF},
         "singular_values": singular_values.tolist(),
-        "mode_energy_ratio": (singular_values / singular_values[0]).tolist(),
+        # lambda_j / lambda_1: the modal energy is the squared singular value
+        "mode_energy_ratio": ((singular_values / singular_values[0]) ** 2).tolist(),
         "threshold_modes": thresholds,
     }
     args.output.write_text(json.dumps(payload), encoding="utf-8")

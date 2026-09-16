@@ -298,3 +298,32 @@ parameters.
 **Acceptance for the statistics layer**: every producer in `applications/statistics/`
 recomputes its artifact from `artifacts/`, the value layer points at those artifacts,
 and `tools/check_traceability.py` reports no source without a producer.
+
+### 6.3 Second external-review round (2026-09-16)
+
+The reviewer reported "logical breaks where updated numbers had not propagated".
+Each item was re-checked against the produced artifacts before editing.
+
+| # | Reported issue | Finding | Fix |
+|---|---|---|---|
+| 1 | Sec. 5.2 "Ridge reaches `Sfull = 4.02` at `M = 50` but `Scoh = 1.73`" contradicts Sec. 6.2 | stale: the closed-form ridge values are `S_full = 3.887`, `S_coh = 4.427` (`band_error_records.json`, `scoh_vs_sfull.json`), i.e. the coherent count is *not* lower | value layer `results.ridge_m50.sfull/scoh` → 3.89/4.43, sentence rewritten |
+| 2 | Appendix D.4 MLP−VCNN differences `+0.23 / +0.30` were stale and hard-coded | `paired_model_comparison.json`: `S_full +0.4377`, `S_coh −0.1154`, `GER −0.00099` | value layer `results.mlp_vs_vcnn.*` now sourced from that artifact; text uses `\FMlpVcnnSfullDiff` / `\FMlpVcnnScohDiff` |
+| 3 | scalar `GER_u` mixed with the two-component GER | Eqs. (6)–(9) hold for the scalar streamwise field only | the scalar relation is now `\GER_u`, with an explicit sentence that Secs. 4–7 report the full two-component state; Sec. 4.2 reworded |
+| 4 | the band operator in Eq. (9)/Fig. S5 did not name its component | `mode_scale_energy.py` filters the streamwise component of each POD mode | Eq. and Fig. S5(b) axis label now use `\phi_j^{(u)}`, defined in Sec. 6.1 |
+| 5 | Sec. 7.2 "across the three main training runs" (wrong: ridge is deterministic) | the three widths also came from an unscripted hand analysis and the `source:` pointed at the wrong artifact | `seed_stability.json` now supplies per-estimator configuration-mean widths 0.06/0.10/0.09 and the range 0.01–0.28 over the 50 non-degenerate configurations |
+| 6 | Discussion "significant in 20 configurations and not weaker in the rest" | Table S18: `rho_G >= rho_S` in 20/20, of which 13 have a 95% CI excluding zero | reworded to "stronger in all 20 configurations, significant in 13" |
+
+The same round added the minimal audit requested by the reviewer:
+
+```
+PYTHONPATH=/home/wyr/projects/Luna conda run -n sana python3 -u tools/check_key_results.py
+```
+
+It cross-checks artifact → value layer → paper macro for six groups: G1 Table 2
+(ridge `M = 50` counts), G2 Fig. 8 (MLP error and rank-128 truncation floor),
+G3/G6 Fig. 10 + Table S10 + Sec. 7.2 (`S_full` bootstrap CI widths), G4 Fig. S5 +
+Table S8 (modal energy tail), G5 Sec. 6.2 (paired differences, `S_coh`/`S_full`
+counts).  Current state `PASS=14 FAIL=0 SKIP=0`.  Display-rounded entries use a
+half-unit tolerance, subsample conventions (50/150/300 snapshots) use a 5%
+relative tolerance, and an unlocatable path reports SKIP instead of passing
+silently.
