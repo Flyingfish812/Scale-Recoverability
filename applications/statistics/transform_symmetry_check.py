@@ -439,7 +439,10 @@ def main() -> None:
     parser.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     parser.add_argument("--mode", default=DEFAULT_MODE)
     parser.add_argument("--n-fourier-bands", type=int, default=5)
-    parser.add_argument("--n-test-fields", type=int, default=10)
+    # Use the same controlled field set as the transform-domain truncation
+    # tables (Appendix E), so that own-domain and cross-domain accuracies
+    # share one population.
+    parser.add_argument("--n-test-fields", type=int, default=100)
     parser.add_argument("--output-dir", default="artifacts/statistics")
     parser.add_argument("--lite", action="store_true")
     parser.add_argument("--project-root", default=".")

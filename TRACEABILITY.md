@@ -361,3 +361,15 @@ Seven groups, all closed; only one touches a number.
 | 5 | Table 4 regime boundaries were descriptive ("about 1-3") | the table contains 3.36 and 3.41, so the interval must be half-open | regimes are now high `S_full >= 4`, intermediate `1 <= S_full < 4`, low `S_full < 1`, in the caption and in Sec. 5.1 |
 | 6 | `[18,45]` cited as the source for "reference-free scale assessment" | one entry is an online basis-updating criterion, the other a data-assimilation package; neither is a reference-free diagnostic | citations removed from that sentence (the remaining bibliography entries are unaffected) |
 | 7 | `Secs. 4- 6` spacing; Table S21 float placement | the en dash was split across a source line | source joined; float placement intentionally left to the JFM template migration |
+
+### 6.6 Fifth external-review round (v5-8 → v5-9, 2026-09-16)
+
+Four content items; the fifth (float placement) is deferred to the JFM
+template migration as the reviewer suggested.
+
+| # | Reported issue | Finding | Fix |
+|---|---|---|---|
+| 1 | the cross-domain accuracy sentence contradicted itself (`k = 1..5` with "the untruncated case is excluded") and mixed a 10-field population with the 100-field tables | the artifact kept the *empty* case out (`expected_recoverable is not None` covers `k = 1..5`, where `k = 5` is the untruncated all-bands case), and `transform_symmetry_check.py` defaulted to `--n-test-fields 10` while the transform-domain tables use 100 fields | the producer now uses the same 100 fields, the artifact was recomputed, and the text states the range and the 500 judgements explicitly. Numbers moved: `S_full` on Fourier-annulus-truncated fields 80% → 96%; `sfull_on_fourier_targets` third entry `1--3` → `2--3` |
+| 2 | 8,879 "samples" read as independent snapshots | 8,879 is a count of pooled evaluation records (21.1% of 42,000) | Sec. 6.2 and Appendix D.5 now say "pooled evaluation records (21.1% of the 42,000 records)" and "those records" |
+| 3 | `S_full` and mean `S_full` mixed | the regimes and the ridge `M = 50` counts are configuration means, while a single sample gives an integer | regime definitions and the ridge sentence now say mean `S_full` / mean `S_coh` |
+| 4 | Sec. 4.3 quoted `rho` without naming the coefficient | the artifact stores `spearman_rho` | the paragraph now states that all coefficients quoted there are Spearman rank correlations |
