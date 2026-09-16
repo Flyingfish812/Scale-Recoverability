@@ -316,7 +316,7 @@ Each item was re-checked against the produced artifacts before editing.
 The same round added the minimal audit requested by the reviewer:
 
 ```
-PYTHONPATH=/home/wyr/projects/Luna conda run -n sana python3 -u tools/check_key_results.py
+python3 -u tools/check_key_results.py      # run from the repository root
 ```
 
 It cross-checks artifact → value layer → paper macro for six groups: G1 Table 2
@@ -327,3 +327,23 @@ counts).  Current state `PASS=14 FAIL=0 SKIP=0`.  Display-rounded entries use a
 half-unit tolerance, subsample conventions (50/150/300 snapshots) use a 5%
 relative tolerance, and an unlocatable path reports SKIP instead of passing
 silently.
+
+### 6.4 Third external-review round (2026-09-16)
+
+The reviewer re-read all 26 pages and reported eight groups: four to fix before
+freezing the numbers, four for completeness.  Findings and actions:
+
+| # | Reported issue | Finding | Fix |
+|---|---|---|---|
+| 1 | `Sec. ??` on p. 4; Sec. 3.1 says the full-state GER is reported in Secs. 5–7 | the cross-reference pointed at a label (`sec:problem`) that does not exist; the method section defines the two-component state in Sec. 3.1 (`sec:setting`) | reference repaired; range corrected to Secs. 4–7 in Sec. 3.1, matching Sec. 3.3 |
+| 2 | scalar vs two-component GER still mixed in three places | Eq. (9)'s implication was written for the two-component symbol and Sec. 4.2/Discussion applied the scalar identity to the full-state metric | the implication now reads `\GER_u`, Sec. 4.2 and the Discussion state that Eq. (9) establishes the masking effect for the streamwise scalar and that the NC results show the analogous effect for the two-component GER |
+| 3 | `0.44 / -0.12 / -1e-3` presented as `(M, sigma) = (20,0)` | those are the aggregate values over the 18,000 matched observations of the primary nested sensor sequence; the `(20,0)` difference is `+0.23` (MLP mean `S_full` 4.513 vs VCNN 4.282) | Appendix D.4 relabelled to the 18,000-observation aggregate; Sec. 5.2 uses the new `(20,0)` value from `band_error_records.json`; the value layer now separates `sfull_diff_m20_sigma0` from `supplementary.paired_mlp_vcnn.*` |
+| 4 | deprecated "coherent" wording reappeared | `S_coh` is the POD-dominant count | wording replaced by "POD-dominant count / content" |
+| 5 | Fig. 4 / pooled test pair scope unclear | the artifact's pooled statistics and bootstrap use the 1,249 within-configuration pairs; the 13 cross-model pairs are a separate set | text now says the figure and pooled test use the 1,249 pairs and that the 13 cross-model pairs are excluded |
+| 6 | "50 non-degenerate configurations" undefined | 60 configurations exist; 10 have zero-width intervals | both Sec. 7.2 and Appendix D.2 now say "configurations with non-zero bootstrap width" and quote the count |
+| 7 | Fig. 5(a) used 100 of 300 held-out snapshots without justification | it was only the producer's CLI default (`--n-samples 100`), not a documented subset | default raised to 300 and the artifact recomputed: `rho(S_full, S_FFT)` 0.79 → 0.80, spectral-loss/low-RMSE/high-RMSE 0.79/0.80/0.60 → 0.78/0.78/0.55, `GER`–spectral loss 0.998 → 0.996 |
+| 8 | Table S1 `Mask type` column contradicts the "RDB/SST are rank-adequacy audits only" narrative | sensor masks are irrelevant for those entries | column removed from the generator; the caption now states that masks enter only the NC reconstruction study |
+
+Verification after the round: paper gate `PASS=118 FAIL=0`, key-result audit
+`PASS=15 FAIL=0 SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0
+failures, traceability clean, tectonic 26 pages with no unresolved reference.

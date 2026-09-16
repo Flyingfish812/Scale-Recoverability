@@ -421,7 +421,10 @@ def print_summary(result: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fourier Spectral Baseline — Standard Metrics")
     parser.add_argument("--test-npz", default=None)
-    parser.add_argument("--n-samples", type=int, default=100)
+    # The VCNN test file holds the full 300-snapshot held-out set used
+    # throughout the paper; score all of them so that the Fourier baseline and
+    # the wavelet band metrics share one test population.
+    parser.add_argument("--n-samples", type=int, default=300)
     parser.add_argument("--tau", type=float, default=TAU_DEFAULT)
     parser.add_argument("--wavelet", default=DEFAULT_WAVELET)
     parser.add_argument("--level", type=int, default=DEFAULT_LEVEL)
