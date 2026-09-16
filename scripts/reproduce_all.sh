@@ -32,7 +32,7 @@ conda run -n "$ENV_NAME" python applications/pipelines/03_train_estimators.py --
     --models mlp ridge vcnn
 
 echo "[3/5] computing the statistics"
-conda run -n "$ENV_NAME" python applications/pipelines/05_compute_statistics.py
+conda run -n "$ENV_NAME" python applications/pipelines/04_compute_statistics.py
 
 echo "[4/5] drawing the figures"
 conda run -n "$ENV_NAME" python applications/figures/make_all_figures.py

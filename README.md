@@ -49,7 +49,7 @@ features/                        domain library
   metrics/                       band-wise metric variants
   statistics/                    resampling and temporal-dependence statistics
 applications/                    paper pipeline
-  pipelines/                     entry points: train -> statistics -> figures
+  pipelines/                     numbered entry points: data -> POD bases -> train -> statistics -> figures
   statistics/                    one module per statistic of the paper
   figures/                       one module per figure of the paper
   configs/, config.py            experiment definitions (YAML)
@@ -131,18 +131,23 @@ Prerequisites, in order:
 
 1. **Raw data** — fetch and prepare the three dataset arrays into
    `data/` (see `scripts/download_data.sh`).
-2. **Trained models / POD bases** — the learned estimators (POD-Ridge,
-   POD-MLP, VCNN) and the band-POD bases are produced by the training code
-   under `features/training/` and stored under `artifacts/`. Because
-   training all configurations is compute-intensive, the paper's
-   published numbers were generated from these artifacts; the pipeline
-   re-runs every analysis step on whatever artifacts are present.
-3. **Run the pipeline**
+2. **POD bases** — the truncation basis every estimator is expressed in is
+   rebuilt from the raw arrays by `02`.
+3. **Trained models** — the learned estimators (POD-Ridge, POD-MLP, VCNN)
+   are produced by the training code under `features/training/` and
+   stored under `artifacts/`. Because training all configurations is
+   compute-intensive, the paper's published numbers were generated from
+   these artifacts; the pipeline re-runs every analysis step on whatever
+   artifacts are present.
+4. **Run the pipeline** — the entry points are numbered in the order they
+   have to run:
 
    ```bash
-   python applications/pipelines/03_train_estimators.py --check   # verify the runs on disk
-   python applications/pipelines/05_compute_statistics.py        # every statistic
-   python -m applications.figures.make_all_figures               # every figure
+   python applications/pipelines/01_prepare_data.py              # raw arrays of data/
+   python applications/pipelines/02_build_pod_bases.py           # POD bases (rank 128)
+   python applications/pipelines/03_train_estimators.py --check  # verify the runs on disk
+   python applications/pipelines/04_compute_statistics.py        # every statistic
+   python applications/pipelines/05_make_figures.py              # every figure
    ```
 
    The statistics step runs the producers of `applications/statistics/`

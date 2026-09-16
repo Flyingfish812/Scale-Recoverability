@@ -25,6 +25,16 @@ The paper is produced by three stages:
 Stage (3) is the contract between code and paper: **a paper object is only
 reproducible if its stage-(3) file is produced by a script in this repository.**
 
+The entry points of the repository follow the same order, one module per stage:
+
+| Step | Entry point | Writes |
+|---|---|---|
+| 01 | `applications/pipelines/01_prepare_data.py` | verifies the raw arrays under `data/` (no output) |
+| 02 | `applications/pipelines/02_build_pod_bases.py` | `artifacts/pod_bases/<dataset>/pod_base_bundle.npz` |
+| 03 | `applications/pipelines/03_train_estimators.py` | the estimator runs under `artifacts/` |
+| 04 | `applications/pipelines/04_compute_statistics.py` | `artifacts/statistics/` |
+| 05 | `applications/pipelines/05_make_figures.py` | `artifacts/figures/` |
+
 ---
 
 ## 1. Stage 1 — raw data
@@ -43,8 +53,8 @@ Sensor sequences: `masks*/` (NC incremental-random + 5 sensor families for Fig S
 
 | Artifact | Producer | Status |
 |---|---|---|
-| `artifacts/pod_bases/cylinder2d_q1/pod_base_bundle.npz` | `luna.pod.decomposition` via a build script | ⚠️ build entry missing |
-| `artifacts/pod_bases/{rdb_h5,sst_weekly}/…` | idem (higher rank) | ⚠️ build entry missing |
+| `artifacts/pod_bases/cylinder2d_q1/pod_base_bundle.npz` | `applications/pipelines/02_build_pod_bases.py` (`luna.pod.decomposition`, rank 128) | ✅ |
+| `artifacts/pod_bases/{rdb_h5,sst_weekly}/…` | idem (rank 128 and 1024) | ✅ |
 | `artifacts/pod_model_sweep_nc/mlp_n*/seed*/tests/s*/test_raw.npz` | `applications/pipelines/03_train_estimators.py` | ✅ |
 | `artifacts/vcnn_results/vcnn_sweep_nc_2000/vcnn_n*_seed*_custom/…` | `applications/pipelines/03_train_estimators.py` | ✅ |
 | `artifacts/ridge_closed_form_sweep_nc/ridge_n*/seed000/…` | `applications/pipelines/03_train_estimators.py` | ✅ |
@@ -55,7 +65,7 @@ Sensor sequences: `masks*/` (NC incremental-random + 5 sensor families for Fig S
 
 Every statistic of the submission lives in `artifacts/statistics/` and is written by one
 module in `applications/statistics/`. The whole layer is rebuilt with one command:
-`python applications/pipelines/05_compute_statistics.py`.
+`python applications/pipelines/04_compute_statistics.py`.
 
 ### 3.1 producer inventory
 
@@ -157,7 +167,9 @@ Unified in this refactor:
 
 All 26 figures are drawn by `applications/figures/` (one script per figure or
 figure group) from `artifacts/statistics/`; `make_all_figures.py` redraws the
-whole set, `compare_with_manuscript.py` checks it against the manuscript copies
+whole set (the pipeline entry point of this stage is
+`applications/pipelines/05_make_figures.py`), `compare_with_manuscript.py` checks
+it against the manuscript copies
 and `publish_figures.py` updates those copies. The scripts used to live in the
 private manuscript tree only, which is why this row of the plan was open.
 
@@ -176,16 +188,16 @@ private manuscript tree only, which is why this row of the plan was open.
 | Fig 9 | `fig09_cross_model_bands.pdf` | `band_error_records.json`, `band_error_records.json` (ridge subset) | `applications/figures/fig09_cross_model_bands.py` | ⚠️ |
 | Fig 10 | `fig10_energy_vs_nrmse.pdf` | POD basis npz + MLP/VCNN npz + raw data + masks | `applications/figures/fig10_energy_vs_nrmse.py` | ⚠️ |
 | Fig 11 | `fig11_wavelet_sensitivity.pdf` | `wavelet_sensitivity.json` | `applications/figures/fig11_wavelet_sensitivity.py` | ⚠️ |
-| Fig S1(a,b) | `figS01_oracle_rdb.pdf`, `figS01_oracle_sst.pdf` | `truncation_reference_audit.json` | `applications/figures/appendix_figures.py` | ⚠️ |
-| Fig S2(a,b) | `figS02_ridge_phase.pdf`, `figS02_vcnn_phase.pdf` | `band_error_records.json` (ridge subset), `s26_pass_probability.json` | idem | ⚠️ |
-| Fig S3(a) | `figS03_noise_propagation.pdf` | legacy `noise_propagation.json` | idem | ⚠️❌ |
+| Fig S1(a,b) | `figS01_oracle_rdb.pdf`, `figS01_oracle_sst.pdf` | `truncation_reference_audit.json` | `applications/figures/figS01_oracle.py` | ⚠️ |
+| Fig S2(a,b) | `figS02_ridge_phase.pdf`, `figS02_vcnn_phase.pdf` | `band_error_records.json` (ridge subset), `s26_pass_probability.json` | `applications/figures/figS02_phase.py` | ⚠️ |
+| Fig S3(a) | `figS03_noise_propagation.pdf` | legacy `noise_propagation.json` | `applications/figures/figS03_diagnostics.py` | ⚠️❌ |
 | Fig S3(b) | `figS03_level_sensitivity.pdf` | legacy `level_sensitivity.json` | idem | ⚠️❌ |
 | Fig S3(c) | `figS03_coherent_only_sample.pdf` | VCNN npz (M=20, σ=0, first failing snapshot) | `applications/figures/figS03c_coherent_only.py` | ⚠️ |
-| Fig S4 | `figS04_three_layer.pdf` | `band_error_records.json` | `appendix_figures.py` | ⚠️ |
-| Fig S5 | `figS05_mode_scale_energy.pdf` | `mode_scale_energy.json` | idem | ✅ |
-| Fig S6 | `figS06_tau_sensitivity.pdf` | `threshold_sensitivity.json` | idem | ⚠️ |
-| Fig S7 | `figS07_sensor_family_ger.pdf` | `sensor_family/sensor_count_effect.csv` | idem | ⚠️ |
-| Fig S8 | `figS08_sensor_family_paired.pdf` | `paired_model_comparison.json` | idem | ⚠️ |
+| Fig S4 | `figS04_three_layer.pdf` | `band_error_records.json` | `applications/figures/figS04_three_layer.py` | ⚠️ |
+| Fig S5 | `figS05_mode_scale_energy.pdf` | `mode_scale_energy.json` | `applications/figures/figS05_mode_scale_energy.py` | ✅ |
+| Fig S6 | `figS06_tau_sensitivity.pdf` | `threshold_sensitivity.json` | `applications/figures/figS06_tau_sensitivity.py` | ⚠️ |
+| Fig S7 | `figS07_sensor_family_ger.pdf` | `sensor_family/sensor_count_effect.csv` | `applications/figures/figS07_sensor_family_ger.py` | ⚠️ |
+| Fig S8 | `figS08_sensor_family_paired.pdf` | `paired_model_comparison.json` | `applications/figures/figS08_sensor_family_paired.py` | ⚠️ |
 
 Note: the figure scripts live in `applications/figures/` and read only `artifacts/statistics/`.
 An earlier application layer (a separate main-paper tree, a supplementary tree and a

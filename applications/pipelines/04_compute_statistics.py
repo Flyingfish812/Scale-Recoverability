@@ -10,21 +10,22 @@ failed.
 Prerequisites
     trained runs under artifacts/ (see applications/pipelines/03_train_estimators.py)
     the POD bases under artifacts/pod_bases/
+             (see applications/pipelines/02_build_pod_bases.py)
 
 Pipeline
     previous  applications/pipelines/03_train_estimators.py
     this step writes artifacts/statistics/
-    next      applications/figures/make_all_figures.py
+    next      applications/pipelines/05_make_figures.py
 
 Outputs
     artifacts/statistics/*.json  (one file per producer, see the docstrings)
     artifacts/statistics/sensor_family/*.csv
 
 Usage
-    python applications/pipelines/05_compute_statistics.py
-    python applications/pipelines/05_compute_statistics.py --only band_error_decomposition
-    python applications/pipelines/05_compute_statistics.py --list
-    python applications/pipelines/05_compute_statistics.py --sequential
+    python applications/pipelines/04_compute_statistics.py
+    python applications/pipelines/04_compute_statistics.py --only band_error_decomposition
+    python applications/pipelines/04_compute_statistics.py --list
+    python applications/pipelines/04_compute_statistics.py --sequential
 """
 
 from __future__ import annotations

@@ -30,8 +30,15 @@ SCRIPTS = [
     "fig09_cross_model_bands.py",
     "fig10_energy_vs_nrmse.py",
     "fig11_wavelet_sensitivity.py",
+    "figS01_oracle.py",
+    "figS02_phase.py",
+    "figS03_diagnostics.py",
     "figS03c_coherent_only.py",
-    "appendix_figures.py",
+    "figS04_three_layer.py",
+    "figS05_mode_scale_energy.py",
+    "figS06_tau_sensitivity.py",
+    "figS07_sensor_family_ger.py",
+    "figS08_sensor_family_paired.py",
 ]
 
 

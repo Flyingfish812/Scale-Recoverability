@@ -13,9 +13,9 @@ Grid
     training seeds  0, 101, 202 (the least-squares map is deterministic)
 
 Pipeline
-    previous  scripts/download_data.sh (raw fields under data/)
+    previous  applications/pipelines/02_build_pod_bases.py
     this step trains the estimators into artifacts/
-    next      applications/pipelines/05_compute_statistics.py
+    next      applications/pipelines/04_compute_statistics.py
 
 Each run writes ``tests/<noise code>/test_raw.npz`` holding the target fields, the
 reconstructions, the test snapshot indices and the noise level. For a given
