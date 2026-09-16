@@ -33,7 +33,7 @@ SCRIPTS = [
     "figS01_oracle.py",
     "figS02_phase.py",
     "figS03_diagnostics.py",
-    "figS03c_coherent_only.py",
+    "figS03c_pod_dominant.py",
     "figS04_three_layer.py",
     "figS05_mode_scale_energy.py",
     "figS06_tau_sensitivity.py",

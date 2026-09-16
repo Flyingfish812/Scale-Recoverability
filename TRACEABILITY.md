@@ -373,3 +373,29 @@ template migration as the reviewer suggested.
 | 2 | 8,879 "samples" read as independent snapshots | 8,879 is a count of pooled evaluation records (21.1% of 42,000) | Sec. 6.2 and Appendix D.5 now say "pooled evaluation records (21.1% of the 42,000 records)" and "those records" |
 | 3 | `S_full` and mean `S_full` mixed | the regimes and the ridge `M = 50` counts are configuration means, while a single sample gives an integer | regime definitions and the ridge sentence now say mean `S_full` / mean `S_coh` |
 | 4 | Sec. 4.3 quoted `rho` without naming the coefficient | the artifact stores `spearman_rho` | the paragraph now states that all coefficients quoted there are Spearman rank correlations |
+
+### 6.7 Sixth external-review round + knock-on sweep (v5-9 → v5-10, 2026-09-16)
+
+Five content items from the reviewer plus a full end-to-end sweep that turned
+up four further inconsistencies created or left behind by earlier rounds.
+
+| # | Item | Fix |
+|---|---|---|
+| 1 | Sec. 4.3 still concluded "each index is specific to its own transform", which the updated 96 % contradicts | the paragraph now reports the asymmetric transfer (own-domain 100 %; `S_full` correct for 96 % of Fourier-annulus truncations, `SFFT` for only 20 % of wavelet-truncated cases) and defines accuracy as the fraction of the 500 field–truncation pairs whose index equals `k`. Appendix E, the Table S14 caption and the Fig. 5(b) caption were aligned, and the figure script now pools pairs instead of averaging per field (same numbers) |
+| 2 | `sample` still used for pooled counts in three places | Sec. 6.2 now reads "at the individual reconstruction-record level"; Table 3 column is `Low-GER records`; Table S11 says "unequal record counts". The paper-wide vocabulary is now: *snapshot* = one held-out field (300), *record* = one model–condition–seed–snapshot evaluation (42,000) |
+| 3 | Sec. 3.2 "provide every target field evaluated below" | scoped to "every NC reconstruction target" |
+| 4 | Sec. 6.1 carried a dangling "alternative normalization" | removed |
+| 5 | Sec. 6.2 "no configuration recovers more bands under the full-band reading" | reworded to "no configuration has mean `S_full` > mean `S_coh`", compatible with the snapshot-dependent ordering of Sec. 3.4 |
+
+Knock-on findings from the sweep:
+
+- **`S_full` means for the Fourier truncation moved** with the 100-field recomputation: `k = 2, 3` are 1.96, 2.86 → **1.97, 2.85** (value layer, macros and Table S14).
+- **Sec. 6.1 quoted an unsourced number** (`-0.9843`, "standardized coefficients"): no artifact contains it and the producer computes a single correlation. Replaced by the sourced statement (per-configuration value plus the across-configuration mean and SD).
+- **`robustness.amplitude_perturbation` had a wrong `source:`** — the referenced artifact contains no amplitude data and the paper never reports the experiment. The entry is retired and its three unused macros removed.
+- **The ridge and gappy W1 excesses were hard-coded** as "more than 0.10 / 0.14"; they are now the sourced values `\FRidgeExcessWOne` = 0.108 and `\FGappyExcessWOne` = 0.148.
+- **Residual "coherent" naming** in the POD-component figure (`figS03c_coherent_only.py`, `figS03_coherent_only_sample.pdf`, label `sfig:coherent_only`) renamed to `pod_dominant` throughout; the figure was regenerated and republished.
+
+Verification: paper gate `PASS=118 FAIL=0`, key-result audit `PASS=15 FAIL=0
+SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0 failures,
+traceability clean, 27 figures identical to the manuscript, tectonic 27 pages
+with no unresolved reference.

@@ -8,7 +8,7 @@ Purpose
     (b) decomposition-level sensitivity: the normalised scale count
         S_full/(L+1) and the per-band mean error of each level.
     The third panel of this appendix figure, the coherent-only sample, is drawn
-    by figS03c_coherent_only.py.
+    by figS03c_pod_dominant.py.
 Data source
     artifacts/statistics/noise_propagation.json
     artifacts/statistics/level_sensitivity.json

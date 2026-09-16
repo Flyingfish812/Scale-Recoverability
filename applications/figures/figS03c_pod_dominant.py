@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS03c_coherent_only.py — S-Fig 3(c) coherent-only POD component example
+figS03c_pod_dominant.py — S-Fig 3(c) POD-dominant POD component example
 (v3-3, 2026-08-31)
 
-Single VCNN sample (figS03_coherent_only_sample.pdf, M=20, σ=0, seed0):
+Single VCNN sample (figS03_pod_dominant_sample.pdf, M=20, σ=0, seed0):
   sample = the first test snapshot with S_full <= 3 in
   vcnn_n0020_seed000_custom/tests/s0000/test_raw.npz
   (sample_idx=1, S_full=3, first failed band W2).
   S_coh=5 was confirmed by recomputing with NC train-split band-POD bases
-  (channel 0 and the two-component bundle); a coherent-only example.
+  (channel 0 and the two-component bundle); a POD-dominant example.
   Row1: Target / VCNN output / Direct residual (S_full)
   Row2: failed band target / output / band error (evidence that S_coh > S_full)
-Output: figS03_coherent_only_sample.pdf under artifacts/figures.
+Output: figS03_pod_dominant_sample.pdf under artifacts/figures.
 """
 
 from __future__ import annotations
@@ -115,7 +115,7 @@ def main() -> int:
              fail_band, errs[BANDS.index(fail_band)]), cb=True)
 
     fig.tight_layout()
-    ps.save(fig, OUT_DIR, "figS03_coherent_only_sample")
+    ps.save(fig, OUT_DIR, "figS03_pod_dominant_sample")
     print(f"  [S3c] sample={sample_idx}, S_full={s_val}, fail_band={fail_band}, "
           f"errs={[round(e,3) for e in errs]}")
     return 0

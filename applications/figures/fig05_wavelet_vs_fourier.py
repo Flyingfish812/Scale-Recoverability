@@ -74,25 +74,27 @@ def main() -> int:
     fal = [r for r in sc["results"] if r["experiment"] == "fourier_annulus_limited"]
 
     def acc(results):
-        fields = sorted({r["field_idx"] for r in results
-                         if r["expected_recoverable"] is not None})
-        out = {}
-        for fid in fields:
-            sub = [r for r in results if r["field_idx"] == fid
-                   and r["expected_recoverable"] is not None]
-            out[fid] = (sum(1 for r in sub if r["S_full_correct"]) / len(sub) * 100,
-                        sum(1 for r in sub if r["S_FFT_correct"]) / len(sub) * 100,
-                        len(sub))
-        return out
+        """Accuracy = fraction of field-truncation pairs whose index equals k.
+
+        Metrics are pooled over all fields and truncation levels, matching the
+        definition in Sec. 4.3.
+        """
+        sub = [r for r in results if r["expected_recoverable"] is not None]
+        n = len(sub)
+        return {
+            "sfull": 100.0 * sum(1 for r in sub if r["S_full_correct"]) / n,
+            "sfft": 100.0 * sum(1 for r in sub if r["S_FFT_correct"]) / n,
+            "n": n,
+        }
 
     w = acc(wbl)
     f = acc(fal)
     ax = axes[1]
     # grouping: 2 bars per experiment (S_full / S_FFT)
-    wbl_sf = float(np.mean([w[k][0] for k in w]))
-    wbl_fft = float(np.mean([w[k][1] for k in w]))
-    fal_sf = float(np.mean([f[k][0] for k in f]))
-    fal_fft = float(np.mean([f[k][1] for k in f]))
+    wbl_sf = w["sfull"]
+    wbl_fft = w["sfft"]
+    fal_sf = f["sfull"]
+    fal_fft = f["sfft"]
     xpos = np.arange(2)
     width = 0.34
     ax.bar(xpos - width / 2, [wbl_sf, fal_sf], width,
@@ -116,10 +118,10 @@ def main() -> int:
               frameon=True, borderaxespad=0.2)
     ps.panel_label(ax, "b")
 
-    # panel (b): the two truncation experiments give the same accuracy
-    print(f"  [ctrl] wavelet-trunc. ({len(w)} fields): S_full={wbl_sf:.0f}% "
-          f"S_FFT={wbl_fft:.0f}%; fourier-trunc. ({len(f)} fields): "
-          f"S_full={fal_sf:.0f}% S_FFT={fal_fft:.0f}%")
+    # panel (b): own-domain detection is exact, cross-domain transfer is not
+    print(f"  [ctrl] wavelet-trunc. ({w['n']} pairs): S_full={wbl_sf:.1f}% "
+          f"S_FFT={wbl_fft:.1f}%; fourier-trunc. ({f['n']} pairs): "
+          f"S_full={fal_sf:.1f}% S_FFT={fal_fft:.1f}%")
     print(f"  [corr] {corr}")
 
     ps.save(fig, OUT_DIR, "fig05_wavelet_vs_fourier")
