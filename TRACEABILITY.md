@@ -163,6 +163,35 @@ Unified in this refactor:
   (a deprecated estimator); the records now use the closed-form Ridge used
   everywhere else in the paper.
 
+## 3.5 The proofreading loop
+
+A number is corrected in one place, `paper_facts.yaml`, and everything downstream
+follows from it. Measured on this machine (2026-09-16):
+
+| Step | Command | Time |
+|---|---|---|
+| macros | `python tools/generate_paper_numbers.py` | 2.0 s |
+| tables | `python tools/generate_paper_tables.py` | 2.0 s |
+| paper gate | `python tools/check_paper_consistency.py` | 3.9 s |
+| manuscript | `tectonic main.tex` | 9.7 s |
+| **whole loop** | `bash refresh.sh` in the manuscript repository | **18 s** |
+
+If a *statistic* has to be recomputed rather than re-read, one producer can be run
+on its own, without the twenty minutes of the full layer:
+
+| Step | Command | Time |
+|---|---|---|
+| one aggregate statistic | `python applications/pipelines/04_compute_statistics.py --only tau_pairwise_checks` | 1.9 s |
+| one statistic over the runs | `... --only boundary_sensitivity` | 11.8 s |
+| all statistics | `python applications/pipelines/04_compute_statistics.py --jobs 3 --workers 10` | ~20 min |
+| one figure | `python -m applications.figures.figS04_three_layer` | 3.5 s |
+| all figures | `python -m applications.figures.make_all_figures` | 33 s |
+
+Training is the only slow step and is never needed for a proofreading round: the
+trained runs and the POD bases stay on disk, and `02_build_pod_bases.py --check`
+plus `03_train_estimators.py --check` confirm they are the ones the statistics
+layer expects.
+
 ## 4. Figures
 
 All 26 figures are drawn by `applications/figures/` (one script per figure or

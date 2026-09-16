@@ -19,7 +19,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATED = ROOT / "artifacts" / "figures"
-MANUSCRIPT = ROOT / "thesis_work" / "thesis_src_planB" / "figures"
+MANUSCRIPT = ROOT / "thesis_work" / "manuscript_src" / "figures"
 
 
 def render(pdf: Path, directory: Path, dpi: int = 100) -> np.ndarray | None:

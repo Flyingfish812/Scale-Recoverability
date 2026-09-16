@@ -24,7 +24,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "artifacts" / "figures"
-DEFAULT_DESTINATION = ROOT / "thesis_work" / "thesis_src_planB" / "figures"
+DEFAULT_DESTINATION = ROOT / "thesis_work" / "manuscript_src" / "figures"
 
 
 def digest(path: Path) -> str:
