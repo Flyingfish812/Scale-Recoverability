@@ -347,3 +347,17 @@ freezing the numbers, four for completeness.  Findings and actions:
 Verification after the round: paper gate `PASS=118 FAIL=0`, key-result audit
 `PASS=15 FAIL=0 SKIP=0`, `pytest tests/unit` 63 passed, repository hygiene 0
 failures, traceability clean, tectonic 26 pages with no unresolved reference.
+
+### 6.5 Fourth external-review round (v5-7 → v5-8, 2026-09-16)
+
+Seven groups, all closed; only one touches a number.
+
+| # | Reported issue | Finding | Fix |
+|---|---|---|---|
+| 1 | Abstract describes the global-band relation without the square | the identity is `GER_u^2 = sum_b omega_b E_direct(b)^2`; the Introduction already stated it correctly | Abstract now reads "the squared GER is an energy-weighted combination of the squared errors at individual scales" |
+| 2 | Sec. 3.3 opens with "Global error (GER) is ..." right after the scalar/two-component split | the sentence defined the scalar quantity under the generic name | now "For the scalar field, we define the corresponding relative `l_2` error as", followed by the `GER_u` equation |
+| 3 | Statistical populations in Sec. 7.2 / Appendix D.2 | the 42,000 records span all learned-model seeds, whereas the CI-width summary uses one representative seed per learned model plus deterministic Ridge (60 configurations) | both places now state their population explicitly, a new macro gives the 60 configurations, and the "inference uses" typo is fixed; Sec. 3.2 also distinguishes pooled / representative-seed / cross-seed results |
+| 4 | Fig. 5 population and the 20%/80% cross-domain accuracy undefined | the correlations belong to the same 300-snapshot VCNN case; cross-domain accuracy averages 10 fields over the 5 truncation levels `k=1..5` (50 cases, untruncated case excluded) | text now says "For the same 300-snapshot VCNN case" and defines the cross-domain metric with its denominator (new `cross_transform_accuracy` entry in the value layer) |
+| 5 | Table 4 regime boundaries were descriptive ("about 1-3") | the table contains 3.36 and 3.41, so the interval must be half-open | regimes are now high `S_full >= 4`, intermediate `1 <= S_full < 4`, low `S_full < 1`, in the caption and in Sec. 5.1 |
+| 6 | `[18,45]` cited as the source for "reference-free scale assessment" | one entry is an online basis-updating criterion, the other a data-assimilation package; neither is a reference-free diagnostic | citations removed from that sentence (the remaining bibliography entries are unaffected) |
+| 7 | `Secs. 4- 6` spacing; Table S21 float placement | the en dash was split across a source line | source joined; float placement intentionally left to the JFM template migration |
