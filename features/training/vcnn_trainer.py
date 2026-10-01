@@ -220,6 +220,7 @@ def train_vcnn(
     checkpoint_config: CheckpointConfig | None = None,
     sweep_meta: dict[str, Any] | None = None,
     dataset_builder: Callable[..., Dataset] | None = None,
+    split_indices: dict[str, np.ndarray] | None = None,
     artifact_saver: Callable[[dict[str, Any]], None] | None = None,
 ) -> tuple[nn.Module, dict[str, Any], dict[str, Any]]:
     set_global_seed(train_config.seed)
@@ -259,11 +260,21 @@ def train_vcnn(
             "Please reduce val_ratio/test_ratio."
         )
 
-    generator = None if train_config.seed is None else torch.Generator().manual_seed(int(train_config.seed))
-    train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test], generator=generator)
-    train_indices = np.asarray(getattr(train_ds, "indices", np.arange(n_train)), dtype=np.int64)
-    val_indices = np.asarray(getattr(val_ds, "indices", np.arange(n_val)), dtype=np.int64)
-    test_indices = np.asarray(getattr(test_ds, "indices", np.arange(n_test)), dtype=np.int64)
+    if split_indices is None:
+        generator = None if train_config.seed is None else torch.Generator().manual_seed(int(train_config.seed))
+        train_ds, val_ds, test_ds = random_split(dataset, [n_train, n_val, n_test], generator=generator)
+        train_indices = np.asarray(getattr(train_ds, "indices", np.arange(n_train)), dtype=np.int64)
+        val_indices = np.asarray(getattr(val_ds, "indices", np.arange(n_val)), dtype=np.int64)
+        test_indices = np.asarray(getattr(test_ds, "indices", np.arange(n_test)), dtype=np.int64)
+    else:
+        # Explicit split override (blocked/contiguous holdout sensitivity):
+        # dataset positions are snapshot indices, as for the POD-coefficient models.
+        train_indices = np.asarray(sorted(int(i) for i in split_indices["train"]), dtype=np.int64)
+        val_indices = np.asarray(sorted(int(i) for i in split_indices["val"]), dtype=np.int64)
+        test_indices = np.asarray(sorted(int(i) for i in split_indices["test"]), dtype=np.int64)
+        train_ds = torch.utils.data.Subset(dataset, train_indices.tolist())
+        val_ds = torch.utils.data.Subset(dataset, val_indices.tolist())
+        test_ds = torch.utils.data.Subset(dataset, test_indices.tolist())
 
     loader_generator = None if train_config.seed is None else torch.Generator().manual_seed(int(train_config.seed))
     train_loader = DataLoader(

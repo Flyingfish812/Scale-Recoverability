@@ -36,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from features.training.estimator_runs import load_run
 from luna.benchmarks.analytical_wake import (
     WakeParams, snapshot, scale_u_components, controlled_reconstructions,
     case_metrics,
@@ -76,9 +77,13 @@ def audit_real_nc(wavelet: str, level: int, mode: str, tau: float) -> dict:
 
     out: dict[str, dict] = {}
     for model, path in NC_PATHS.items():
-        d = np.load(path)
-        u = d["target_nchw"][:, 0, :, :].astype(np.float64)   # (300, H, W)
-        uh = d["output_nchw"][:, 0, :, :].astype(np.float64)
+        # Both fields come from load_run, which returns physical units for every
+        # estimator; the convolutional runs store normalised fields, and reading
+        # them raw would put this model on a different scale from the two
+        # POD-coefficient estimators in the same table.
+        target, recon = load_run(path)
+        u = target[:, 0, :, :].astype(np.float64)    # (300, H, W)
+        uh = recon[:, 0, :, :].astype(np.float64)
         n = u.shape[0]
         gers, sfs, scohs = [], [], []
         errs = {b: [] for b in BANDS_CF}

@@ -109,15 +109,9 @@ paper-writing-skill/
 /tools_active/
 /pipelines/
 
-# 仅 paper_main 作为公开复现入口; 其余 application 层不随源码链接发布
-applications/paper_expand/
-applications/paper_supplementary/
-
-# 论文发布 / 内部比对辅助 (不随源码链接发布)
-applications/paper_main/figures/publish_figures.py
-applications/paper_main/figures/build_figure_03.py
-applications/paper_main/manifests/
-applications/paper_main/README.md
+# application 层整体随源码链接发布: applications/pipelines (01--05 复现入口),
+# applications/statistics (每个统计产物的生产者) 与 applications/figures (绘图脚本)。
+# 生成物仍按扩展名兜底忽略 (见本文件上半部分)。
 
 # 其他大型二进制兜底
 *.nc

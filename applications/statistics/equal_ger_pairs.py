@@ -36,6 +36,7 @@ from features.statistics.paired_matching import (  # noqa: E402
     compute_paired_stats,
     find_internal_pairs,
 )
+from features.training.estimator_runs import load_run  # noqa: E402
 
 OUT_DIR = ROOT / "artifacts" / "statistics"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -107,9 +108,10 @@ def main() -> None:
                         skipped += 1
                         print(f"  [skip] missing: {npz_path}")
                         continue
-                    data = dict(np.load(str(npz_path)))
-                    out = data["output_nchw"]
-                    tgt = data["target_nchw"]
+                    # ``load_run`` restores the physical field for VCNN, whose
+                    # stored arrays are normalised; the raw arrays would put the
+                    # band errors and GER of that estimator in a different space.
+                    tgt, out = load_run(npz_path)
                     B = out.shape[0]
                     key = f"{model}_M{mask}_σ{sigma}_seed{seed}"
                     ger_list, sfull_list, metrics_list = [], [], []

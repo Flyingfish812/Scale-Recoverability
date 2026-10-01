@@ -49,10 +49,14 @@ def main() -> int:
     ridge = records.config_summary("ridge", 20, 0.0)
     ridge_ger, ridge_sf = ridge["GER_mean"], ridge["S_full_mean"]
 
-    s23 = load_json("gappy_pod_baseline.json")
-    gappy_ger = next((r["test_ger_mean"] for r in s23["results"]
-                      if r["mask_num"] == 20 and r["sigma"] == 0.0), 0.0333)
-    gappy_sf = 0.53  # fixed value from paper_facts (original method S_full)
+    # Gappy POD is read from the canonical per-snapshot records, the same source
+    # as the model-comparison table, so that the chain figure cannot drift from
+    # the table it reproduces.
+    gappy_recs = load_json("band_error_records.json")["records"]
+    gappy_sel = [r for r in gappy_recs if r["model"] == "gappy"
+                 and r["sensor_count"] == 20 and float(r["noise_sigma"]) == 0.0]
+    gappy_ger = float(np.mean([r["global_error"] for r in gappy_sel]))
+    gappy_sf = float(np.mean([r["s_full"] for r in gappy_sel]))
 
     oracle_ger = records.truncation_global_error()
     oracle_sf = records.truncation_scale_count()

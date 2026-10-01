@@ -30,8 +30,10 @@ Reconstruction methods evaluated in the paper:
   to rank-`r` POD coefficients;
 - **VCNN** — a convolutional network operating directly on the sparse
   observation grid;
-- **Gappy POD** — POD with gappy data reconstruction (rank capped by the
-  number of sensor locations);
+- **Gappy POD** — POD with gappy data reconstruction (rank selected on
+  validation data and capped by the number of scalar observations, i.e. twice
+  the number of sensor locations; the location cap is retained as a
+  sensitivity);
 - **rank-`r` POD truncation** — reference baselines.
 
 ## Repository layout
@@ -117,6 +119,10 @@ gappy rank behaviour):
 ```bash
 make test            # pytest tests/unit
 ```
+
+`make test` needs no data: the tests that exercise the five sampled sensor-mask
+families skip when those masks have not been generated locally (they are large
+sampling patterns and are not shipped with the code).
 
 ## Reproducing the paper
 

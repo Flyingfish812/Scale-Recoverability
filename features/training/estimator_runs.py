@@ -78,6 +78,13 @@ def run_path(model: str, sensor_count: int, sigma: float, seed: int) -> Path | N
                 ESTIMATOR_ROOTS["vcnn"] / f"vcnn_sweep_nc_2000_seed{seed:03d}"
                 / f"vcnn_n{sensor_count:04d}_seed000_custom" / "tests" / code / "test_raw.npz"
             )
+    elif model == "gappy":
+        # Gappy POD is deterministic: the validation-selected rank replaces the
+        # training seed, so every configuration is stored under seed000.
+        path = (
+            GAPPY_ROOT / f"gappy_n{sensor_count:04d}" / "seed000"
+            / "tests" / code / "test_raw.npz"
+        )
     else:
         raise ValueError(f"unknown estimator: {model!r}")
     return path if path.exists() else None

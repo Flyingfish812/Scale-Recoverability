@@ -175,10 +175,16 @@ def run_benchmark(n_train: int = N_TRAIN_POD, n_test: int = N_TEST,
 
 
 def consolidate(benchmark: dict, sensitivity: dict) -> dict:
-    """Reduce the raw results to the numbers the paper quotes."""
+    """Reduce the raw results to the numbers the paper quotes.
+
+    ``sensitivity`` is the transform-sensitivity block of the paper's runs
+    (``applications/statistics/wavelet_sensitivity.py``). It is merged in when
+    available; a checkout without trained runs passes ``None`` and the block is
+    omitted, so the benchmark itself needs no data.
+    """
     statistics = benchmark["ensemble_stats"]
     representative = benchmark["representative_seed0"]
-    return {
+    result = {
         "meta": {
             "grid": benchmark.get("grid"),
             "wavelet": benchmark.get("wavelet"),
@@ -217,7 +223,11 @@ def consolidate(benchmark: dict, sensitivity: dict) -> dict:
         },
         "target_band_energy_fractions": benchmark.get("target_band_energy_fractions"),
         "nc_band_energy_fractions": NC_BAND_ENERGY_FRACTIONS,
-        "wavelet_sensitivity": {
+    }
+    if sensitivity is not None:
+        # Appended last, so the key order of the artifact is unchanged when the
+        # block is present.
+        result["wavelet_sensitivity"] = {
             "representative_case": sensitivity.get("representative_case"),
             "real_nc": {
                 wavelet: {
@@ -240,8 +250,23 @@ def consolidate(benchmark: dict, sensitivity: dict) -> dict:
                           for case in CASES}
                 for wavelet in WAVELETS
             },
-        },
-    }
+        }
+    return result
+
+
+def load_sensitivity() -> dict | None:
+    """Transform-sensitivity block of the paper's runs, or ``None`` if absent.
+
+    The block is produced by ``applications/statistics/wavelet_sensitivity.py``
+    from trained runs, so it cannot be regenerated here; the analytical
+    benchmark constructs its own fields and runs without it.
+    """
+    path = SOURCE / "wavelet_sensitivity.json"
+    if not path.exists():
+        print(f"   note: {path.name} absent; the transform-sensitivity block is "
+              "omitted from this build")
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def main() -> int:
@@ -254,7 +279,7 @@ def main() -> int:
     print("== analytical multiscale benchmark")
     print(f"   constructing {N_TEST} snapshots and the band-POD basis ...")
     benchmark = run_benchmark()
-    sensitivity = json.loads((SOURCE / "wavelet_sensitivity.json").read_text(encoding="utf-8"))
+    sensitivity = load_sensitivity()
     result = consolidate(benchmark, sensitivity)
 
     if args.verify:
@@ -269,7 +294,7 @@ def main() -> int:
               f"measured {values['S_full_mean']:.2f} "
               f"(correct in {100 * values['S_full_correct_frac']:.0f}% of fields), "
               f"GER {values['GER_mean']:.4f}")
-    for wavelet, entry in result["wavelet_sensitivity"]["benchmark_detection"].items():
+    for wavelet, entry in result.get("wavelet_sensitivity", {}).get("benchmark_detection", {}).items():
         worst = min(entry.values())
         print(f"   detection with {wavelet:6s}: worst case {100 * worst:.0f}%")
     return 0

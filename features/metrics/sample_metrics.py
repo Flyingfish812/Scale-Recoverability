@@ -14,6 +14,8 @@ from __future__ import annotations
 import numpy as np
 import pywt
 
+from luna.wavelet.metrics import contiguous_recoverable_index
+
 BANDS = ["A4", "W4", "W3", "W2", "W1"]
 WAVELET = "db2"
 LEVEL = 4
@@ -49,7 +51,18 @@ def gradient_rmse(target: np.ndarray, pred: np.ndarray) -> float:
 
 
 def band_errors(target_2d: np.ndarray, pred_2d: np.ndarray, tau: float = 0.05) -> dict:
-    """Per-band relative errors and the number of bands below ``tau``."""
+    """Per-band relative errors, ``S_full`` and the band count below ``tau``.
+
+    ``S_full`` is the quantity defined by the paper: the number of consecutive
+    bands, counted from the coarsest, whose own relative error is at or below
+    ``tau`` (the count stops at the first failed band). It is computed by the
+    authoritative implementation in :mod:`luna.wavelet.metrics`.
+
+    ``n_bands_below_tau`` is a *different* diagnostic: the total number of
+    bands below ``tau``, regardless of order. A reconstruction that fails W3
+    but passes W2 and W1 has a larger ``n_bands_below_tau`` than ``S_full``, so
+    the two must not be reported under the same name.
+    """
     coeffs_pred = pywt.wavedec2(pred_2d, WAVELET, level=LEVEL, mode="periodization")
     coeffs_target = pywt.wavedec2(target_2d, WAVELET, level=LEVEL, mode="periodization")
 
@@ -68,7 +81,12 @@ def band_errors(target_2d: np.ndarray, pred_2d: np.ndarray, tau: float = 0.05) -
         errs[BANDS[j + 1]] = e
         n_below += int(e < tau)
 
-    return {"band_errors": errs, "n_bands_below_tau": n_below}
+    s_full = int(
+        contiguous_recoverable_index(
+            np.array([errs[b] for b in BANDS], dtype=np.float64), tau
+        )
+    )
+    return {"band_errors": errs, "S_full": s_full, "n_bands_below_tau": n_below}
 
 
 def compute_sample_metrics(
@@ -92,12 +110,12 @@ def compute_sample_metrics(
 
     band = band_errors(tgt_2d, out_2d, tau=tau)
     errs = band["band_errors"]
-
     vort_rmse = float(np.sqrt(np.mean((laplacian(tgt_2d) - laplacian(out_2d)) ** 2)))
 
     return {
         "GER": ger,
-        "S_full": band["n_bands_below_tau"],
+        "S_full": band["S_full"],
+        "n_bands_below_tau": band["n_bands_below_tau"],
         "E_W1": errs.get("W1", float("nan")),
         "E_W2": errs.get("W2", float("nan")),
         "E_W3": errs.get("W3", float("nan")),

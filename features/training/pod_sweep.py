@@ -36,6 +36,11 @@ from luna.models.pod_mlp import build_pod_mlp_model
 
 EPS = 1e-12
 
+#: Candidate retained ranks of the Gappy POD validation search: multiples of
+#: four up to the largest rank the scalar-observation cap can admit at the
+#: largest sensor count. Ranks above the cap are dropped per sensor count.
+GAPPY_CANDIDATE_RANKS = (4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128)
+
 # Authoritative test split (300-sample snapshot of MLP seed0); reused by Ridge/Gappy
 MLP_SEED0_TEST_NPZ = (
     Path(__file__).resolve().parents[2]
@@ -331,9 +336,15 @@ def run_mlp_case(
     device: str = "cpu",
     skip_if_exists: bool = True,
     expected_test: Optional[int] = None,
+    test_indices: Optional[np.ndarray] = None,
+    val_indices: Optional[np.ndarray] = None,
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """Train MLP for (family, M, seed) and save test_raw.npz per noise level."""
+    """Train MLP for (family, M, seed) and save test_raw.npz per noise level.
+
+    test_indices/val_indices override the default seed0 random split; used by
+    the blocked-holdout sensitivity (contiguous blocks instead of a random
+    snapshot split)."""
     fields = np.load(str(data_path), mmap_mode="r").astype(np.float32, copy=False)
     T, H, W, C = fields.shape
     basis, coeff, mean_field = _load_pod_bundle(pod_bundle_path, n_modes)
@@ -345,7 +356,17 @@ def run_mlp_case(
     out = {"family": family, "model": "mlp", "M": M, "training_seed": int(training_seed),
            "case_dir": str(case_dir), "npz_paths": {}}
 
-    split = split_indices(T, training_seed)
+    if test_indices is not None or val_indices is not None:
+        split = _resolve_split(test_indices, T)
+        if val_indices is not None:
+            excluded = set(int(i) for i in split["test"]) | set(int(i) for i in val_indices)
+            split = {
+                "train": np.asarray([i for i in range(T) if i not in excluded], dtype=np.int64),
+                "val": np.asarray(sorted(int(i) for i in val_indices), dtype=np.int64),
+                "test": split["test"],
+            }
+    else:
+        split = split_indices(T, training_seed)
     test_idx = np.sort(split["test"])  # sorted order = reference protocol
     if expected_test is not None and len(test_idx) != expected_test:
         print(f"  [warn] test split = {len(test_idx)} (expected {expected_test})")
@@ -560,15 +581,22 @@ def run_gappy_case(
     out_root: Path,
     test_sigmas: Sequence[float] = (0.0, 0.001, 0.01, 0.1),
     n_modes: int = 128,
-    candidate_ranks: Sequence[int] = (4, 8, 12, 16, 20, 24, 32),
+    candidate_ranks: Sequence[int] = GAPPY_CANDIDATE_RANKS,
+    rank_cap: str = "scalars",
+    rank_select_noise: str = "clean",
     phys_mean: Optional[np.ndarray] = None,
     phys_std: Optional[np.ndarray] = None,
     test_indices: Optional[np.ndarray] = None,
     noise_domain: str = "normalized",
     verbose: bool = True,
 ) -> dict[str, Any]:
-    """Gappy POD (deterministic) — replicates compute_s23_gappy: rank<=M chosen
-    on validation set; uses seed0 split.
+    """Gappy POD (deterministic), on the seed0 split.
+
+    The rank is chosen on noise-free validation data from a fixed candidate grid
+    and clamped by ``rank_cap``: ``"scalars"`` (default, the convention of the
+    paper: r <= m_obs = 2M, the number of independent scalar observations) or
+    ``"locations"`` (r <= M, the earlier convention, kept for the cap
+    sensitivity).
 
     paper-expand: phys_mean/phys_std override the physical-domain noise parameters (NC
     default), test_indices overrides the test set (NC default: the 300 samples of MLP
@@ -607,21 +635,27 @@ def run_gappy_case(
             coeffs[i] = pseudo @ y
         return coeffs
 
+    def _select_rank(obs_val: np.ndarray, target_f: np.ndarray) -> tuple[int, float]:
+        best_r, best_e = ranks[0], float("inf")
+        tgt_flat = target_f.reshape(len(target_f), -1)
+        tgt_norm = np.linalg.norm(tgt_flat, axis=1) + EPS
+        for r in ranks:
+            coeffs = gappy_predict(obs_val, r)
+            recon = mean_field.ravel()[None, :] + coeffs @ basis_4d[:r].reshape(r, -1)
+            err = float(np.mean(np.linalg.norm(recon - tgt_flat, axis=1) / tgt_norm))
+            if err < best_e:
+                best_e, best_r = err, r
+        return best_r, best_e
+
     # select rank on validation
     train_c = full_coeffs[train_idx]
     val_f = fields[val_idx]
-    ranks = [r for r in candidate_ranks if r <= n_obs and r <= n_modes]
-    best_rank, best_err = ranks[0], float("inf")
-    val_obs = obs_matrix(val_f)
-    for r in ranks:
-        coeffs = gappy_predict(val_obs, r)
-        recon = mean_field.ravel()[None, :] + coeffs @ basis_4d[:r].reshape(r, -1)
-        err = float(np.mean(np.linalg.norm(recon - val_f.reshape(len(val_idx), -1), axis=1) /
-                            (np.linalg.norm(val_f.reshape(len(val_idx), -1), axis=1) + EPS)))
-        if err < best_err:
-            best_err, best_rank = err, r
+    ranks = [r for r in candidate_ranks
+             if r <= (n_obs * C if rank_cap == "scalars" else n_obs) and r <= n_modes]
+    best_rank, best_err = _select_rank(obs_matrix(val_f), val_f)
     if verbose:
-        print(f"  [Gappy] {family} M={M} rank={best_rank} (val err={best_err:.5f})")
+        print(f"  [Gappy] {family} M={M} rank={best_rank} (val err={best_err:.5f}, "
+              f"clean validation, rank_select_noise={rank_select_noise})")
 
     mask_tag = f"n{M:04d}"
     case_dir = out_root / f"gappy_{mask_tag}" / "seed000"
@@ -651,11 +685,29 @@ def run_gappy_case(
             phys = test_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
             noise = np.random.RandomState(42).randn(*phys.shape).astype(np.float64) * sigma
             te_f = (phys + noise - mean_v[None, None, None, :]) / std_v[None, None, None, :]
-        coeffs = gappy_predict(obs_matrix(te_f), best_rank)
-        recon = mean_field.ravel()[None, :] + coeffs @ basis_4d[:best_rank].reshape(best_rank, -1)
+        rank_use = best_rank
+        if rank_select_noise == "match":
+            if sigma == 0.0:
+                va_f = val_f
+            elif noise_domain == "physical":
+                va_f = val_f + np.random.RandomState(42).randn(*val_f.shape) * sigma
+            else:
+                mean_v = np.asarray([1.0004944, -0.00017817653] if phys_mean is None else phys_mean,
+                                    dtype=np.float64).reshape(-1)
+                std_v = np.asarray([0.21863055, 0.19121747] if phys_std is None else phys_std,
+                                   dtype=np.float64).reshape(-1)
+                va_phys = val_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
+                va_phys = va_phys + np.random.RandomState(42).randn(*va_phys.shape) * sigma
+                va_f = (va_phys - mean_v[None, None, None, :]) / std_v[None, None, None, :]
+            rank_use, val_err = _select_rank(obs_matrix(va_f), va_f)
+            if verbose:
+                print(f"  [Gappy] {family} M={M} σ={sigma}: rank={rank_use} "
+                      f"(val err={val_err:.5f}, noisy validation)")
+        coeffs = gappy_predict(obs_matrix(te_f), rank_use)
+        recon = mean_field.ravel()[None, :] + coeffs @ basis_4d[:rank_use].reshape(rank_use, -1)
         pred_nchw = recon.reshape(len(test_idx), H, W, C).transpose(0, 3, 1, 2).astype(np.float32)
         save_test_raw(pred_nchw, tgt_nchw, test_idx, float(sigma), test_dir,
-                      mask_meta={"mode": "csv", "mask_family": family, "mask_num": M, "rank": best_rank},
+                      mask_meta={"mode": "csv", "mask_family": family, "mask_num": M, "rank": rank_use},
                       train_info={"best_epoch": 0, "best_val_loss": best_err},
                       model_type="gappy", family=family)
         out["npz_paths"][float(sigma)] = str(npz_path)

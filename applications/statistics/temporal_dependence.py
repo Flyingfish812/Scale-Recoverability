@@ -99,9 +99,12 @@ def main() -> int:
     path = run_path(*PRIMARY)
     if path is None:
         raise SystemExit(f"missing run for the primary configuration {PRIMARY}")
-    _, reconstruction = load_run(path)
+    # Both fields come from load_run so that the estimator's stored unit
+    # convention (normalised for the convolutional model) is undone in one
+    # place; reading `target_nchw` directly would mismatch the reconstruction
+    # for any configuration that stores normalised fields.
+    target, reconstruction = load_run(path)
     data = np.load(path, allow_pickle=True)
-    target = np.asarray(data["target_nchw"], dtype=np.float64)
     test_indices = np.asarray(sorted(set(data["test_indices"].tolist())), dtype=np.int64)
     gaps = np.diff(test_indices)
     gap_stats = {

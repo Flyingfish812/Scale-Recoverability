@@ -5,6 +5,15 @@ import pytest
 
 from features.sensors import mask_registry as mr
 
+#: The five independent mask families are generated locally (they are large
+#: sampling patterns, not shipped with the code), so the tests that need them
+#: skip when the directory is absent.
+MASKS = mr.DEFAULT_FAMILIES_ROOT
+pytestmark = pytest.mark.skipif(
+    not MASKS.exists(),
+    reason=f"mask families are not present under {MASKS}; generate them first",
+)
+
 
 def test_five_families():
     assert mr.list_families() == [f"family_{i:02d}" for i in range(1, 6)]

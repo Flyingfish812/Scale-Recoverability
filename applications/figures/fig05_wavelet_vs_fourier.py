@@ -5,8 +5,8 @@ fig05_wavelet_vs_fourier.py — Fig. 5 scale diagnostics vs Fourier (v3-3, 2026-
 
 Two panels:
   (a) S_full (wavelet) vs S_FFT (Fourier dyadic) scatter + count labels
-  (b) controlled transform-domain test cases: detection accuracy for wavelet- vs
-      transform-domain test cases (S_full / S_FFT accuracy)
+  (b) controlled transform-domain test cases: agreement between the
+      prescribed count and each index (S_full / S_FFT agreement)
 Data sources (verified):
   - artifacts/statistics/fourier_band_baseline.{csv,json}
   - artifacts/statistics/transform_symmetry_check.json
@@ -68,7 +68,7 @@ def main() -> int:
     ax.set_xlim(-0.5, 5.5); ax.set_ylim(-0.5, 5.5)
     ps.panel_label(ax, "a")
 
-    # ── (b) controlled truncation accuracy ───────────────────────
+    # ── (b) controlled truncation agreement ───────────────────────
     sc = json.loads((DATA / "transform_symmetry_check.json").read_text())
     wbl = [r for r in sc["results"] if r["experiment"] == "wavelet_band_limited"]
     fal = [r for r in sc["results"] if r["experiment"] == "fourier_annulus_limited"]
@@ -112,7 +112,7 @@ def main() -> int:
     # reconstructions": the counted cases include the untruncated k=5 level.
     ax.set_xticklabels(["Wavelet-domain\ntest cases",
                         "Fourier-annulus-domain\ntest cases"], fontsize=7.5)
-    ax.set_ylabel("accuracy (%)")
+    ax.set_ylabel("agreement (%)")
     ax.set_ylim(0, 118)
     ax.set_xlim(-0.6, 1.6)
     # legend inside the axes, lower right (white background, clear of labels)

@@ -48,6 +48,8 @@ import time
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
+import numpy as np
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -113,6 +115,76 @@ def _redirect(path: Path) -> Path:
     if _SCRATCH is None:
         return path
     return _SCRATCH / path.relative_to(ROOT / "artifacts")
+
+
+#: Contiguous-holdout audit: is the random 70/10/20 split letting temporally
+#: adjacent snapshots sit on both sides of the train/test boundary? One shedding
+#: period is about 63 snapshots (supplement), so that is the guard gap; the
+#: validation and inner test blocks keep the sizes of the random split.
+BLOCKED_GUARD = 63
+BLOCKED_N_TEST = 300
+BLOCKED_N_VAL = 120
+BLOCKED_PLACEMENTS = {
+    0: {"val": (500, 500 + BLOCKED_N_VAL), "test": (683, 683 + BLOCKED_N_TEST)},
+    1: {"val": (900, 900 + BLOCKED_N_VAL), "test": (1083, 1083 + BLOCKED_N_TEST)},
+    2: {"val": (200, 200 + BLOCKED_N_VAL), "test": (383, 383 + BLOCKED_N_TEST)},
+}
+
+
+def blocked_split(placement: int, n_total: int) -> dict[str, np.ndarray]:
+    """Contiguous train | val | test blocks with a guard gap around the test block.
+
+    ``test`` carries the guard rows (tests kept the same size as the random
+    split), so the saved predictions can be evaluated on the narrower inner
+    block later; ``test_inner`` is that block. Every guard row is excluded from
+    training, which is the whole point of the audit.
+    """
+    spec = BLOCKED_PLACEMENTS[placement]
+    guard = int(BLOCKED_GUARD)
+    val = np.arange(spec["val"][0], spec["val"][1], dtype=np.int64)
+    inner = np.arange(spec["test"][0], spec["test"][1], dtype=np.int64)
+    test = np.sort(np.concatenate([
+        inner,
+        np.arange(inner[0] - guard, inner[0], dtype=np.int64),
+        np.arange(inner[-1] + 1, inner[-1] + 1 + guard, dtype=np.int64),
+    ]))
+    excluded = set(test.tolist()) | set(val.tolist())
+    train = np.asarray([i for i in range(n_total) if i not in excluded], dtype=np.int64)
+    return {"train": train, "val": val, "test": test, "test_inner": inner}
+
+
+def build_blocked_bundle(split: dict[str, np.ndarray], out_path: Path,
+                         rank: int = 128) -> Path:
+    """POD bundle of the blocked *training* set, built with the paper's routine.
+
+    Uses ``luna.pod.decomposition.compute_pod``, i.e. the same decomposition as
+    ``applications/pipelines/02_build_pod_bases.py``, on the blocked training
+    snapshots only, so the basis cannot see the held-out block. The coefficient
+    array covers every snapshot, because the estimators read the coefficients of
+    the validation/test rows from the bundle.
+    """
+    from luna.pod.decomposition import compute_pod
+
+    raw = np.asarray(np.load(DATA_ARRAY, mmap_mode="r"), dtype=np.float64)
+    n_total, sample_shape = int(raw.shape[0]), raw.shape[1:]
+    flat = raw.reshape(n_total, -1)
+    train_flat = flat[split["train"]]
+    pod = compute_pod(train_flat, rank=rank)
+    basis = np.asarray(pod["basis"])
+    mean = np.asarray(pod["mean"])
+    arrays = {
+        "mean_field": mean.reshape(sample_shape),
+        "pod_basis": basis.reshape((int(basis.shape[0]),) + tuple(sample_shape)),
+        "coefficients": ((flat - mean[None, :]) @ basis.T).astype(np.float32),
+    }
+    for key in ("singular_values", "energy_ratio", "cumulative_energy"):
+        if key in pod:
+            arrays[key] = np.asarray(pod[key])
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez(str(out_path), **arrays)
+    print(f"   [blocked] POD bundle of {len(split['train'])} training snapshots "
+          f"-> {out_path}")
+    return out_path
 
 
 def mask_path(family: str, sensors: int) -> Path:
@@ -191,15 +263,31 @@ def expected_runs(models: list[str], family: str, sensor_counts: list[int],
 
 
 def train_pod_case(model: str, family: str, sensors: int, seed: int,
-                   sigmas: tuple[float, ...], device: str, smoke: bool) -> dict:
+                   sigmas: tuple[float, ...], device: str, smoke: bool,
+                   split: dict[str, np.ndarray] | None = None,
+                   pod_bundle: Path | None = None,
+                   gappy_rank_cap: str = "scalars",
+                   gappy_candidates: tuple[int, ...] | None = None) -> dict:
     """Train one POD-coefficient estimator on one sensor count and evaluate it."""
     from features.training import pod_sweep
 
     settings = {
         "family": family, "M": sensors, "data_path": DATA_ARRAY,
-        "pod_bundle_path": POD_BUNDLE, "mask_hw": load_nc_mask_bool(family, sensors),
+        "pod_bundle_path": pod_bundle or POD_BUNDLE,
+        "mask_hw": load_nc_mask_bool(family, sensors),
         "out_root": output_root(model, family), "test_sigmas": sigmas, "verbose": False,
     }
+    if model == "gappy":
+        # The rank cap of the paper is the number of scalar observations (2M);
+        # "locations" (M) reproduces the earlier sweep for the cap sensitivity.
+        settings["rank_cap"] = gappy_rank_cap
+        if gappy_candidates:
+            settings["candidate_ranks"] = gappy_candidates
+    if split is not None:
+        # Explicit contiguous blocks instead of the default seed-0 random split.
+        settings["test_indices"] = split["test"]
+        if model == "mlp":
+            settings["val_indices"] = split["val"]
     if model == "mlp":
         # Only the network has a training seed; the two closed-form estimators
         # are deterministic and always use the seed-0 split.
@@ -215,7 +303,8 @@ def train_pod_case(model: str, family: str, sensors: int, seed: int,
 
 
 def train_vcnn(family: str, sensors: int, seed: int, sigmas: tuple[float, ...],
-               device: str, smoke: bool) -> dict:
+               device: str, smoke: bool,
+               split: dict[str, np.ndarray] | None = None) -> dict:
     """Train the convolutional estimator on one sensor count and evaluate it."""
     root = vcnn_root(seed, family)
     summary = run_vcnn_sweep(
@@ -245,6 +334,8 @@ def train_vcnn(family: str, sensors: int, seed: int, sigmas: tuple[float, ...],
         checkpoint_options=CheckpointConfig(
             out_dir=root, save_best_only=True, save_last=True, prefix="vcnn",
         ),
+        split_indices=None if split is None else {
+            key: split[key] for key in ("train", "val", "test")},
     )
     if family != MAIN_FAMILY:
         place_family_output(family, sensors, seed, sigmas)
@@ -276,6 +367,31 @@ def place_family_output(family: str, sensors: int, seed: int,
     return placed
 
 
+def run_one(job: tuple, *, family: str, sigmas: tuple[float, ...], device: str,
+            smoke: bool, split: dict[str, np.ndarray] | None,
+            pod_bundle: Path | None, gappy_rank_cap: str = "scalars",
+            gappy_candidates: tuple[int, ...] | None = None) -> dict:
+    """Train one (model, sensor count, seed) run.
+
+    Module level on purpose: ``ProcessPoolExecutor`` has to pickle the callable,
+    which a closure defined inside ``main`` cannot be.
+    """
+    model, sensors, seed = job
+    print(f"   {model:6s} M={sensors:3d} seed={seed:3d}", flush=True)
+    if model == "vcnn":
+        return train_vcnn(family, sensors, seed, sigmas, device, smoke, split=split)
+    return train_pod_case(model, family, sensors, seed, sigmas, device, smoke,
+                          split=split, pod_bundle=pod_bundle,
+                          gappy_rank_cap=gappy_rank_cap,
+                          gappy_candidates=gappy_candidates)
+
+
+def _run_one_packed(packed: tuple) -> dict:
+    """Picklable trampoline used by the process pool."""
+    job, options = packed
+    return run_one(job, **options)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models", nargs="+", default=list(MODELS), choices=list(MODELS))
@@ -288,6 +404,20 @@ def main() -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--check", action="store_true", help="report present runs only")
     parser.add_argument("--smoke", action="store_true", help="truncated run to exercise the path")
+    parser.add_argument("--split", choices=("random", "blocked"), default="random",
+                        help="blocked: contiguous train/val/test blocks with a guard gap")
+    parser.add_argument("--placement", type=int, default=0, choices=sorted(BLOCKED_PLACEMENTS),
+                        help="which contiguous test block the blocked split uses")
+    parser.add_argument("--out-root", default=None,
+                        help="write every artifact below this root, so that the paper "
+                             "artifacts are never touched by a sensitivity run")
+    parser.add_argument("--gappy-rank-cap", choices=("locations", "scalars"),
+                        default="scalars",
+                        help="Gappy POD rank cap: scalars (m_obs = 2M, the protocol of "
+                             "the paper, default) or locations (M, the earlier sweep)")
+    parser.add_argument("--gappy-candidates", nargs="+", type=int, default=None,
+                        help="candidate ranks of the Gappy POD validation search "
+                             "(default: multiples of four up to 128)")
     args = parser.parse_args()
 
     cfg = get_config()
@@ -299,6 +429,21 @@ def main() -> int:
         _SCRATCH = ROOT / "artifacts" / "smoke"
         sensor_counts, sigmas, seeds = sensor_counts[:1], sigmas[:1], seeds[:1]
         print(f"[smoke] outputs are redirected to {_SCRATCH.relative_to(ROOT)}")
+
+    if args.out_root and not args.smoke:
+        _SCRATCH = Path(args.out_root).expanduser().resolve()
+        print(f"[out-root] every artifact is written below {_SCRATCH}")
+
+    split: dict[str, np.ndarray] | None = None
+    pod_bundle: Path | None = None
+    if args.split == "blocked":
+        n_total = int(np.load(DATA_ARRAY, mmap_mode="r").shape[0])
+        split = blocked_split(args.placement, n_total)
+        pod_bundle = build_blocked_bundle(
+            split, _redirect(POD_BUNDLE.parent / f"blocked_p{args.placement}.npz"), rank=128)
+        print(f"[blocked] placement {args.placement}: train={len(split['train'])} "
+              f"val={len(split['val'])} test={len(split['test'])} "
+              f"inner={len(split['test_inner'])}")
 
     runs = expected_runs(args.models, args.family, sensor_counts, sigmas, seeds)
     if args.check:
@@ -328,20 +473,15 @@ def main() -> int:
         if model not in DETERMINISTIC or seed == seeds[0]
     ]
 
-    def run_one(job: tuple) -> dict:
-        model, sensors, seed = job
-        print(f"   {model:6s} M={sensors:3d} seed={seed:3d}")
-        if model == "vcnn":
-            return train_vcnn(args.family, sensors, seed, tuple(sigmas), args.device,
-                              args.smoke)
-        return train_pod_case(model, args.family, sensors, seed, tuple(sigmas),
-                              args.device, args.smoke)
-
+    options = {"family": args.family, "sigmas": tuple(sigmas), "device": args.device,
+               "smoke": args.smoke, "split": split, "pod_bundle": pod_bundle,
+               "gappy_rank_cap": args.gappy_rank_cap,
+               "gappy_candidates": tuple(args.gappy_candidates) if args.gappy_candidates else None}
     if args.jobs > 1:
         with ProcessPoolExecutor(max_workers=args.jobs) as pool:
-            results = list(pool.map(run_one, jobs))
+            results = list(pool.map(_run_one_packed, [(job, options) for job in jobs]))
     else:
-        results = [run_one(job) for job in jobs]
+        results = [run_one(job, **options) for job in jobs]
 
     print(f"[OK] {len(results)} runs trained ({time.time() - start:.1f}s)")
     missing = [

@@ -84,7 +84,7 @@ module in `applications/statistics/`. The whole layer is rebuilt with one comman
 | `temporal_dependence.json` | `applications/statistics/temporal_dependence.py` | ✅ | §7.4 block bootstrap |
 | `paired_model_comparison.{json,csv}` | `applications/statistics/paired_model_comparison.py` | ✅ | Fig S8, §7.4 |
 | `sensor_family/…`, `sensor_family_summary.json` | `applications/statistics/sensor_family_summary.py` | ✅ | Fig S7, Table S19, truth layer |
-| `gappy_pod_baseline.json` | `applications/statistics/gappy_pod_baseline.py` | ✅ | Fig 8 |
+| `blocked_holdout_audit.json` | `applications/statistics/blocked_holdout_audit.py` | ✅ | Table S22, contiguous-holdout audit |
 | `equal_ger_pairs.json`, `equal_ger_pairs_strict.json` | `applications/statistics/equal_ger_pairs.py` | ✅ | Fig 4, Table S18 |
 | `fourier_band_baseline.{json,csv}` | `applications/statistics/fourier_band_baseline.py` | ✅ | Fig 5, Table S14 |
 | `transform_symmetry_check.{json,csv}` | `applications/statistics/transform_symmetry_check.py` | ✅ | Fig 5, Tables S14, S21 |
@@ -96,7 +96,7 @@ module in `applications/statistics/`. The whole layer is rebuilt with one comman
 | `tau_pairwise_checks.json` | `applications/statistics/tau_pairwise_checks.py` | ✅ | App. B, §7.5 |
 | `wavelet_family_sensitivity.json` | `applications/statistics/wavelet_family_sensitivity.py` | ✅ | Table S13 |
 | `low_ger_analysis.json` | `applications/statistics/low_ger_analysis.py` | ✅ | Table S16 |
-| `gappy_band_errors.json` | `applications/statistics/gappy_band_errors.py` | ✅ | Table S15 |
+| `rank_scan/rank_sensitivity.json` | `applications/statistics/rank_sensitivity.py` | ✅ standalone scan, run outside the `04_compute_statistics.py` orchestrator | retained-rank sensitivity behind §2.2 |
 | `per_mode_nrmse.json` | `applications/statistics/per_mode_nrmse.py` | ✅ | Tables S8, S11 |
 | `excess_error_recompute.json` | `applications/statistics/excess_error_recompute.py` | ✅ | Tables S8, S15 |
 | `within_config_physics_bootstrap.json` | `applications/statistics/within_config_physics_bootstrap.py` | ✅ | Table S17 |
@@ -456,3 +456,23 @@ were found, and the v5 series is frozen as the pre-JFM baseline
 (paper commit `8ffb2a3` + this round; figures, gates and the value layer are
 consistent).  Remaining work is the JFM template/voice migration, which must
 re-check appendix heading vs. figure/table ordering after the class change.
+
+### 6.11 Code archive round — JFM v2 series (2026-10-01)
+
+One pass over the published set, so that the repository matches the code that
+produced the current manuscript.
+
+| Item | Change |
+|---|---|
+| New producers/scripts published | `applications/statistics/blocked_holdout_audit.py` (contiguous-holdout table plus the rank-128 representation audit) and `applications/statistics/rank_sensitivity.py` (standalone retained-rank scan, `--out-root`, not part of the orchestrator) |
+| Deprecated producers removed | `applications/statistics/gappy_pod_baseline.py` and `gappy_band_errors.py`; Gappy POD now enters only through the canonical per-snapshot records (`band_error_records.py`), and their rows in §3.1 are replaced accordingly |
+| Superseded helper removed | `applications/statistics/band_metrics_from_npz.py` — read run `npz` files directly (VCNN fields would have been taken in normalised units) and defaulted to batch directories that no longer exist |
+| Figure scripts published | `fig01_known_scale.py`, `fig02_global_vs_scale.py`, `fig03_sensor_noise.py`, `fig05_modal_hierarchy.py`, `fig06_robustness.py`, `graphical_abstract.py` |
+| Reported protocol restored as the default | `03_train_estimators.py --gappy-rank-cap` now defaults to `scalars` (r <= m_obs = 2M) with the candidate grid of the paper (multiples of four up to 128), so the documented entry point reproduces the Gappy POD column of the model comparison; `locations` remains available for the cap sensitivity |
+| Working-language notes removed | the comments that had slipped into `04_compute_statistics.py` and `fig08_recoverability_chain.py` |
+| Layout references refreshed | `.gitignore` no longer names the retired `applications/paper_*` layout; `tests/README.md` points the gappy-rank test at `features.training.pod_sweep` |
+
+Verification of this round: repository hygiene gate 0 failures; clean export of
+the archived index (`git write-tree` + `git archive`) runs `pytest tests/unit`
+(67 passed) and the self-contained analytical benchmark without any local data,
+and contains no reference to a deleted producer.

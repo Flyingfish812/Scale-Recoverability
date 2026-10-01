@@ -47,6 +47,8 @@ PRODUCERS = [
     "applications.statistics.analytical_benchmark",
     "applications.statistics.band_error_decomposition",
     "applications.statistics.band_error_records",
+    "applications.statistics.blocked_holdout_audit",
+    "applications.statistics.rank_scan_summary",
     "applications.statistics.low_ger_analysis",
     "applications.statistics.per_mode_nrmse",
     "applications.statistics.excess_error_recompute",
@@ -59,8 +61,9 @@ PRODUCERS = [
     "applications.statistics.temporal_dependence",
     "applications.statistics.paired_model_comparison",
     "applications.statistics.sensor_family_summary",
-    "applications.statistics.gappy_pod_baseline",
-    "applications.statistics.gappy_band_errors",
+    # Gappy POD has no producer of its own: it enters the canonical per-snapshot
+    # layer below (applications/statistics/band_error_records.py), so that the
+    # scale counts and the model comparison share a single source.
     "applications.statistics.fourier_band_baseline",
     "applications.statistics.transform_symmetry_check",
     "applications.statistics.threshold_sensitivity",

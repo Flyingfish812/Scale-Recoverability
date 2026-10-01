@@ -120,7 +120,7 @@ def main() -> int:
     r = recs["E1_del_W1_only"]
     _field_panel(fig, ax, _recon_image(u, u_j, "E1_del_W1_only"), "d", vmax=vm,
                  colorbar=False)
-    ax.set_title(f"E1: W1-associated carriers removed\nGER {cE1['GER_mean']:.4f}  $S_{{\\mathrm{{full}}}}$ = {r['S_full']}",
+    ax.set_title(f"E1: W1-associated carriers removed\n$\\mathrm{{GER}}_u$ {cE1['GER_mean']:.4f}  $S_{{\\mathrm{{full}}}}$ = {r['S_full']}",
                  fontsize=ps.TITLE_FONT)
 
     # Row 3: (e) E2: partial W3 | (f) per-band error
@@ -128,7 +128,7 @@ def main() -> int:
     r = recs["E2_partial_W3"]
     _field_panel(fig, ax, _recon_image(u, u_j, "E2_partial_W3"), "e", vmax=vm,
                  colorbar=False)
-    ax.set_title(f"E2: partial W3-associated carriers\nGER {cE2['GER_mean']:.4f}  $S_{{\\mathrm{{full}}}}$ = {r['S_full']}",
+    ax.set_title(f"E2: partial W3-associated carriers\n$\\mathrm{{GER}}_u$ {cE2['GER_mean']:.4f}  $S_{{\\mathrm{{full}}}}$ = {r['S_full']}",
                  fontsize=ps.TITLE_FONT)
 
     # (f) per-band error: E1 vs E2
@@ -222,7 +222,7 @@ def main() -> int:
         _field_panel(fig2, ax, _recon_image(u, u_j, cname), None,
                      colorbar=(i == 0), show_label=False)
         ax.set_title(f"({chr(ord('i') + i)}) {lab}\n"
-                     f"GER {rr['GER']:.3f}, $S_{{\\mathrm{{full}}}}$ {rr['S_full']}",
+                     f"$\\mathrm{{GER}}_u$ {rr['GER']:.3f}, $S_{{\\mathrm{{full}}}}$ {rr['S_full']}",
                      fontsize=ps.TITLE_FONT, pad=5)
 
     # (m) per-band error for all cases

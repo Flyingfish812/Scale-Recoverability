@@ -183,6 +183,7 @@ def run_vcnn_sweep(
     sweep_config: SweepConfig,
     checkpoint_root: Path,
     checkpoint_options: CheckpointConfig | None = None,
+    split_indices: dict[str, np.ndarray] | None = None,
     dataset_builder: Callable[..., Any] | None = None,
     artifact_saver: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
@@ -273,6 +274,7 @@ def run_vcnn_sweep(
                 "data_config": {"array_path": str(data_config.array_path), "mmap": bool(data_config.mmap)},
             },
             dataset_builder=dataset_builder,
+            split_indices=split_indices,
             artifact_saver=artifact_saver,
         )
 

@@ -122,11 +122,11 @@ def main() -> int:
         return verify(payload["records"])
 
     tasks = [(model, sensor_count, sigma, seed)
-             for model in ("mlp", "vcnn", "ridge")
+             for model in ("mlp", "vcnn", "ridge", "gappy")
              for sensor_count in SENSOR_COUNTS
              for sigma in NOISE_SIGMAS
              for seed in TRAINING_SEEDS
-             if not (model == "ridge" and seed != TRAINING_SEEDS[0])]
+             if not (model in ("ridge", "gappy") and seed != TRAINING_SEEDS[0])]
 
     started = time.time()
     records: list[dict] = []

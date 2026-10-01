@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pywt
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +20,8 @@ from features.metrics.sample_metrics import (  # noqa: E402
     laplacian,
     sigma_to_code,
 )
+from luna.core.constants import TAU_DEFAULT  # noqa: E402
+from luna.wavelet.metrics import compute_S_full  # noqa: E402
 
 
 
@@ -60,13 +63,42 @@ def test_laplacian_matches_gradient_composition():
 
 
 GOLDEN = [
-    {"GER": 0.0499084614, "S_full": 3, "E_W1": 0.0502094182, "E_A4": 0.0509949893,
+    {"GER": 0.0499084614, "S_full": 0, "E_W1": 0.0502094182, "E_A4": 0.0509949893,
      "vorticity_RMSE": 0.0563394153, "gradient_RMSE": 0.051145994},
-    {"GER": 0.0500693121, "S_full": 3, "E_W1": 0.0502029468, "E_A4": 0.0459953428,
+    {"GER": 0.0500693121, "S_full": 2, "E_W1": 0.0502029468, "E_A4": 0.0459953428,
      "vorticity_RMSE": 0.0561481171, "gradient_RMSE": 0.051207088},
-    {"GER": 0.0496520733, "S_full": 4, "E_W1": 0.0499406068, "E_A4": 0.0446997208,
+    {"GER": 0.0496520733, "S_full": 1, "E_W1": 0.0499406068, "E_A4": 0.0446997208,
      "vorticity_RMSE": 0.0565651641, "gradient_RMSE": 0.0512418468},
 ]
+
+
+def test_s_full_is_the_consecutive_band_count():
+    """S_full must agree with the authoritative contiguous implementation.
+
+    A reconstruction that fails one middle band but passes the finer ones has
+    ``n_bands_below_tau > S_full``; the two definitions must not be conflated.
+    """
+    rng = np.random.default_rng(3)
+    target = rng.normal(size=(80, 160))
+    coeffs = pywt.wavedec2(target, "db2", level=4, mode="periodization")
+    scaled = list(coeffs)
+    scaled[2] = tuple(part * 1.5 for part in coeffs[2])   # corrupt W3 only
+    pred = pywt.waverec2(scaled, "db2", mode="periodization")
+
+    res = band_errors(target, pred[:80, :160], tau=TAU_DEFAULT)
+    assert res["band_errors"]["W3"] > TAU_DEFAULT
+    assert res["S_full"] == 2, "the count must stop at the first failed band"
+    assert res["n_bands_below_tau"] == 4, "A4, W4, W2 and W1 do pass"
+
+
+def test_s_full_matches_the_luna_implementation():
+    rng = np.random.default_rng(11)
+    out = rng.normal(size=(2, 2, 80, 160))
+    tgt = out + 0.05 * rng.normal(size=(2, 2, 80, 160))
+    for index in range(2):
+        metrics = compute_sample_metrics(out, tgt, index)
+        expected = compute_S_full(tgt[index, 0], out[index, 0], TAU_DEFAULT)
+        assert metrics["S_full"] == expected
 
 
 def test_metric_values_are_pinned():
