@@ -1,14 +1,10 @@
 """Distribution of POD modal energy across spatial scales.
 
-Each POD mode is decomposed into the five wavelet bands, and the fraction of
-band energy carried by the first r modes gives the cumulative coverage curve
+Each POD mode is decomposed into the five wavelet bands, and the fraction of band energy carried by the first r modes gives the cumulative coverage curve
 
     C_b(r) = Σ_{j<=r} λ_j E_b(φ_j) / Σ_{j<=R} λ_j E_b(φ_j)
 
-where E_b(φ_j) is the energy of mode j inside band b. Steep curves mean that a
-band is described by a few modes; shallow curves mean that it is spread over many
-weak modes. The number of modes needed for 90% and 99% coverage of each band is
-reported explicitly, since that is the quantity quoted in the paper.
+where E_b(φ_j) is the energy of mode j inside band b. Steep curves mean that a band is described by a few modes; shallow curves mean that it is spread over many weak modes. The number of modes needed for 90% and 99% coverage of each band is reported explicitly, since that is the quantity quoted in the paper.
 
 Inputs
     artifacts/pod_bases/...    rank-128 POD basis (both components)

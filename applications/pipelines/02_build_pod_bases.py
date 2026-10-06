@@ -1,45 +1,24 @@
 """Build the POD bases that every reconstruction artifact is expressed in.
 
-The estimators of the paper never see the fields directly: the training code
-reduces the snapshots to POD coefficients (``features.training.pod_sweep``) and
-the statistics layer reconstructs the truncated reference of the same rank
-(``applications.statistics.band_error_decomposition``). Both read the bundle
-written here, so the mean field, the basis, the coefficients and the rank have
-to be produced once, in one place: this step.
+The estimators of the paper never see the fields directly: the training code reduces the snapshots to POD coefficients (``features.training.pod_sweep``) and the statistics layer reconstructs the truncated reference of the same rank (``applications.statistics.band_error_decomposition``). Both read the bundle written here, so the mean field, the basis, the coefficients and the rank have to be produced once, in one place: this step.
 
-One bundle is written per dataset of the registry, holding the mean field, the
-rank-r basis, the coefficients of every snapshot, the energy of the retained
-modes and the prefix-reconstruction error of each snapshot. The keys are the
-ones the existing consumers read, and the decomposition is
-``luna.pod.decomposition.compute_pod``, which is what the published bundles were
-built with.
+One bundle is written per dataset of the registry, holding the mean field, the rank-r basis, the coefficients of every snapshot, the energy of the retained modes and the prefix-reconstruction error of each snapshot. The keys are the ones the existing consumers read, and the decomposition is ``luna.pod.decomposition.compute_pod``, which is what the published bundles were built with.
 
 Prerequisites
     data/ arrays verified by applications/pipelines/01_prepare_data.py
 
 Rank
-    nc 128, rdb_h5 128, sst_weekly 1024, the rank of the published bundles. The
-    main sequence of the paper uses the rank-128 basis of the numerical wake;
-    the sea-surface dataset keeps more modes because its energy spectrum is much
-    flatter. ``--rank`` overrides the rank for every selected dataset, which
-    changes the meaning of the artifacts downstream and is meant for inspection.
+    nc 128, rdb_h5 128, sst_weekly 1024, the rank of the published bundles. The main sequence of the paper uses the rank-128 basis of the numerical wake;
+    the sea-surface dataset keeps more modes because its energy spectrum is much flatter. ``--rank`` overrides the rank for every selected dataset, which changes the meaning of the artifacts downstream and is meant for inspection.
 
 Outputs
     artifacts/pod_bases/<dataset>/pod_base_bundle.npz with the keys
-        dataset_name, source_data_path, interpreted_layout, input_shape,
-        interpreted_shape,
-        mean_field, pod_basis, coefficients, singular_values,
-        mode_energy_ratio, cumulative_energy_ratio,
-        relative_rmse_prefix, relative_rmse_top_r
+        dataset_name, source_data_path, interpreted_layout, input_shape, interpreted_shape, mean_field, pod_basis, coefficients, singular_values, mode_energy_ratio, cumulative_energy_ratio, relative_rmse_prefix, relative_rmse_top_r
 
-    A bundle that already exists is compared with the rebuild before anything is
-    written. Identical values leave the file untouched; differing values are
-    reported and the bundle on disk is kept, so a rebuild can never silently
-    replace the basis the paper's numbers were computed from.
+    A bundle that already exists is compared with the rebuild before anything is written. Identical values leave the file untouched; differing values are reported and the bundle on disk is kept, so a rebuild can never silently replace the basis the paper's numbers were computed from.
 
 Pipeline
-    previous  applications/pipelines/01_prepare_data.py
-    this step writes the POD bases under artifacts/pod_bases/
+    previous  applications/pipelines/01_prepare_data.py this step writes the POD bases under artifacts/pod_bases/
     next      applications/pipelines/03_train_estimators.py
 
 Usage
@@ -48,10 +27,7 @@ Usage
     python applications/pipelines/02_build_pod_bases.py --check
     python applications/pipelines/02_build_pod_bases.py --datasets nc --out-root /tmp/pod_bases
 
-The sea-surface bundle is by far the most expensive one (rank 1024 on 1914
-snapshots of 180 x 360 fields); ``--datasets nc`` rebuilds only the basis of the
-main sequence. ``--out-root`` writes somewhere else and is the way to compare a
-rebuild against the bundles in place.
+The sea-surface bundle is by far the most expensive one (rank 1024 on 1914 snapshots of 180 x 360 fields); ``--datasets nc`` rebuilds only the basis of the main sequence. ``--out-root`` writes somewhere else and is the way to compare a rebuild against the bundles in place.
 """
 
 from __future__ import annotations
@@ -71,18 +47,18 @@ from luna.data.io import save_npz  # noqa: E402
 from luna.data.registry import get_dataset  # noqa: E402
 from luna.pod.decomposition import compute_pod  # noqa: E402
 
-#: Datasets of the paper, in the order of scripts/download_data.sh.
+# : Datasets of the paper, in the order of scripts/download_data.sh.
 DEFAULT_DATASETS = ("nc", "rdb_h5", "sst_weekly")
 
-#: Rank of the published bundle of each dataset.
+# : Rank of the published bundle of each dataset.
 RANKS = {"nc": 128, "rdb_h5": 128, "sst_weekly": 1024}
 
 DEFAULT_OUT_ROOT = ROOT / "artifacts" / "pod_bases"
 
-#: Name of the bundle inside the directory of a dataset.
+# : Name of the bundle inside the directory of a dataset.
 BUNDLE_NAME = "pod_base_bundle.npz"
 
-#: Guard of the relative reconstruction error, as in the published bundles.
+# : Guard of the relative reconstruction error, as in the published bundles.
 EPS = 1e-12
 
 
@@ -98,12 +74,7 @@ def relative(path: Path) -> str:
 def sample_layout(array: np.ndarray) -> tuple[np.ndarray, str]:
     """Snapshots as (N, H, W, C) plus the layout note stored in the bundle.
 
-    The published bundles record the layout they were given, and that field is
-    part of the bundle contract, so a rebuild applies the same convention: a
-    four-dimensional array whose axis 1 is a small channel axis is read as NCHW
-    and transposed, everything else is taken as it is and noted NHWC (four
-    dimensions) or BNC (three). The three datasets of the paper are already in
-    that layout, so they are used unchanged.
+    The published bundles record the layout they were given, and that field is part of the bundle contract, so a rebuild applies the same convention: a four-dimensional array whose axis 1 is a small channel axis is read as NCHW and transposed, everything else is taken as it is and noted NHWC (four dimensions) or BNC (three). The three datasets of the paper are already in that layout, so they are used unchanged.
     """
     if array.ndim == 4:
         if array.shape[1] <= 4 and array.shape[-1] > 4:
@@ -120,12 +91,7 @@ def relative_rmse_prefix(coefficients: np.ndarray, target_norm_sq: np.ndarray) -
     """Relative reconstruction error of every snapshot as a function of the
     number of retained modes.
 
-    With an orthonormal basis the error of the first r modes is the part of the
-    snapshot energy the first r coefficients do not carry. The energy of a
-    snapshot is reduced with ``np.sum``, the reduction the published bundles
-    were written with: the difference between two summation orders is at the
-    last bit of the total, but it survives the subtraction of two nearly equal
-    energies, so keeping the reduction makes a rebuild bit-identical.
+    With an orthonormal basis the error of the first r modes is the part of the snapshot energy the first r coefficients do not carry. The energy of a snapshot is reduced with ``np.sum``, the reduction the published bundles were written with: the difference between two summation orders is at the last bit of the total, but it survives the subtraction of two nearly equal energies, so keeping the reduction makes a rebuild bit-identical.
     """
     cumulated = np.cumsum(coefficients * coefficients, axis=1)
     residual = np.maximum(target_norm_sq[:, None] - cumulated, 0.0)
@@ -148,8 +114,7 @@ def build_bundle(dataset: str, rank: int) -> dict[str, np.ndarray]:
     basis = pod["basis"].astype(np.float32)
     coefficients = pod["coefficients"].astype(np.float32)
 
-    # The prefix-error diagnostics are read off the coefficients as they are
-    # stored, so that a rebuild reproduces the bundle field by field.
+    # The prefix-error diagnostics are read off the coefficients as they are stored, so that a rebuild reproduces the bundle field by field.
     centered = fields.reshape(snapshots, dim).astype(np.float64) - pod["mean"]
     target_norm_sq = np.sum(centered * centered, axis=1)
     prefix = relative_rmse_prefix(np.asarray(coefficients, dtype=np.float64), target_norm_sq)
@@ -175,10 +140,7 @@ def build_bundle(dataset: str, rank: int) -> dict[str, np.ndarray]:
 def compare_bundles(path: Path, arrays: dict[str, np.ndarray]) -> list[str]:
     """Field-by-field differences between a bundle on disk and a rebuild.
 
-    The comparison is exact. A bundle is regenerated from the same raw array
-    with the same decomposition, so a faithful rebuild is bit-identical; a
-    different LAPACK flips the sign of a singular vector, which this reports as
-    a difference of the basis instead of hiding it behind a tolerance.
+    The comparison is exact. A bundle is regenerated from the same raw array with the same decomposition, so a faithful rebuild is bit-identical; a different LAPACK flips the sign of a singular vector, which this reports as a difference of the basis instead of hiding it behind a tolerance.
     """
     existing = np.load(path)
     present = set(existing.files)

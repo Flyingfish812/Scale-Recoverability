@@ -3,18 +3,9 @@
 """
 graphical_abstract.py — single-panel graphical abstract for the JFM submission
 
-JFM uses the graphical abstract as a small table-of-contents thumbnail (about
-2.4 cm x 2 cm) and as a cover candidate, so it must be a single panel, 1.2:1,
-without caption and without text.  The image is therefore kept deliberately
-simple and self-explanatory at that size: one reference cylinder-wake state with
-the cylinder section drawn in, the vortex street filling most of the frame, the
-sparse measurement locations marked, and two iso-lines that suggest the
-large-scale wake envelope and the finer shear-layer structures.
+JFM uses the graphical abstract as a small table-of-contents thumbnail (about 2.4 cm x 2 cm) and as a cover candidate, so it must be a single panel, 1.2:1, without caption and without text.  The image is therefore kept deliberately simple and self-explanatory at that size: one reference cylinder-wake state with the cylinder section drawn in, the vortex street filling most of the frame, the sparse measurement locations marked, and two iso-lines that suggest the large-scale wake envelope and the finer shear-layer structures.
 
-The measurement locations are illustrative: the nested sensor masks are drawn
-randomly (`masks_families/`), so the artwork shows a representative set placed
-where it reads as sparse sampling of the wake; SENSORS_MODE = "mask" plots the
-family_01 / M = 20 mask inside the field of view instead.
+The measurement locations are illustrative: the nested sensor masks are drawn randomly (`masks_families/`), so the artwork shows a representative set placed where it reads as sparse sampling of the wake; SENSORS_MODE = "mask" plots the family_01 / M = 20 mask inside the field of view instead.
 
 Data
     artifacts/pod_model_sweep_nc/mlp_n0020/seed000/tests/s0000/test_raw.npz
@@ -52,27 +43,18 @@ MASK = (_ROOT / "masks_families" / "family_01" / "masks"
 SNAPSHOT = 40          # one fully developed wake state
 FINE_BANDS = ("W1",)   # finest band of the streamwise velocity
 # 72 columns x 60 rows = 1.2:1 exactly: the tightest window that still encloses
-# the cylinder and the whole near-wake structure with a narrow margin above and
-# below the street.
+# the cylinder and the whole near-wake structure with a narrow margin above and below the street.
 CROP = (20, 92, 10, 70)
-# The true body is a circle of radius 5 grid units at (39.5, 39.5).  It is drawn
-# slightly smaller because it is only a locator for the reader: the wake has to
-# stay the subject.
+# The true body is a circle of radius 5 grid units at (39.5, 39.5).  It is drawn slightly smaller because it is only a locator for the reader: the wake has to stay the subject.
 CYLINDER = (39.5, 39.5, 3.9)
-# The measurement mask is a randomly drawn nested set, so the artwork uses a
-# representative set of measurement locations instead of the raw mask; the
-# layout is chosen to read as "sparse sensors sampling the wake" at thumbnail
-# size (one at each cylinder shoulder, two on the shear layers, two inside the
+# The measurement mask is a randomly drawn nested set, so the artwork uses a representative set of measurement locations instead of the raw mask; the layout is chosen to read as "sparse sensors sampling the wake" at thumbnail size (one at each cylinder shoulder, two on the shear layers, two inside the
 # wake and one in the far wake).  Set SENSORS_MODE = "mask" to plot the
 # family_01 / M = 20 mask instead.
 SENSORS_MODE = "illustrative"
 SENSOR_POINTS = ((30, 40), (49, 40), (29, 57), (50, 57),
                  (35, 68), (46, 70), (37, 84))   # (row, column) in field units
 SENSOR_BAND = 15               # half-width of the mask band used in "mask" mode
-# The iso-lines are drawn as a contour map over the wake, which is what makes
-# the multiscale structure readable at thumbnail size: one outer envelope plus
-# two inner levels.  One or two levels degenerate into a few unexplained closed
-# loops, and four or more give the outer lines a "tree ring" look.
+# The iso-lines are drawn as a contour map over the wake, which is what makes the multiscale structure readable at thumbnail size: one outer envelope plus two inner levels.  One or two levels degenerate into a few unexplained closed loops, and four or more give the outer lines a "tree ring" look.
 # FINE_SOURCE = "lost" maps the fine-scale content the reconstruction misses.
 FINE_SOURCE = "reference"      # "lost" (reconstruction) or "reference" (truth)
 CONTOUR_PCTS = (70.0, 88.0, 96.0)
@@ -128,8 +110,7 @@ def main() -> int:
         kwargs = dict(cmap="RdBu_r", vmin=-lim, vmax=lim)
     else:
         field = np.asarray(ref[0], dtype=np.float32)[r0:r1, c0:c1]
-        # colour scale centred on the free stream, so that the wake reads as a
-        # deficit band on a neutral background
+        # colour scale centred on the free stream, so that the wake reads as a deficit band on a neutral background
         kwargs = dict(cmap="RdBu_r", vmin=-0.2, vmax=2.2)
 
     extent = (-0.5, width - 0.5, -0.5, height - 0.5)
@@ -141,9 +122,7 @@ def main() -> int:
 
     from scipy.ndimage import gaussian_filter
 
-    # A contour map of the fine-scale content that the sparse reconstruction
-    # misses: nested thin lines over the shear layers and the vortex cores,
-    # which is the multiscale cue that survives thumbnailing.
+    # A contour map of the fine-scale content that the sparse reconstruction misses: nested thin lines over the shear layers and the vortex cores, which is the multiscale cue that survives thumbnailing.
     fine_field = (fine_scale(ref) - fine_scale(pred)
                   if FINE_SOURCE == "lost" else fine_scale(ref))
     fine = np.abs(fine_field)[r0:r1, c0:c1]
@@ -152,10 +131,7 @@ def main() -> int:
     ax.contour(fine_smooth, levels=levels, colors="0.15", alpha=0.85,
                linewidths=CONTOUR_WIDTHS, origin="lower", extent=extent,zorder=2)
 
-    # The cylinder section is drawn explicitly: without it the picture reads as
-    # an arbitrary jet, with it as a cylinder wake.  The body is grey rather
-    # than white because the free stream upstream of the cylinder is white in
-    # the vorticity colour scale.
+    # The cylinder section is drawn explicitly: without it the picture reads as an arbitrary jet, with it as a cylinder wake.  The body is grey rather than white because the free stream upstream of the cylinder is white in the vorticity colour scale.
     body_r, body_c, body_radius = CYLINDER
     ax.add_patch(plt.Circle((body_c - c0, body_r - r0), body_radius,
                             facecolor="0.78", edgecolor="0.25", lw=0.6,
@@ -175,8 +151,7 @@ def main() -> int:
     ax.set_xlim(-0.5, width - 0.5)
     ax.set_ylim(-0.5, height - 0.5)
 
-    # The house style sets a tight bounding box; the graphical abstract has to
-    # keep the exact 1.2:1 canvas that JFM asks for, so save the full figure.
+    # The house style sets a tight bounding box; the graphical abstract has to keep the exact 1.2:1 canvas that JFM asks for, so save the full figure.
     plt.rcParams["savefig.bbox"] = "standard"
     pdf = OUT_DIR / "graphical_abstract.pdf"
     fig.savefig(OUT_DIR / "graphical_abstract.jpg", format="jpg", dpi=300,

@@ -1,11 +1,6 @@
 """Correlation between the global error and the per-band errors.
 
-Within one configuration (sensor count, noise level, training seed) the global
-error and the individual band errors are strongly correlated, which is what makes
-the global ratio a usable proxy for the recursive scale count. This module
-measures that correlation with Spearman's rank coefficient for every
-configuration of the POD-coefficient sweep and reports the median over
-configurations, band by band.
+Within one configuration (sensor count, noise level, training seed) the global error and the individual band errors are strongly correlated, which is what makes the global ratio a usable proxy for the recursive scale count. This module measures that correlation with Spearman's rank coefficient for every configuration of the POD-coefficient sweep and reports the median over configurations, band by band.
 
 Output
 ------

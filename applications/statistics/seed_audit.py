@@ -1,26 +1,15 @@
 """How much do the reported scale counts and global errors move with the seed sample?
 
-Every configuration of the sweep is trained with three seeds (0, 101, 202). This
-module asks what a wider seed sample would change: two further seeds (303, 404)
-were trained for the sensor counts of three representative conditions, and the
-per-run scale count and global error of the three-seed and the five-seed sample
-are compared on the same test snapshots.
+Every configuration of the sweep is trained with three seeds (0, 101, 202). This module asks what a wider seed sample would change: two further seeds (303, 404) were trained for the sensor counts of three representative conditions, and the per-run scale count and global error of the three-seed and the five-seed sample are compared on the same test snapshots.
 
     condition     sensor count M   noise level sigma
     clean         20               0
     transition    30               0.01
     high noise    20               0.1
 
-Each run contributes the mean global error over its test snapshots and the mean,
-standard deviation and mode of the scale count, together with the
-coherent-subspace index and the direct band errors of the streamwise component.
-The global error is the relative L2 error of the full two-component state and the
-scale indices are evaluated on the streamwise component, both in physical units,
-the convention of the rest of the layer.
+Each run contributes the mean global error over its test snapshots and the mean, standard deviation and mode of the scale count, together with the coherent-subspace index and the direct band errors of the streamwise component. The global error is the relative L2 error of the full two-component state and the scale indices are evaluated on the streamwise component, both in physical units, the convention of the rest of the layer.
 
-The convolutional estimator has runs for the three main seeds only, so its
-five-seed block repeats its three-seed block; the artifact keeps the same
-comparison keys for both estimators so that the two can be read side by side.
+The convolutional estimator has runs for the three main seeds only, so its five-seed block repeats its three-seed block; the artifact keeps the same comparison keys for both estimators so that the two can be read side by side.
 
 Inputs
     data/cylinder2d_q1.npy        raw snapshots, for the band-POD reference basis
@@ -32,12 +21,7 @@ Usage
     python -m applications.statistics.seed_audit
     python -m applications.statistics.seed_audit --verify
 
-``--verify`` compares the artifact with the frozen baseline of the submitted
-manuscript. The frozen baseline evaluated the convolutional estimator on its
-stored normalised fields and every global error on the streamwise component
-alone, so only the MLP scale indices are expected to reproduce exactly; the
-remaining fields are compared for information and the comparison still exits
-non-zero only when a reproduced field disagrees.
+``--verify`` compares the artifact with the reference values of the paper. The reference evaluated the convolutional estimator on its stored normalised fields and every global error on the streamwise component alone, so only the MLP scale indices are expected to reproduce exactly; the remaining fields are compared for information and the comparison still exits non-zero only when a reproduced field disagrees.
 """
 
 from __future__ import annotations
@@ -71,44 +55,41 @@ from luna.wavelet.metrics import (  # noqa: E402
 
 DATA_ARRAY = ROOT / "data" / "cylinder2d_q1.npy"
 OUTPUT = ROOT / "artifacts" / "statistics" / "seed_audit.json"
-#: Frozen artifact of the earlier analysis of the same quantity, read by --verify.
+# : Frozen artifact of the earlier analysis of the same quantity, read by --verify.
 REFERENCE = (ROOT / "artifacts" / "derived" / "main" / "statistics"
              / "seed_audit_3v5.json")
 
-#: Conditions of the audit: label, sensor count, noise level.
+# : Conditions of the audit: label, sensor count, noise level.
 CONDITIONS = [
     ("clean", 20, 0.0),
     ("transition", 30, 0.01),
     ("noisy", 20, 0.1),
 ]
-#: Estimators of the audit, in the order of the artifact.
+# : Estimators of the audit, in the order of the artifact.
 MODELS = ("mlp", "vcnn")
-#: Seeds of the main sweep and of the extended sample.
+# : Seeds of the main sweep and of the extended sample.
 SEEDS_MAIN = [0, 101, 202]
 SEEDS_EXTENDED = [0, 101, 202, 303, 404]
-#: Snapshots of the raw sequence used to fit the band-POD reference basis, and
-#: the seed of the draw. The draw is the one of the main sensitivity analysis.
+# : Snapshots of the raw sequence used to fit the band-POD reference basis, and : the seed of the draw. The draw is the one of the main sensitivity analysis.
 N_TRAIN_POD = 400
 BAND_POD_SEED = 7
-#: Sensor count and noise level whose test split defines the training snapshots.
+# : Sensor count and noise level whose test split defines the training snapshots.
 SPLIT_REFERENCE = ("mlp", 20, 0.0)
-#: Fields the paper reads from every block of the artifact.
+# : Fields the paper reads from every block of the artifact.
 REPRODUCED_FIELDS = (
     "S_full_mean_3sd",
     "S_full_sd_across_seeds_3",
     "S_full_mean_5sd",
     "S_full_sd_across_seeds_5",
 )
-#: Tolerance of --verify on a reproduced field.
+# : Tolerance of --verify on a reproduced field.
 VERIFY_TOLERANCE = 1e-9
 
 
 def band_pod_reference() -> dict:
     """Band-POD basis of the coherent subspace, on the sweep's training split.
 
-    The coherent index needs a POD subspace per band. It is fitted once on the
-    raw snapshots, on the complement of the test split of the reference
-    configuration, and shared by every run of the audit.
+    The coherent index needs a POD subspace per band. It is fitted once on the raw snapshots, on the complement of the test split of the reference configuration, and shared by every run of the audit.
     """
     path = run_path(*SPLIT_REFERENCE, seed=0)
     if path is None:
@@ -223,8 +204,7 @@ def build_audit() -> dict:
                   f"+- {block['S_full_sd_across_seeds_5']:.3f} | GER 3-seed "
                   f"{block['GER_mean_3sd']:.5f} -> 5-seed {block['GER_mean_5sd']:.5f}")
 
-    # The two estimators of a condition are ranked by their three-seed mean scale
-    # count, which is the ordering the paper reports.
+    # The two estimators of a condition are ranked by their three-seed mean scale count, which is the ordering the paper reports.
     for label in audit:
         means = {model: audit[label][model]["S_full_mean_3sd"]
                  for model in audit[label]}
@@ -238,9 +218,9 @@ def build_audit() -> dict:
 
 
 def verify(audit: dict) -> int:
-    """Compare the artifact with the frozen baseline of the manuscript."""
+    """Compare the artifact with the reference values of the paper."""
     if not REFERENCE.exists():
-        print(f"   [skip] no frozen baseline at {REFERENCE.relative_to(ROOT)}")
+        print(f"   [skip] no reference values at {REFERENCE.relative_to(ROOT)}")
         return 0
     frozen = json.loads(REFERENCE.read_text(encoding="utf-8"))
     failures = 0
@@ -268,7 +248,7 @@ def verify(audit: dict) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", action="store_true",
-                        help="compare the artifact with the frozen baseline")
+                        help="compare the artifact with the reference values")
     args = parser.parse_args()
 
     start = time.time()

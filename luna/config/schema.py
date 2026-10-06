@@ -4,8 +4,7 @@ Unified configuration schema for all Luna experiments.
 Consolidates config dataclasses from:
     training/config.py  — VCNN training + sweep
     l1_pod/config.py    — L1 POD parameters
-    run_pod_model_sweep.py — POD model training
-    thesis_figure_pipeline configs — figure generation
+    run_pod_model_sweep.py — POD model training thesis_figure_pipeline configs — figure generation
 
 All paths in configs are relative to the project root.
 """

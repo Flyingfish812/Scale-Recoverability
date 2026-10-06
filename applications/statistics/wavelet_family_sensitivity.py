@@ -1,11 +1,6 @@
 """Sensitivity of the band errors to the choice of wavelet basis.
 
-Every scale-recoverability number is computed in a db2 wavelet basis. This module
-repeats the decomposition with the other bases a reader might reach for — sym2,
-which is a phase-shifted db2, and haar, the piecewise-constant limit — and reports
-the mean direct band error of the same reconstruction. Sym2 reproduces db2 by
-construction; haar trades accuracy in the detail bands for a coarser basis, which
-is the effect the table quantifies.
+Every scale-recoverability number is computed in a db2 wavelet basis. This module repeats the decomposition with the other bases a reader might reach for — sym2, which is a phase-shifted db2, and haar, the piecewise-constant limit — and reports the mean direct band error of the same reconstruction. Sym2 reproduces db2 by construction; haar trades accuracy in the detail bands for a coarser basis, which is the effect the table quantifies.
 
 Output
 ------

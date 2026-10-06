@@ -1,15 +1,9 @@
 """
 Block bootstrap for time series statistics.
 
-Implements moving-block, circular-block and stationary bootstrap, plus a
-snapshot-cluster bootstrap (used as a control). All methods resample *rows* of
-an (n, ...) array so they work for both scalar statistics and per-snapshot
-vectors.
+Implements moving-block, circular-block and stationary bootstrap, plus a snapshot-cluster bootstrap (used as a control). All methods resample *rows* of an (n, ...) array so they work for both scalar statistics and per-snapshot vectors.
 
-For the NC dataset: the 300 test snapshots are non-consecutive samples from the
-full 1501-snapshot sequence. Block length should be chosen from the physical
-vortex-shedding period (~62 snapshots, see temporal_dependence) and blocks are
-defined on the *time index* of each snapshot.
+For the NC dataset: the 300 test snapshots are non-consecutive samples from the full 1501-snapshot sequence. Block length should be chosen from the physical vortex-shedding period (~62 snapshots, see temporal_dependence) and blocks are defined on the *time index* of each snapshot.
 """
 
 from __future__ import annotations

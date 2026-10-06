@@ -1,13 +1,8 @@
 """Application-level configuration.
 
-Single place where the paper's experimental parameters live: sensor counts,
-noise levels, training seeds, POD rank, wavelet settings and tolerance. Values
-come from ``applications/configs/*.yaml`` when present and fall back to the
-defaults below, which are the ones used for the paper.
+Single place where the paper's experimental parameters live: sensor counts, noise levels, training seeds, POD rank, wavelet settings and tolerance. Values come from ``applications/configs/*.yaml`` when present and fall back to the defaults below, which are the ones used for the paper.
 
-The pipeline steps and the statistics producers read parameters from here so
-that changing, for instance, the tolerance requires editing one YAML file rather
-than individual scripts.
+The pipeline steps and the statistics producers read parameters from here so that changing, for instance, the tolerance requires editing one YAML file rather than individual scripts.
 """
 
 from __future__ import annotations

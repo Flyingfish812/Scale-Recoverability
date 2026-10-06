@@ -1,45 +1,25 @@
 """Per-mode NRMSE of the recovered POD coefficients, its energy-decile table and
 the band recovery rates.
 
-For every configuration (estimator, sensor count M, noise level sigma) the
-reconstruction is projected onto the rank-128 POD basis and the error of modal
-coefficient j is reported as
+For every configuration (estimator, sensor count M, noise level sigma) the reconstruction is projected onto the rank-128 POD basis and the error of modal coefficient j is reported as
 
     e_j = sqrt( Σ_i (â_ij − a_ij)² / Σ_i a_ij² )
 
-summed over the test snapshots i, with λ_j² / λ_1² as the modal energy. Because
-the modal energy spans five orders of magnitude, the mechanism table of the
-paper groups the 128 modes into energy deciles and reports the mean per-mode
-NRMSE and the energy share of each group.
+summed over the test snapshots i, with λ_j² / λ_1² as the modal energy. Because the modal energy spans five orders of magnitude, the mechanism table of the paper groups the 128 modes into energy deciles and reports the mean per-mode NRMSE and the energy share of each group.
 
-Two groupings of the same partition appear in the paper and are both reported
-here, because they place the two 12-mode groups at opposite ends:
+Two groupings of the same partition appear in the paper and are both reported here, because they place the two 12-mode groups at opposite ends:
 
     rows            13 modes in groups 1-8 and 12 in groups 9-10, counted from
                     the least energetic mode (the order of the table)
     rows_descending the same partition counted from the most energetic mode,
-                    which is the orientation of the frozen cross-table artifact
-                    this module reproduces numerically
-    rows_manuscript the partition of the frozen table again, counted from the
-                    least energetic mode, which is the orientation the
-                    manuscript prints: its two 12-mode groups are groups 1-2
-                    and its group 10 holds the 13 most energetic modes
+                    which is the orientation of the frozen cross-table artifact this module reproduces numerically
+    rows_paper      the partition of the table again, counted from the least
+                    energetic mode, which is the orientation the paper prints:
+                    its two 12-mode groups are groups 1-2 and its group 10 holds the 13 most energetic modes
 
-The second block counts how often each wavelet band error stays below the
-tolerance tau over the complete 42,000-record set of the model comparison,
-which is the recovery-rate table. It reads the record set produced by
-``applications.statistics.band_error_records`` rather than recomputing the band
-errors (the same way the pre-refactor analysis consumed its upstream record
-file).
+The second block counts how often each wavelet band error stays below the tolerance tau over the complete 42,000-record set of the model comparison, which is the recovery-rate table. It reads the record set produced by ``applications.statistics.band_error_records`` rather than recomputing the band errors (the same way the pre-refactor analysis consumed its upstream record file).
 
-The three families are not equivalent inputs: the POD-coefficient estimators
-store physical fields, the convolutional estimator stores normalised fields
-(``load_run`` de-normalises them), and the linear estimator of the paper is the
-closed-form Ridge of the trained-run layout. The frozen per-mode artifact was
-built before the unit convention and the Ridge estimator were unified, so its
-convolutional and linear configurations are reported but not reproduced; only
-the MLP configurations, the modal energies and the recovery rates are expected
-to agree with the frozen values.
+The three families are not equivalent inputs: the POD-coefficient estimators store physical fields, the convolutional estimator stores normalised fields (``load_run`` de-normalises them), and the linear estimator of the paper is the closed-form Ridge of the trained-run layout. The frozen per-mode artifact was built before the unit convention and the Ridge estimator were unified, so its convolutional and linear configurations are reported but not reproduced; only the MLP configurations, the modal energies and the recovery rates are expected to agree with the frozen values.
 
 Inputs
     artifacts/pod_bases/...                       rank-128 POD basis (both components)
@@ -78,19 +58,18 @@ from features.training.estimator_runs import load_run, noise_code, run_path  # n
 OUTPUT = OUT_DIR / "per_mode_nrmse.json"
 RECORD_SET = OUT_DIR / "band_error_records.json"
 
-#: Estimators of the sweep, in the order of the per-mode listing.
+# : Estimators of the sweep, in the order of the per-mode listing.
 ESTIMATORS = ["mlp", "ridge", "vcnn"]
-#: The per-mode listing covers one representative training run per configuration.
+# : The per-mode listing covers one representative training run per configuration.
 REPRESENTATIVE_SEED = 0
-#: Decile table of the paper: the MLP run at the middle sensor count, clean input.
+# : Decile table of the paper: the MLP run at the middle sensor count, clean input.
 EXAMPLE_CONFIG = ("mlp", 20, 0.0)
-#: Modes per group in the per-configuration decile listing, which splits the 128
-#: modes into ten equal groups and leaves the eight least energetic ones out.
+# : Modes per group in the per-configuration decile listing, which splits the 128 : modes into ten equal groups and leaves the eight least energetic ones out.
 MODES_PER_LISTING_DECILE = 12
-#: Frozen values of the manuscript, checked by ``--verify``.
+# : Reference values of the paper, checked by ``--verify``.
 FROZEN_CORRELATION = -0.9772
 FROZEN_RECOVERY = {"A4": 73.4, "W4": 56.6, "W3": 48.4, "W2": 36.3, "W1": 30.8}
-#: Energy share of the 13 most energetic modes (the manuscript's decile 10).
+# : Energy share of the 13 most energetic modes (decile 10 of the paper).
 FROZEN_TOP_DECILE_ENERGY = 98.64
 
 
@@ -108,11 +87,7 @@ def decile_records(
 ) -> list[dict]:
     """Statistics of the 128 modes per energy decile of the paper's grouping.
 
-    ``descending`` counts the groups from the most energetic mode, which is the
-    orientation of the pre-refactor cross-table artifact; the default counts
-    them from the least energetic mode. The energy share is reported both as a
-    fraction of the total modal energy (the column of the paper) and as a
-    percentage of λ_1² (the value of the pre-refactor artifact).
+    ``descending`` counts the groups from the most energetic mode, which is the orientation of the pre-refactor cross-table artifact; the default counts them from the least energetic mode. The energy share is reported both as a fraction of the total modal energy (the column of the paper) and as a percentage of λ_1² (the value of the pre-refactor artifact).
     """
     order = np.argsort(mode_energy)
     if descending:
@@ -140,10 +115,7 @@ def decile_records(
 def listing_decile_records(errors: np.ndarray, mode_energy: np.ndarray) -> list[dict]:
     """Equal-size decile listing stored with every configuration.
 
-    The listing groups the modes into ten equal groups of 12, most energetic
-    first, so the eight least energetic modes are not covered; it is kept for
-    compatibility with the frozen per-mode artifact, which reports the same
-    list for all 60 configurations.
+    The listing groups the modes into ten equal groups of 12, most energetic first, so the eight least energetic modes are not covered; it is kept for compatibility with the frozen per-mode artifact, which reports the same list for all 60 configurations.
     """
     order = np.argsort(mode_energy)[::-1]
     records = []
@@ -213,9 +185,7 @@ def summary_of_model(records: list[dict], model: str) -> dict | None:
 def recovery_rates(bands: list[str], tau: float) -> dict:
     """Share of the records whose band error stays below tau.
 
-    The record set pools the MLP and convolutional runs (three training seeds
-    each) with the closed-form Ridge runs (one deterministic run per
-    configuration), 42,000 records in total, and every record carries the same
+    The record set pools the MLP and convolutional runs (three training seeds each) with the closed-form Ridge runs (one deterministic run per configuration), 42,000 records in total, and every record carries the same
     weight.
     """
     payload = json.loads(RECORD_SET.read_text(encoding="utf-8"))
@@ -255,7 +225,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--verify", action="store_true",
-                        help="compare the reported values with the manuscript")
+                        help="compare the reported values with the paper")
     parser.add_argument("--verify-only", action="store_true",
                         help="verify an existing output file without recomputing")
     args = parser.parse_args()
@@ -331,13 +301,13 @@ def main() -> int:
         "decile_sizes": list(DECILE_SIZES),
         "rows": decile_rows(rows),
         "rows_descending": decile_rows(rows_descending),
-        "rows_manuscript": decile_rows(rows_descending[::-1]),
+        "rows_paper": decile_rows(rows_descending[::-1]),
         "descending_grouping": ("descending energy order: 13 modes in groups 1-8 and "
                                 "12 modes in groups 9-10, the orientation of the frozen "
                                 "cross-table artifact (its group 1 is the most energetic)"),
-        "manuscript_grouping": ("ascending energy order: 12 modes in groups 1-2 and 13 "
-                                "modes in groups 3-10, the orientation of the frozen "
-                                "facts of the manuscript"),
+        "paper_grouping": ("ascending energy order: 12 modes in groups 1-2 and 13 "
+                           "modes in groups 3-10, the orientation of the table of "
+                           "the paper"),
         "structured": rows,
         "structured_descending": rows_descending,
         "energy_share_definition": "share of the total modal energy of the 128 modes",
@@ -404,8 +374,8 @@ def main() -> int:
 
 
 def verify(results: list[dict], deciles: dict, rates: dict) -> int:
-    """Compare the reported values with the frozen values of the manuscript."""
-    print("\nverification against the manuscript")
+    """Compare the reported values with the reference values of the paper."""
+    print("\nverification against the reference values")
     ok = True
 
     example = next(
@@ -416,14 +386,14 @@ def verify(results: list[dict], deciles: dict, rates: dict) -> int:
     )
     difference = abs(example["spearman_r"] - FROZEN_CORRELATION)
     print(f"  {EXAMPLE_CONFIG[0].upper()} M={EXAMPLE_CONFIG[1]} sigma={EXAMPLE_CONFIG[2]}: "
-          f"rho = {example['spearman_r']:+.4f} (manuscript {FROZEN_CORRELATION:+.4f})  "
+          f"rho = {example['spearman_r']:+.4f} (paper {FROZEN_CORRELATION:+.4f})  "
           f"{'OK' if difference < 5e-3 else 'DIFFERS'}")
     ok &= difference < 5e-3
 
     for band, expected in FROZEN_RECOVERY.items():
         reported = rates["overall"][band]["rate_pct"]
         difference = abs(reported - expected)
-        print(f"  recovery {band}: {reported:>5.1f}% (manuscript {expected:>5.1f}%)  "
+        print(f"  recovery {band}: {reported:>5.1f}% (paper {expected:>5.1f}%)  "
               f"{'OK' if difference < 0.2 else 'DIFFERS'}")
         ok &= difference < 0.2
 
@@ -431,7 +401,7 @@ def verify(results: list[dict], deciles: dict, rates: dict) -> int:
     top_twelve = deciles["structured"][-1]["energy_share_pct"]
     difference = abs(top_thirteen - FROZEN_TOP_DECILE_ENERGY)
     print(f"  most energetic 13 modes: {top_thirteen:.2f}% of the modal energy "
-          f"(manuscript {FROZEN_TOP_DECILE_ENERGY:.2f}%)  "
+          f"(paper {FROZEN_TOP_DECILE_ENERGY:.2f}%)  "
           f"{'OK' if difference < 0.05 else 'DIFFERS'}")
     print(f"  most energetic 12 modes: {top_twelve:.2f}% (the grouping of the per-configuration listing)")
     ok &= difference < 0.05

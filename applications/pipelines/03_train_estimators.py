@@ -1,11 +1,6 @@
 """Train and evaluate every reconstruction estimator of the main paper.
 
-Four estimators are compared: the closed-form least-squares map, Gappy POD, the
-POD-coefficient network and the convolutional estimator. They differ in what
-they store and in how they are trained, so the work is done by the routines in
-``features.training.pod_sweep`` and ``features.training.vcnn_sweep``; this module
-defines the experiment grid and writes each run to the location that the
-statistics layer looks in (``features.training.estimator_runs``).
+Four estimators are compared: the closed-form least-squares map, Gappy POD, the POD-coefficient network and the convolutional estimator. They differ in what they store and in how they are trained, so the work is done by the routines in ``features.training.pod_sweep`` and ``features.training.vcnn_sweep``; this module defines the experiment grid and writes each run to the location that the statistics layer looks in (``features.training.estimator_runs``).
 
 Grid
     sensor counts   10, 15, 20, 30, 50 of one fixed nested sequence
@@ -17,10 +12,7 @@ Pipeline
     this step trains the estimators into artifacts/
     next      applications/pipelines/04_compute_statistics.py
 
-Each run writes ``tests/<noise code>/test_raw.npz`` holding the target fields, the
-reconstructions, the test snapshot indices and the noise level. For a given
-training seed every estimator is evaluated on the same test snapshots, which is
-what makes the configuration-wise comparisons of the statistics layer valid.
+Each run writes ``tests/<noise code>/test_raw.npz`` holding the target fields, the reconstructions, the test snapshot indices and the noise level. For a given training seed every estimator is evaluated on the same test snapshots, which is what makes the configuration-wise comparisons of the statistics layer valid.
 
 Outputs (main sequence, ``--family family_01``)
     artifacts/pod_model_sweep_nc/{mlp,ridge}_n{count:04d}/seed{seed:03d}/
@@ -36,8 +28,7 @@ Usage
     python applications/pipelines/03_train_estimators.py --family family_02 --models mlp
     python applications/pipelines/03_train_estimators.py --check
 
-``--check`` only reports which of the expected runs are present, which is the
-cheap way to confirm that the statistics layer will find its inputs.
+``--check`` only reports which of the expected runs are present, which is the cheap way to confirm that the statistics layer will find its inputs.
 """
 
 from __future__ import annotations
@@ -80,33 +71,30 @@ DATA_ARRAY = ROOT / "data" / "cylinder2d_q1.npy"
 POD_BUNDLE = ROOT / "artifacts" / "pod_bases" / "cylinder2d_q1" / "pod_base_bundle.npz"
 VCNN_ROOT = ROOT / "artifacts" / "vcnn_results"
 
-#: Sensor sequence of the main experiments; the placement study uses the others.
+# : Sensor sequence of the main experiments; the placement study uses the others.
 MAIN_FAMILY = "family_01"
 
 MODELS = ("mlp", "ridge", "gappy", "vcnn")
-#: Estimators without a training seed, evaluated once per configuration.
+# : Estimators without a training seed, evaluated once per configuration.
 DETERMINISTIC = ("ridge", "gappy")
 
-#: Training settings of the convolutional estimator, as used for the paper.
+# : Training settings of the convolutional estimator, as used for the paper.
 VCNN_TRAINING = {
     "batch_size": 32, "num_epochs": 2000, "lr": 1e-3, "min_lr": 1e-5,
     "warmup_epochs": 5, "cosine_schedule": True, "early_stop": False,
     "weight_decay": 0.0, "val_ratio": 0.1, "test_ratio": 0.2,
 }
-#: Training settings of the POD-coefficient network.
+# : Training settings of the POD-coefficient network.
 MLP_TRAINING = {
     "num_epochs": 5000, "lr": 1e-3, "weight_decay": 1e-4, "batch_size": 64,
     "early_patience": 30,
 }
-#: Truncated settings used by --smoke, which only exercises the code path.
+# : Truncated settings used by --smoke, which only exercises the code path.
 SMOKE = {"vcnn_epochs": 2, "vcnn_batches": 2, "mlp_epochs": 2}
-#: Grid of the convolutional estimator in the placement study: retraining it on
-#: every family and noise level would be prohibitive, so the paper validates it
-#: on two sequences with three sensor counts and two noise levels.
+# : Grid of the convolutional estimator in the placement study: retraining it on : every family and noise level would be prohibitive, so the paper validates it : on two sequences with three sensor counts and two noise levels.
 VCNN_VALIDATION = {"sensor_counts": (10, 30, 50), "sigmas": (0.0, 0.1), "seeds": (0,)}
 
-#: Redirects every output below a scratch directory. ``--smoke`` sets it so that
-#: a truncated test run can never overwrite a run that the paper depends on.
+# : Redirects every output below a scratch directory. ``--smoke`` sets it so that : a truncated test run can never overwrite a run that the paper depends on.
 _SCRATCH: Path | None = None
 
 
@@ -117,10 +105,7 @@ def _redirect(path: Path) -> Path:
     return _SCRATCH / path.relative_to(ROOT / "artifacts")
 
 
-#: Contiguous-holdout audit: is the random 70/10/20 split letting temporally
-#: adjacent snapshots sit on both sides of the train/test boundary? One shedding
-#: period is about 63 snapshots (supplement), so that is the guard gap; the
-#: validation and inner test blocks keep the sizes of the random split.
+# : Contiguous-holdout audit: is the random 70/10/20 split letting temporally : adjacent snapshots sit on both sides of the train/test boundary? One shedding : period is about 63 snapshots (supplement), so that is the guard gap; the : validation and inner test blocks keep the sizes of the random split.
 BLOCKED_GUARD = 63
 BLOCKED_N_TEST = 300
 BLOCKED_N_VAL = 120
@@ -134,10 +119,7 @@ BLOCKED_PLACEMENTS = {
 def blocked_split(placement: int, n_total: int) -> dict[str, np.ndarray]:
     """Contiguous train | val | test blocks with a guard gap around the test block.
 
-    ``test`` carries the guard rows (tests kept the same size as the random
-    split), so the saved predictions can be evaluated on the narrower inner
-    block later; ``test_inner`` is that block. Every guard row is excluded from
-    training, which is the whole point of the audit.
+    ``test`` carries the guard rows (tests kept the same size as the random split), so the saved predictions can be evaluated on the narrower inner block later; ``test_inner`` is that block. Every guard row is excluded from training, which is the whole point of the audit.
     """
     spec = BLOCKED_PLACEMENTS[placement]
     guard = int(BLOCKED_GUARD)
@@ -159,9 +141,7 @@ def build_blocked_bundle(split: dict[str, np.ndarray], out_path: Path,
 
     Uses ``luna.pod.decomposition.compute_pod``, i.e. the same decomposition as
     ``applications/pipelines/02_build_pod_bases.py``, on the blocked training
-    snapshots only, so the basis cannot see the held-out block. The coefficient
-    array covers every snapshot, because the estimators read the coefficients of
-    the validation/test rows from the bundle.
+    snapshots only, so the basis cannot see the held-out block. The coefficient array covers every snapshot, because the estimators read the coefficients of the validation/test rows from the bundle.
     """
     from luna.pod.decomposition import compute_pod
 
@@ -221,10 +201,7 @@ def vcnn_root(training_seed: int, family: str) -> Path:
 def run_directory(model: str, family: str, sensors: int, sigma: float, seed: int) -> Path:
     """Directory in which one run stores its test output.
 
-    The convolutional sweep names a model directory after its sensor count and
-    mask seed, and marks the use of explicit mask files with ``_custom``. The
-    placement study stores its runs in the same layout as the other estimators,
-    so that all of them can be summarised by a single scan.
+    The convolutional sweep names a model directory after its sensor count and mask seed, and marks the use of explicit mask files with ``_custom``. The placement study stores its runs in the same layout as the other estimators, so that all of them can be summarised by a single scan.
     """
     if model == "vcnn":
         if family == MAIN_FAMILY:
@@ -240,9 +217,7 @@ def expected_runs(models: list[str], family: str, sensor_counts: list[int],
                   sigmas: list[float], seeds: list[int]) -> list[dict]:
     """Every run the statistics layer will look for, with its expected path.
 
-    Outside the main sequence the convolutional estimator is trained on the
-    reduced grid of the placement study, so the requested grid is intersected
-    with :data:`VCNN_VALIDATION` for that estimator only.
+    Outside the main sequence the convolutional estimator is trained on the reduced grid of the placement study, so the requested grid is intersected with :data:`VCNN_VALIDATION` for that estimator only.
     """
     runs = []
     for model in models:
@@ -289,8 +264,7 @@ def train_pod_case(model: str, family: str, sensors: int, seed: int,
         if model == "mlp":
             settings["val_indices"] = split["val"]
     if model == "mlp":
-        # Only the network has a training seed; the two closed-form estimators
-        # are deterministic and always use the seed-0 split.
+        # Only the network has a training seed; the two closed-form estimators are deterministic and always use the seed-0 split.
         settings.update(MLP_TRAINING, training_seed=seed, device=device)
         if smoke:
             settings["num_epochs"] = SMOKE["mlp_epochs"]
@@ -346,10 +320,7 @@ def place_family_output(family: str, sensors: int, seed: int,
                         sigmas: tuple[float, ...]) -> list[Path]:
     """Move the placement-study output into the common run layout.
 
-    The sweep writes its own directory names; the summary scans all estimators
-    with one rule, so the test outputs of this estimator are copied to the same
-    location the other estimators use. The reported quantities are evaluated on
-    the copied files, so the check in ``--check`` is meaningful.
+    The sweep writes its own directory names; the summary scans all estimators with one rule, so the test outputs of this estimator are copied to the same location the other estimators use. The reported quantities are evaluated on the copied files, so the check in ``--check`` is meaningful.
     """
     import shutil
 
@@ -373,8 +344,7 @@ def run_one(job: tuple, *, family: str, sigmas: tuple[float, ...], device: str,
             gappy_candidates: tuple[int, ...] | None = None) -> dict:
     """Train one (model, sensor count, seed) run.
 
-    Module level on purpose: ``ProcessPoolExecutor`` has to pickle the callable,
-    which a closure defined inside ``main`` cannot be.
+    Module level on purpose: ``ProcessPoolExecutor`` has to pickle the callable, which a closure defined inside ``main`` cannot be.
     """
     model, sensors, seed = job
     print(f"   {model:6s} M={sensors:3d} seed={seed:3d}", flush=True)

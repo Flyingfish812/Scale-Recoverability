@@ -1,9 +1,6 @@
 """How much does the band-POD energy threshold move the coherent-only count?
 
-The coherent-only scale count projects the fields onto per-band POD bases whose
-size follows an energy threshold eta. This module repeats the count at
-eta = 0.99 (the value used everywhere else) and at the ends of the range the paper
-reports, so that the threshold can be seen not to carry the result.
+The coherent-only scale count projects the fields onto per-band POD bases whose size follows an energy threshold eta. This module repeats the count at eta = 0.99 (the value used everywhere else) and at the ends of the range the paper reports, so that the threshold can be seen not to carry the result.
 
 Output
 ------
@@ -29,7 +26,7 @@ from luna.pod.band_pod import fit_band_pod  # noqa: E402
 from luna.wavelet.metrics import compute_S_coh, compute_S_full  # noqa: E402
 
 RAW_SEQUENCE = ROOT / "data" / "cylinder2d_q1.npy"
-#: Fields used to fit the per-band bases, drawn from the training split.
+# : Fields used to fit the per-band bases, drawn from the training split.
 BAND_POD_FIELDS = 400
 ETA_VALUES = [0.95, 0.99, 0.999]
 REFERENCE_ETA = 0.99

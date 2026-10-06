@@ -1,15 +1,12 @@
 """How measurement noise amplifies the error of each wavelet band.
 
-For every estimator the mean band error at the highest tested noise level is
-compared with the clean case,
+For every estimator the mean band error at the highest tested noise level is compared with the clean case,
 
     ratio_b = mean over snapshots of E_total(b) at sigma = 0.1
               -----------------------------------------------------  ,
               mean over snapshots of E_total(b) at sigma = 0
 
-and the same ratio is formed for the global error. Ratios above one mean that
-noise degrades that band; the comparison across bands shows which scales the
-noise reaches first.
+and the same ratio is formed for the global error. Ratios above one mean that noise degrades that band; the comparison across bands shows which scales the noise reaches first.
 
 Inputs
     artifacts/statistics/band_error_records.json   (produced by

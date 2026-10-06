@@ -1,9 +1,7 @@
 """
 POD Oracle reconstruction — theoretical lower bound for any POD-based method.
 
-Given a POD basis and a target field, the oracle reconstructs the field
-by projecting onto the truncated basis. This gives the best possible
-reconstruction achievable with the given rank.
+Given a POD basis and a target field, the oracle reconstructs the field by projecting onto the truncated basis. This gives the best possible reconstruction achievable with the given rank.
 """
 
 from __future__ import annotations
@@ -21,14 +19,10 @@ def truncation_reference_reconstruct(
 ) -> np.ndarray:
     """Oracle reconstruction: project field onto POD basis, then reconstruct.
 
-    This is the theoretical lower bound — no model can do better than this
-    for a given POD basis and rank.
+    This is the theoretical lower bound — no model can do better than this for a given POD basis and rank.
 
     Args:
-        field: (H, W) or (D,) ground truth field.
-        basis: (r, D) POD spatial basis.
-        mean: (D,) ensemble mean.
-        spatial_shape: (H, W) for output reshaping.
+        field: (H, W) or (D,) ground truth field. basis: (r, D) POD spatial basis. mean: (D,) ensemble mean. spatial_shape: (H, W) for output reshaping.
 
     Returns:
         Oracle-reconstructed field.
@@ -46,10 +40,7 @@ def truncation_reference_batch(
     """Batch oracle reconstruction for multiple fields.
 
     Args:
-        fields: (N, H, W) or (N, D) array of fields.
-        basis: (r, D) POD basis.
-        mean: (D,) mean.
-        spatial_shape: (H, W).
+        fields: (N, H, W) or (N, D) array of fields. basis: (r, D) POD basis. mean: (D,) mean. spatial_shape: (H, W).
 
     Returns:
         (N, H, W) or (N, D) oracle reconstructions.

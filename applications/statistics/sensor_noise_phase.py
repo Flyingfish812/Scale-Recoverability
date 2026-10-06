@@ -1,19 +1,12 @@
 """Sensor-count / noise phase diagram of the scale-recoverability index.
 
-For every configuration the index S_full is evaluated on each of the 300 test
-snapshots of one representative training run, and summarised by its mean and by
-the pass probabilities
+For every configuration the index S_full is evaluated on each of the 300 test snapshots of one representative training run, and summarised by its mean and by the pass probabilities
 
-    P3 = fraction of snapshots with S_full >= 3
-    P4 = fraction of snapshots with S_full >= 4
+    P3 = fraction of snapshots with S_full >= 3 P4 = fraction of snapshots with S_full >= 4
 
-with a 95% bootstrap interval over snapshots. The result is the phase diagram
-quoted in the paper: how the finest reliably recovered scale moves with sensor
-count M and measurement noise sigma.
+with a 95% bootstrap interval over snapshots. The result is the phase diagram quoted in the paper: how the finest reliably recovered scale moves with sensor count M and measurement noise sigma.
 
-Fields are evaluated in physical units; the convolutional estimator stores its
-outputs in normalised units and is de-normalised first (the legacy pipeline did
-not do this, which biased its S_full downwards at the coarse end).
+Fields are evaluated in physical units; the convolutional estimator stores its outputs in normalised units and is de-normalised first; without that step the coarse end of S_full is biased downwards.
 
 Inputs
     artifacts/<estimator runs>/    one test_raw.npz per configuration
@@ -149,20 +142,16 @@ def main() -> int:
 
 
 def verify(records: list[dict]) -> int:
-    """Compare with the frozen baseline of the submitted manuscript.
+    """Compare with the reference values reported in the paper.
 
-    The baseline evaluated the convolutional estimator in normalised units, so
-    its S_full is systematically lower wherever the reconstruction fails in the
-    coarse bands; only the POD-coefficient estimators must reproduce the
-    baseline here.
+    The baseline evaluated the convolutional estimator in normalised units, so its S_full is systematically lower wherever the reconstruction fails in the coarse bands; only the POD-coefficient estimators must reproduce the baseline here.
     """
     baseline = json.loads(BASELINE.read_text(encoding="utf-8"))["phase_summary"]
-    print("\nverification against the frozen baseline")
+    print("\nverification against the reference values")
     worst = 0.0
     for record in records:
         if record["model"] in ("vcnn", "ridge"):
-            # the baseline evaluated the convolutional estimator in normalised
-            # units, and used a deprecated AdamW-trained Ridge
+            # the baseline evaluated the convolutional estimator in normalised units, and used a Ridge estimator that differs from the closed form
             continue
         expected = baseline.get(record["model"], {}).get(
             str(record["sensor_count"]), {}).get(str(record["noise_sigma"]))

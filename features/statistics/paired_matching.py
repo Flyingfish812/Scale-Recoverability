@@ -1,14 +1,8 @@
 """Matching and paired statistics for the equal-error comparison.
 
-The main text compares reconstructions that have the same global error but a
-different number of recovered scales. Those comparison units are built here: two
-snapshots of one configuration are matched when their global errors agree to
-within a tolerance while their scale counts differ by at least a given gap, and
-the resulting pairs are summarised with paired tests and a cluster bootstrap that
-respects the temporal ordering of the snapshots.
+The main text compares reconstructions that have the same global error but a different number of recovered scales. Those comparison units are built here: two snapshots of one configuration are matched when their global errors agree to within a tolerance while their scale counts differ by at least a given gap, and the resulting pairs are summarised with paired tests and a cluster bootstrap that respects the temporal ordering of the snapshots.
 
-The matching is first-fit and one-to-one, so the result is deterministic and does
-not depend on the order in which equally valid partners appear.
+The matching is first-fit and one-to-one, so the result is deterministic and does not depend on the order in which equally valid partners appear.
 """
 
 from __future__ import annotations
@@ -20,8 +14,7 @@ EPS = 1e-12
 
 def find_internal_pairs(ger_list, sfull_list, tol=0.01, min_gap=2):
     """
-    Find one-to-one matched pairs within a single configuration.
-    Uses same first-fit algorithm as s33 for reproducible results.
+    Find one-to-one matched pairs within a single configuration. First-fit scanning, so the result is deterministic.
 
     Conditions:
       - |GER_i - GER_j| / max(GER_i, GER_j) <= tol
@@ -81,8 +74,7 @@ def compute_paired_stats(all_pairs_data):
     """
     Compute paired statistics for the matched pairs.
 
-    all_pairs_data: list of dicts, each with fields for both members.
-    Returns dict with n_pairs, per-metric tests.
+    all_pairs_data: list of dicts, each with fields for both members. Returns dict with n_pairs, per-metric tests.
     """
     w1_low, w1_high = [], []
     vort_low, vort_high = [], []

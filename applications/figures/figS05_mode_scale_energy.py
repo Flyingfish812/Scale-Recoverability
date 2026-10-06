@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS05_mode_scale_energy.py — Fig. S5 mode-to-scale energy
+figS05_mode_scale_energy.py — supplementary figure S9: mode-to-scale energy
 
 Purpose
     (a) cumulative band energy C_b(r) of the POD modes;
@@ -63,11 +63,10 @@ def main() -> int:
 
     # (b) per-mode band energy fractions (bottom left) — multi-line (smoothed)
     # band_energy_weighted[b][j] = λ_j ‖W_b(φ_j)‖² is a weighted energy with
-    # arbitrary units, so it is not plotted directly. The plotted quantity is
-    # the share of the mode φ_r energy carried by band b:
-    #   frac_b(r) = E_b(φ_r) / Σ_b' E_b'(φ_r) ∈ [0,1], summing to 1 per mode.
-    # Those per-mode fractions oscillate strongly in r, so the plotted curves
-    # are Gaussian-smoothed trends, which make the band shares readable.
+    # arbitrary units, so it is not plotted directly. The plotted quantity is the share of the mode φ_r energy carried by band b:
+    # frac_b(r) = E_b(φ_r) / Σ_b' E_b'(φ_r) ∈ [0,1], summing to 1 per mode.
+    # Those per-mode fractions oscillate strongly in r, so the plotted curves are Gaussian-smoothed trends, which
+    # make the band shares readable.
     from scipy.ndimage import gaussian_filter1d
     ax = fig.add_subplot(gs[1, 0])
     Eb = np.stack([np.asarray(bw[b], dtype=float) for b in BANDS])   # (5, 128)

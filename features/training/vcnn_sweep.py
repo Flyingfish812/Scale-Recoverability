@@ -1,9 +1,6 @@
 """Sensor-mask sweep for the convolutional estimator.
 
-Trains one run per (data source, sensor mask, random seed) and evaluates it at a
-fixed set of test noise levels. Each run writes its checkpoint and the
-reconstructions under the sweep root, which is where the statistics stage reads
-them from.
+Trains one run per (data source, sensor mask, random seed) and evaluates it at a fixed set of test noise levels. Each run writes its checkpoint and the reconstructions under the sweep root, which is where the statistics stage reads them from.
 
 Entry point: ``applications/pipelines/03_train_estimators.py``.
 """
@@ -192,10 +189,10 @@ def run_vcnn_sweep(
 
     mask_rates = tuple(float(value) for value in sweep_config.mask_rates)
     mask_nums = tuple(int(value) for value in sweep_config.mask_nums)
-    legacy_noise_sigmas = tuple(float(value) for value in sweep_config.noise_sigmas)
+    fallback_noise_sigmas = tuple(float(value) for value in sweep_config.noise_sigmas)
     test_noise_sigmas = tuple(float(value) for value in sweep_config.test_noise_sigmas)
-    if not test_noise_sigmas and legacy_noise_sigmas:
-        test_noise_sigmas = legacy_noise_sigmas
+    if not test_noise_sigmas and fallback_noise_sigmas:
+        test_noise_sigmas = fallback_noise_sigmas
     train_noise_sigma = float(sweep_config.train_noise_sigma)
     mask_seeds = tuple(int(value) for value in sweep_config.mask_seeds)
     mask_paths = tuple(Path(value) for value in sweep_config.mask_paths)
@@ -363,7 +360,7 @@ def run_vcnn_sweep(
         "sweep_config": {
             "mask_rates": list(mask_rates),
             "mask_nums": list(mask_nums),
-            "noise_sigmas": list(legacy_noise_sigmas),
+            "noise_sigmas": list(fallback_noise_sigmas),
             "train_noise_sigma": float(train_noise_sigma),
             "test_noise_sigmas": list(test_noise_sigmas),
             "mask_seeds": list(mask_seeds),

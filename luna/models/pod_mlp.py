@@ -13,11 +13,9 @@ from torch import nn
 
 
 class PODMLP(nn.Module):
-    """Multi-layer perceptron for predicting POD coefficients
-    from sparse spatial observations.
+    """Multi-layer perceptron for predicting POD coefficients from sparse spatial observations.
 
-    Maps a flattened observation vector (n_obs * C) through a stack of
-    Linear → ReLU → (Dropout)? layers, then outputs POD coefficients (R).
+    Maps a flattened observation vector (n_obs * C) through a stack of Linear → ReLU → (Dropout)? layers, then outputs POD coefficients (R).
     """
 
     def __init__(

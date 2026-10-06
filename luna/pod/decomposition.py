@@ -18,19 +18,11 @@ def compute_pod(
     """Compute POD decomposition of a field ensemble.
 
     Args:
-        fields: Array of shape (N, H, W) or (N, D).
-        rank: Number of modes to retain. If None, determined by energy_threshold.
-        energy_threshold: Cumulative energy ratio (e.g. 0.999).
-        center: If True, subtract the ensemble mean.
+        fields: Array of shape (N, H, W) or (N, D). rank: Number of modes to retain. If None, determined by energy_threshold. energy_threshold: Cumulative energy ratio (e.g. 0.999). center: If True, subtract the ensemble mean.
 
     Returns:
         Dict with keys:
-            'mean': (D,) mean field
-            'basis': (r, D) spatial modes (U)
-            'coefficients': (N, r) temporal coefficients (A)
-            'singular_values': (min(N,D),) all singular values
-            'energy_ratio': (min(N,D),) per-mode energy fraction
-            'cumulative_energy': (min(N,D),) cumulative energy
+            'mean': (D,) mean field 'basis': (r, D) spatial modes (U) 'coefficients': (N, r) temporal coefficients (A) 'singular_values': (min(N,D),) all singular values 'energy_ratio': (min(N,D),) per-mode energy fraction 'cumulative_energy': (min(N,D),) cumulative energy
     """
     # Flatten spatial dims
     if fields.ndim == 3:
@@ -83,9 +75,7 @@ def project_to_pod(
     """Project a field onto the POD basis to get coefficients.
 
     Args:
-        field: (D,) or (H, W) field.
-        basis: (r, D) POD basis.
-        mean: (D,) ensemble mean.
+        field: (D,) or (H, W) field. basis: (r, D) POD basis. mean: (D,) ensemble mean.
 
     Returns:
         (r,) POD coefficients.
@@ -104,10 +94,7 @@ def reconstruct_from_pod(
     """Reconstruct a field from POD coefficients.
 
     Args:
-        coefficients: (r,) POD coefficients.
-        basis: (r, D) POD basis.
-        mean: (D,) ensemble mean.
-        spatial_shape: If provided, reshape output to (H, W).
+        coefficients: (r,) POD coefficients. basis: (r, D) POD basis. mean: (D,) ensemble mean. spatial_shape: If provided, reshape output to (H, W).
 
     Returns:
         Reconstructed field (D,) or (H, W).

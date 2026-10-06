@@ -11,11 +11,9 @@ from torch import nn
 
 
 class PODLinearRegression(nn.Module):
-    """Linear (Ridge) regression for predicting POD coefficients
-    from sparse spatial observations.
+    """Linear (Ridge) regression for predicting POD coefficients from sparse spatial observations.
 
-    Maps a flattened observation vector (n_obs * C) to POD coefficients (R).
-    L2 regularization is applied via weight decay in the optimizer.
+    Maps a flattened observation vector (n_obs * C) to POD coefficients (R). L2 regularization is applied via weight decay in the optimizer.
     """
 
     def __init__(

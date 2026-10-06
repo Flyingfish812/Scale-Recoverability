@@ -1,15 +1,12 @@
 """
 Band-error metrics — denominator stability audit.
 
-Background: the per-band error of the paper is computed in the *coefficient*
-domain of a 2D DWT (db2, level 4, periodization):
+Background: the per-band error of the paper is computed in the *coefficient* domain of a 2D DWT (db2, level 4, periodization):
 
     E(A4) = ||a4_p - a4_t|| / (||a4_t|| + EPS)
     E(Wi) = sqrt(sum_hvd ||dp - dt||^2) / (sqrt(sum_hvd ||dt||^2) + EPS)
 
-The denominators ||a4_t|| and sqrt(sum ||dt||^2) are the band-wise L2 norms of
-the target field u. If a band norm is near zero, the relative band error is
-unstable / can be amplified. This module audits those denominators:
+The denominators ||a4_t|| and sqrt(sum ||dt||^2) are the band-wise L2 norms of the target field u. If a band norm is near zero, the relative band error is unstable / can be amplified. This module audits those denominators:
 
     q_b(u) = ||W_b u||_2^2 / ||u||_2^2   (energy fraction, Parseval-consistent)
     abs:    ||W_b u||_2                  (absolute band norm)
@@ -93,9 +90,7 @@ def audit_band_denominators(
     """Audit band denominators over a set of 2D fields.
 
     Args:
-        fields_2d: (N, H, W) array of target fields.
-        eps_abs: absolute band-norm near-zero threshold.
-        eps_rel: energy-fraction near-zero threshold.
+        fields_2d: (N, H, W) array of target fields. eps_abs: absolute band-norm near-zero threshold. eps_rel: energy-fraction near-zero threshold.
 
     Returns:
         dict per band with:

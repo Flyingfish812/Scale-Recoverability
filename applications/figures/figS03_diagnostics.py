@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS03_diagnostics.py — Fig. S3 supporting diagnostics (noise, levels)
+figS03_diagnostics.py — supplementary figures S10 and S12: noise and level diagnostics
 
 Purpose
     (a) mean degradation ratio of every model per band under sensor noise;
     (b) decomposition-level sensitivity: the normalised scale count
         S_full/(L+1) and the per-band mean error of each level.
-    The third panel of this appendix figure, the coherent-only sample, is drawn
-    by figS03c_pod_dominant.py.
+    The third panel of this appendix figure, the coherent-only sample, is drawn by figS03c_pod_dominant.py.
 Data source
     artifacts/statistics/noise_propagation.json
     artifacts/statistics/level_sensitivity.json

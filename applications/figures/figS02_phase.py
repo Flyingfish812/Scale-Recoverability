@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS02_phase.py — Fig. S2 phase diagrams (Ridge / VCNN)
+figS02_phase.py — supplementary figures S7 and S8: phase diagrams (Ridge / VCNN)
 
 Purpose
-    Mean S_full against the sensor count M, one curve per sensor-noise level,
-    for the closed-form ridge estimator and for VCNN, so that the two phase
-    diagrams can be compared side by side.
+    Mean S_full against the sensor count M, one curve per sensor-noise level, for the closed-form ridge estimator and for VCNN, so that the two phase diagrams can be compared side by side.
 Data source
     artifacts/statistics/band_error_records.json (ridge subset, via records)
     artifacts/statistics/sensor_noise_phase.json (VCNN phase summary)

@@ -1,8 +1,7 @@
 """
 Band name/index conversion utilities.
 
-Provides consistent mapping between band names (A4, W4, ...) and
-integer indices, in both coarse-to-fine and fine-to-coarse orderings.
+Provides consistent mapping between band names (A4, W4, ...) and integer indices, in both coarse-to-fine and fine-to-coarse orderings.
 """
 
 from __future__ import annotations

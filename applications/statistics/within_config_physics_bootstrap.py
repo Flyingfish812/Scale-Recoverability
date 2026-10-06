@@ -1,28 +1,16 @@
-"""Within-configuration correlation of the scale index and the global error with
-the Laplacian error.
+"""Within-configuration correlation of the scale index and the global error with the Laplacian error.
 
-For every sensor count and noise level of one representative convolutional run,
-the module correlates two per-snapshot diagnostics with the derivative error of
-the same reconstruction:
+For every sensor count and noise level of one representative convolutional run, the module correlates two per-snapshot diagnostics with the derivative error of the same reconstruction:
 
-    S_full  the contiguous scale count the reconstruction recovers
-    GER     the global relative error of the reconstruction
+    S_full  the contiguous scale count the reconstruction recovers GER     the global relative error of the reconstruction
 
-The reported quantity is the difference of the two absolute Spearman
-correlations,
+The reported quantity is the difference of the two absolute Spearman correlations,
 
     delta_rho = |rho(S_full, E)| - |rho(GER, E)|,
 
-together with a 95% bootstrap interval and the fraction of resamples on the
-other side of zero. A negative value means that the global error is the stronger
-correlate of the physical error, which is what the manuscript reports. The same
-statistics are computed a second time against the gradient RMSE.
+together with a 95% bootstrap interval and the fraction of resamples on the other side of zero. A negative value means that the global error is the stronger correlate of the physical error, which is what the paper reports. The same statistics are computed a second time against the gradient RMSE.
 
-A snapshot is the cluster of the analysis: ``block_bootstrap`` is called with
-block length one, so each resample draws the run's snapshots with replacement.
-The analysis keeps the fixed parameters of the manuscript -- one representative
-convolutional run, 10,000 resamples, derivatives taken on the streamwise
-component, bands and threshold taken from ``applications.config``.
+A snapshot is the cluster of the analysis: ``block_bootstrap`` is called with block length one, so each resample draws the run's snapshots with replacement. The analysis keeps the fixed parameters of the paper -- one representative convolutional run, 10,000 resamples, derivatives taken on the streamwise component, bands and threshold taken from ``applications.config``.
 
 Inputs
     the trained runs under artifacts/ (see applications/pipelines/03_train_estimators.py)
@@ -56,21 +44,19 @@ from luna.wavelet.metrics import compute_S_full  # noqa: E402
 
 OUTPUT = ROOT / "artifacts" / "statistics" / "within_config_physics_bootstrap.json"
 
-#: Estimator and training seed of the representative run the manuscript reports.
+# : Estimator and training seed of the representative run reported in the paper.
 MODEL = "vcnn"
 TRAINING_SEED = 0
-#: Channel carrying the streamwise component, on which the indices are defined.
+# : Channel carrying the streamwise component, on which the indices are defined.
 COMPONENT = 0
-#: Bootstrap settings of the manuscript.
+# : Bootstrap settings reported in the paper.
 N_RESAMPLES = 10000
 BOOTSTRAP_SEED = 42
 CI_LEVEL = 95.0
-#: A correlation needs variation in both arguments; a configuration below this
-#: many snapshots or with a constant argument is not reported.
+# : A correlation needs variation in both arguments; a configuration below this : many snapshots or with a constant argument is not reported.
 MIN_SNAPSHOTS = 10
 
-#: The diagnostics correlated with the physical error, in the order of the
-#: feature matrix handed to the bootstrap.
+# : The diagnostics correlated with the physical error, in the order of the : feature matrix handed to the bootstrap.
 PHYSICS_FIELDS = ("laplacian_rmse", "gradient_rmse")
 
 
@@ -93,12 +79,9 @@ def _gradient_rmse(truth: np.ndarray, prediction: np.ndarray) -> float:
 
 
 def snapshot_diagnostics(target: np.ndarray, reconstruction: np.ndarray, cfg) -> dict:
-    """Per-snapshot scale count, global error and derivative errors.
-
-    ``target`` and ``reconstruction`` are the physical-unit fields of one run,
-    shaped (snapshots, channels, rows, columns). The band errors behind
-    ``S_full`` use the configuration's wavelet, level, boundary mode and
-    threshold.
+    """
+    Per-snapshot scale count, global error and derivative errors.
+    ``target`` and ``reconstruction`` are the physical-unit fields of one run, shaped (snapshots, channels, rows, columns). The band errors behind ``S_full`` use the configuration's wavelet, level, boundary mode and threshold.
     """
     n_snapshots = target.shape[0]
     diagnostics = {
@@ -126,14 +109,11 @@ def snapshot_diagnostics(target: np.ndarray, reconstruction: np.ndarray, cfg) ->
 def bootstrap_delta_rho(features: np.ndarray, n_resamples: int, seed: int) -> np.ndarray:
     """Snapshot-cluster bootstrap distribution of the correlation difference.
 
-    ``features`` holds one row per snapshot with the columns ``S_full``,
-    ``GER`` and the physical error. A block length of one resamples single
-    snapshots with replacement, which is the cluster bootstrap of this analysis.
+    ``features`` holds one row per snapshot with the columns ``S_full``, ``GER`` and the physical error. A block length of one resamples single snapshots with replacement, which is the cluster bootstrap of this analysis.
     """
     def statistic(rows: np.ndarray) -> float:
         with warnings.catch_warnings():
-            # A resample can collapse a diagnostic to a constant, for which the
-            # correlation is undefined; the legacy analysis propagated that NaN.
+            # A resample can collapse a diagnostic to a constant, for which the correlation is undefined; NaN is propagated in that case.
             warnings.simplefilter("ignore")
             rho_scale, _ = sp_stats.spearmanr(rows[:, 0], rows[:, 2])
             rho_ger, _ = sp_stats.spearmanr(rows[:, 1], rows[:, 2])
@@ -165,8 +145,7 @@ def correlation_row(sensor_count, sigma, diagnostics, physics_field,
     alpha = (100.0 - CI_LEVEL) / 2.0
     ci_low = float(np.percentile(distribution, alpha))
     ci_high = float(np.percentile(distribution, 100.0 - alpha))
-    # The legacy analysis used the same definition: resamples beyond zero count
-    # against the sign of the observed difference.
+    # Resamples beyond zero are counted against the sign of the observed difference.
     p_value = float(np.mean(distribution <= 0) if delta_rho > 0
                     else np.mean(distribution >= 0))
     significant = bool((ci_low > 0 and ci_high > 0) or (ci_low < 0 and ci_high < 0))

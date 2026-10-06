@@ -1,8 +1,6 @@
 """Sensitivity of the scale count to the boundary handling of the transform.
 
-The scale count is quoted for a periodized DWT. This module repeats the count with
-the symmetric extension on two representative configurations, so that the reported
-numbers can be read as independent of that convention.
+The scale count is quoted for a periodized DWT. This module repeats the count with the symmetric extension on two representative configurations, so that the reported numbers can be read as independent of that convention.
 
 Output
 ------
@@ -25,7 +23,7 @@ from applications.config import get_config  # noqa: E402
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
 from luna.wavelet.metrics import compute_S_full  # noqa: E402
 
-#: (label, estimator, sensor count, noise level, training seed)
+# : (label, estimator, sensor count, noise level, training seed)
 CONFIGURATIONS = [
     ("mlp_m20_s0", "mlp", 20, 0.0, 0),
     ("mlp_m30_s001", "mlp", 30, 0.001, 0),

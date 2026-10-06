@@ -1,19 +1,11 @@
 """Accuracy of the POD truncation used as the reconstruction reference.
 
-Every band error in the paper is measured against a rank-r POD truncation of the
-same snapshot. This module quantifies that reference: for each rank it reports
-the per-band truncation error over a test block, the fraction of the energy the
-truncation retains, and the smallest rank at which the truncation is accurate in
-every band. It also states the resulting scale count S_full, i.e. how many bands
-of the truncation itself sit below tau.
+Every band error in the paper is measured against a rank-r POD truncation of the same snapshot. This module quantifies that reference: for each rank it reports the per-band truncation error over a test block, the fraction of the energy the truncation retains, and the smallest rank at which the truncation is accurate in every band. It also states the resulting scale count S_full, i.e. how many bands of the truncation itself sit below tau.
 
-The test block is the last 20% of each sequence, which is the protocol of the
-main experiments. For the two auxiliary datasets (RDB, SST) the block is capped
-at 300 snapshots so that all three are summarised on comparable sample sizes.
+The test block is the last 20% of each sequence, which is the protocol of the main experiments. For the two auxiliary datasets (RDB, SST) the block is capped at 300 snapshots so that all three are summarised on comparable sample sizes.
 
 Inputs
-    data/{cylinder2d_q1,rdb_h5,sst_weekly}.npy
-    artifacts/pod_bases/{...}/pod_base_bundle.npz
+    data/{cylinder2d_q1,rdb_h5,sst_weekly}.npy artifacts/pod_bases/{...}/pod_base_bundle.npz
 Output
     artifacts/statistics/truncation_reference_audit.json
     artifacts/statistics/truncation_reference_audit.csv
@@ -23,8 +15,7 @@ Usage
     python -m applications.statistics.truncation_reference_audit --datasets nc
     python -m applications.statistics.truncation_reference_audit --verify
 
-``--verify`` compares the result with the audit reported in the submitted
-manuscript, which was produced by the same computation from a legacy script.
+``--verify`` compares the result with the audit reported in the paper, produced by the same computation.
 """
 
 from __future__ import annotations
@@ -53,7 +44,7 @@ from luna.data.io import load_npy, load_npz  # noqa: E402
 from luna.wavelet.metrics import band_error  # noqa: E402
 from luna.wavelet.transform import decompose_field_2d  # noqa: E402
 
-#: Datasets of the paper, with the rank grid and test block of each.
+# : Datasets of the paper, with the rank grid and test block of each.
 DATASETS = {
     "nc": {
         "label": "numerical cylinder wake",
@@ -81,11 +72,11 @@ DATASETS = {
     },
 }
 TEST_RATIO = 0.2
-#: Upper bound on the test block, so that all datasets use the same sample size.
+# : Upper bound on the test block, so that all datasets use the same sample size.
 MAX_TEST_SNAPSHOTS = 300
 OUTPUT = ROOT / "artifacts" / "statistics" / "truncation_reference_audit.json"
 OUTPUT_CSV = ROOT / "artifacts" / "statistics" / "truncation_reference_audit.csv"
-#: Audit of the submitted manuscript, kept for --verify.
+# : Audit reported in the paper, kept for --verify.
 SUBMITTED = ROOT / "artifacts" / "derived" / "main" / "statistics" / "oracle_audit_testset.json"
 
 
@@ -93,9 +84,7 @@ def test_block(n_total: int) -> np.ndarray:
     """Indices of the held-out block: the last 20% of the sequence, capped in
     length so that every dataset is summarised on the same number of snapshots.
 
-    The cap keeps the first snapshots of the block, which is the convention of
-    the main experiments for the numerical cylinder wake, where the block is
-    exactly 300 snapshots long.
+    The cap keeps the first snapshots of the block, which is the convention of the main experiments for the numerical cylinder wake, where the block is exactly 300 snapshots long.
     """
     n_test = int(n_total * TEST_RATIO)
     return np.arange(n_total - n_test, n_total - n_test + min(n_test, MAX_TEST_SNAPSHOTS),
@@ -116,9 +105,7 @@ def truncation_band_errors(
 ) -> dict[int, dict[str, np.ndarray]]:
     """Per-snapshot band errors of the rank-r truncation, for every rank.
 
-    For a multi-channel dataset the coefficients are obtained from the full
-    state, which is what the main experiments do; the errors are then evaluated
-    on the streamwise component, as everywhere else in the paper.
+    For a multi-channel dataset the coefficients are obtained from the full state, which is what the main experiments do; the errors are then evaluated on the streamwise component, as everywhere else in the paper.
     """
     height, width = grid
     available = basis.shape[0]
@@ -162,8 +149,7 @@ def audit_dataset(name: str, config: dict, tau: float, wavelet: str, level: int,
     test_fields = fields[indices].astype(np.float64)
     channels = config["channels"]
     height, width = config["grid"]
-    # Single-channel datasets store a trailing channel axis of length one; the
-    # wavelets are applied to the two-dimensional field.
+    # Single-channel datasets store a trailing channel axis of length one; the wavelets are applied to the two-dimensional field.
     target_ch0 = (test_fields[:, :, :, 0] if channels > 1
                   else test_fields.reshape(test_fields.shape[0], height, width))
     print(f"   {len(indices)} snapshots ({indices[0]}-{indices[-1]}), "
@@ -198,9 +184,7 @@ def audit_dataset(name: str, config: dict, tau: float, wavelet: str, level: int,
             mean_ok &= statistics["mean_ok"]
             q95_ok &= statistics["q95_ok"]
             bands[band] = statistics
-        # Scale count of the truncation itself: how many of its bands are
-        # accurate, which is the reference that the reconstructions are
-        # compared against.
+        # Scale count of the truncation itself: how many of its bands are accurate, which is the reference that the reconstructions are compared against.
         accurate = sum(
             (errors[rank][band] < tau).astype(int) for band in BANDS_CF
         )
@@ -323,7 +307,7 @@ def main() -> int:
 
 
 def _verify(summaries: list[dict]) -> int:
-    """Compare with the audit reported in the submitted manuscript."""
+    """Compare with the audit reported in the paper."""
     if not SUBMITTED.exists():
         print("   submitted audit not available; nothing to compare")
         return 1

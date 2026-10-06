@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS03c_pod_dominant.py — S-Fig 3(c) POD-dominant POD component example
-(v3-3, 2026-08-31)
+figS03c_pod_dominant.py — supplementary figure S11: POD-dominant example.
 
-Single VCNN sample (figS03_pod_dominant_sample.pdf, M=20, σ=0, seed0):
-  sample = the first test snapshot with S_full <= 3 in
-  vcnn_n0020_seed000_custom/tests/s0000/test_raw.npz
-  (sample_idx=1, S_full=3, first failed band W2).
-  S_coh=5 was confirmed by recomputing with NC train-split band-POD bases
-  (channel 0 and the two-component bundle); a POD-dominant example.
-  Row1: Target / VCNN output / Direct residual (S_full)
-  Row2: failed band target / output / band error (evidence that S_coh > S_full)
-Output: figS03_pod_dominant_sample.pdf under artifacts/figures.
+A single VCNN sample (M = 20, sigma = 0, seed 0) whose direct band error fails at W2 while the POD-dominant error stays below the tolerance, so that S_coh exceeds S_full:
+  row 1: target, VCNN output, direct residual (S_full) row 2: failed band target, output, band error (the evidence that S_coh > S_full)
+
+Data: artifacts/vcnn_results/vcnn_sweep_nc_2000/vcnn_n0020_seed000_custom/
+      tests/s0000/test_raw.npz and the NC band-POD bundle.
+Output: artifacts/figures/figS03_pod_dominant_sample.pdf
 """
 
 from __future__ import annotations

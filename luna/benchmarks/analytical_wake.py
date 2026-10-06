@@ -1,28 +1,19 @@
 """
 NC-inspired analytical multiscale wake benchmark.
 
-This module provides a fully analytical, ground-truth-controlled multiscale
-field that mimics the cylinder-wake structure of the NC dataset (80x160
-velocity field, downstream von-Karman vortex street, coarse-to-fine scale
-content). It is used to validate the Scale-Recoverability diagnostics
-(S_full, S_coh, per-band errors) in a setting where the scale content is
-strictly known.
+This module provides a fully analytical, ground-truth-controlled multiscale field that mimics the cylinder-wake structure of the NC dataset (80x160 velocity field, downstream von-Karman vortex street, coarse-to-fine scale content). It is used to validate the Scale-Recoverability diagnostics (S_full, S_coh, per-band errors) in a setting where the scale content is strictly known.
 
 Construction
 ------------
-A streamfunction is built analytically and velocities follow
-u = d(psi)/dy, v = -d(psi)/dx (exactly divergence-free):
+A streamfunction is built analytically and velocities follow u = d(psi)/dy, v = -d(psi)/dx (exactly divergence-free):
 
     psi(x, y) = psi0(x, y) + E(x, y) * sum_{j=2..5} A_j g_j(x, y)
                             + A_1 g_1(x, y)
 
   * psi0        : global (A4-level) base flow -- uniform stream plus a smooth
-                  Gaussian wake deficit that turns on downstream of the
-                  cylinder.  This is the physical content of the coarsest
-                  wavelet band A4 (like the real NC mean field).
+                  Gaussian wake deficit that turns on downstream of the cylinder.  This is the physical content of the coarsest wavelet band A4 (like the real NC mean field).
   * E(x, y)     : smooth wake envelope (ramp-on at the cylinder, exponential
-                  downstream decay, Gaussian cross-stream profile with
-                  downstream widening).  Localizes detail scales to the wake.
+                  downstream decay, Gaussian cross-stream profile with downstream widening).  Localizes detail scales to the wake.
   * g_j(x, y)   : L2-normalized superposition of Fourier modes whose
                   wavenumbers lie in the octave of wavelet band j, calibrated
                   empirically against db2 / level-4 / periodization on the
@@ -37,9 +28,7 @@ Controlled cases (each "reconstruction" removes a known scale)
   E : matched-GER pair with different failed bands   -> expect same GER,
                                                        different S_full
 
-Amplitudes A_j are set so that the band energy hierarchy matches the real NC
-data (A4 ~95%, W4 ~2.5%, W3 ~1.5%, W2 ~0.3%, W1 ~0.1%), which is exactly the
-regime in which the metric is designed to add information beyond GER.
+Amplitudes A_j are set so that the band energy hierarchy matches the real NC data (A4 ~95%, W4 ~2.5%, W3 ~1.5%, W2 ~0.3%, W1 ~0.1%), which is exactly the regime in which the metric is designed to add information beyond GER.
 """
 from __future__ import annotations
 
@@ -60,8 +49,7 @@ from luna.wavelet.transform import decompose_field_2d
 class WakeParams:
     """Parameters of the analytical wake field.
 
-    All length units are grid points.  The grid is H (y) x W (x) with the
-    cylinder on the left and flow to the right (matching the NC layout).
+    All length units are grid points.  The grid is H (y) x W (x) with the cylinder on the left and flow to the right (matching the NC layout).
     """
     H: int = 80
     W: int = 160
@@ -86,8 +74,7 @@ class WakeParams:
     })
 
 
-# Wavenumber octaves per band, empirically calibrated so that each mode's
-# dominant wavelet band is its target band and the *coarse-direction* leakage
+# Wavenumber octaves per band, empirically calibrated so that each mode's dominant wavelet band is its target band and the *coarse-direction* leakage
 # (into the next coarser band) is minimized.  Bands: 1=A4 (coarsest) ... 5=W1.
 WAVENUM: dict[int, list[tuple[int, int]]] = {
     1: [(1, 1), (2, 1), (3, 2)],   # A4  (global, no envelope)
@@ -166,8 +153,7 @@ def streamfunction(
     """Analytical streamfunction and its scale components.
 
     Returns:
-        psi: (W, H) streamfunction field.
-        psi_j: {j: (W, H)} streamfunction contribution of scale j
+        psi: (W, H) streamfunction field. psi_j: {j: (W, H)} streamfunction contribution of scale j
                (psi_j = E * A_j g_j for j>=2, A_1 g_1 for j=1; psi0 is not
                attributed to a component).
     """
@@ -229,8 +215,7 @@ def generate_ensemble(
     """Generate n analytical snapshots (u fields) with random phases.
 
     Returns:
-        fields: (n, H, W) u-fields.
-        (x, y): grid arrays.
+        fields: (n, H, W) u-fields. (x, y): grid arrays.
     """
     p = params or WakeParams()
     x, y = _grid(p)
@@ -249,9 +234,7 @@ def controlled_reconstructions(
     """Build the controlled-case reconstructions.
 
     Args:
-        u: target u-field.
-        u_j: {j: u^{(j)}} scale components of the target.
-        alpha_e: partial-deletion factor for Case E (auto-solved if None).
+        u: target u-field. u_j: {j: u^{(j)}} scale components of the target. alpha_e: partial-deletion factor for Case E (auto-solved if None).
 
     Returns:
         {case_name: reconstructed u-field}

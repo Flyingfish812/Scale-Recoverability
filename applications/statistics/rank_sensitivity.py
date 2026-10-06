@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """Retained-rank (r) sensitivity: r in {100, 128, 150}.
 
-The main study fixes r = 128.  This sensitivity checks whether the coarse-to-fine
-hierarchy and the estimator ranking depend on that particular choice, by
-rebuilding the POD bundle of the numerical wake with 200 modes and re-running
-the coefficient maps at r = 100, 128, 150.
+The main study fixes r = 128.  This sensitivity checks whether the coarse-to-fine hierarchy and the estimator ranking depend on that particular choice, by rebuilding the POD bundle of the numerical wake with 200 modes and re-running the coefficient maps at r = 100, 128, 150.
 
 Estimators: Ridge (closed form), Gappy POD (rank cap r <= 2M) and MLP, all at
 the three ranks.  The bundle is written by the canonical builder of the
@@ -17,7 +14,8 @@ Outputs (nothing existing is touched):
 
 Usage
 -----
-    PYTHONPATH=<repo root> python -u applications/statistics/rank_sensitivity.py \
+    PYTHONPATH=<repo root>
+    python -u applications/statistics/rank_sensitivity.py \
         [--out-root results/rank_scan]
 """
 
@@ -54,8 +52,7 @@ CANDIDATE_RANKS = (4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128)
 FAMILY = "inc"
 
 DATA = ROOT / "data" / "cylinder2d_q1.npy"
-#: Output root; ``--out-root`` overrides it so the published script carries no
-#: date-stamped batch directory.
+# : Output root; ``--out-root`` overrides it so the published script carries no : date-stamped batch directory.
 OUT_ROOT = ROOT / "results" / "rank_scan"
 BUNDLE = OUT_ROOT / "pod_bundle_200.npz"
 
@@ -85,9 +82,7 @@ def build_bundle_200(out_root: Path) -> Path:
     """POD bundle with ``N_BUNDLE`` modes, built by the canonical builder.
 
     ``applications/pipelines/02_build_pod_bases.py`` writes the published
-    bundles; it is called here with a larger rank so that the basis, the mean
-    field and the coefficient convention are exactly those of the rank-128
-    bundle the main study uses.  The scan then varies the retained rank alone,
+    bundles; it is called here with a larger rank so that the basis, the mean field and the coefficient convention are exactly those of the rank-128 bundle the main study uses.  The scan then varies the retained rank alone,
     and its r = 128 arm reproduces the main study instead of re-deriving it on a
     basis built from a different snapshot sample.
     """

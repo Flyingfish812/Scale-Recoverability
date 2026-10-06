@@ -1,31 +1,15 @@
 """Excess per-band error of the estimators over the rank-128 truncation.
 
-For the reference configuration of the main comparison -- 20 sensor locations,
-noise-free measurements, first training seed -- the module reports, band by
-band, the mean relative error of a reconstruction minus the error of the
-rank-128 POD truncation reference:
+For the reference configuration of the main comparison -- 20 sensor locations, noise-free measurements, first training seed -- the module reports, band by band, the mean relative error of a reconstruction minus the error of the rank-128 POD truncation reference:
 
     delta_excess_band_error[model][band]
         = mean_snapshots(total(band)) - reference(band)
 
-The estimator term is the mean of ``band_errors[band]["total"]`` over the 300
-test snapshots of the run, taken from the per-snapshot record set; the reference
-term is the NC rank-128 band mean of the truncation audit. Both terms therefore
-describe the streamwise component in physical units, and the excess is the part
-of the reconstruction error that remains once the rank-128 representation floor
-is removed.
+The estimator term is the mean of ``band_errors[band]["total"]`` over the 300 test snapshots of the run, taken from the per-snapshot record set; the reference term is the NC rank-128 band mean of the truncation audit. Both terms therefore describe the streamwise component in physical units, and the excess is the part of the reconstruction error that remains once the rank-128 representation floor is removed.
 
-The POD-coefficient network and the convolutional estimator are recomputed here.
-The least-squares estimator is computed as well, as a cross-check of the
-reference: the manuscript takes its excess errors from the same record set
-through the band-error decomposition.
+The POD-coefficient network and the convolutional estimator are recomputed here. The least-squares estimator is computed as well, as a cross-check: the paper takes its excess errors from the same record set through the band-error decomposition.
 
-Two reference conventions are reported. ``truncation_errors`` is the mean of the
-record set's own per-snapshot truncation term, which pairs every estimator error
-with the truncation of the same snapshot; ``delta`` subtracts the single
-reference band mean of the truncation audit instead, which is the convention the
-manuscript uses. The two differ by the spread of the truncation term over the
-test snapshots.
+Two reference conventions are reported. ``truncation_errors`` is the mean of the record set's own per-snapshot truncation term, which pairs every estimator error with the truncation of the same snapshot; ``delta`` subtracts the single reference band mean of the truncation audit instead, which is the convention the paper uses. The two differ by the spread of the truncation term over the test snapshots.
 
 Inputs
     artifacts/statistics/band_error_records.json         per-snapshot band errors
@@ -56,17 +40,17 @@ from applications.config import get_config  # noqa: E402
 RECORDS = ROOT / "artifacts" / "statistics" / "band_error_records.json"
 TRUNCATION = ROOT / "artifacts" / "statistics" / "truncation_reference_audit.json"
 OUTPUT = ROOT / "artifacts" / "statistics" / "excess_error_recompute.json"
-#: Frozen artifact of the earlier recomputation of the same quantity, read by --verify.
+# : Frozen artifact of the earlier recomputation of the same quantity, read by --verify.
 REFERENCE = (ROOT / "artifacts" / "derived" / "main" / "statistics"
              / "s02_recomputed_values.json")
 
-#: Estimators of the reference comparison, in the order of the artifact.
+# : Estimators of the reference comparison, in the order of the artifact.
 MODELS = ("ridge", "mlp", "vcnn")
-#: The configuration the manuscript reports.
+# : The configuration reported in the paper.
 SENSOR_COUNT = 20
 NOISE_SIGMA = 0.0
 TRAINING_SEED = 0
-#: Dataset whose truncation reference is subtracted.
+# : Dataset whose truncation reference is subtracted.
 DATASET = "nc"
 
 

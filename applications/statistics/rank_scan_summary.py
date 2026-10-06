@@ -1,18 +1,8 @@
 """Aggregate the retained-rank scan into the numbers the sensitivity table prints.
 
-The main study holds the retained rank of the POD-based estimators at
-``r = 128``. ``applications/statistics/rank_sensitivity.py`` re-runs those
-estimators with the same split and the same validation-selected Gappy POD rule at
-``r = 100`` and ``r = 150``; this module reads the resulting runs and evaluates
-each one with the paper's metrics (global relative error over both velocity
-components in physical units, and per-band errors and scale count on the
-streamwise component, ``tau = 0.05``).
+The main study holds the retained rank of the POD-based estimators at ``r = 128``. ``applications/statistics/rank_sensitivity.py`` re-runs those estimators with the same split and the same validation-selected Gappy POD rule at ``r = 100`` and ``r = 150``; this module reads the resulting runs and evaluates each one with the paper's metrics (global relative error over both velocity components in physical units, and per-band errors and scale count on the streamwise component, ``tau = 0.05``).
 
-The ``r = 128`` column of the table is the main study itself, and the scan
-re-derives it from the same canonical bundle: the summary records how far the
-scan's own ``r = 128`` arm is from the main-study run of the same split and
-seed (``main_study_check``). The convolutional estimator does not appear: it
-reconstructs the field without a POD basis, so it has no retained rank to vary.
+The ``r = 128`` column of the table is the main study itself, and the scan re-derives it from the same canonical bundle: the summary records how far the scan's own ``r = 128`` arm is from the main-study run of the same split and seed (``main_study_check``). The convolutional estimator does not appear: it reconstructs the field without a POD basis, so it has no retained rank to vary.
 
 Output
 ------
@@ -40,8 +30,7 @@ SCANNED_RANKS = {k: RANKS for k in ("ridge", "gappy", "mlp")}
 MTEN = (20, 30, 50)
 MLP_M = (20, 30)
 SIGMAS = (0.0, 0.001, 0.01, 0.1)
-#: The reference conditions of the main-study comparison: every scanned mask at
-#: clean and medium noise.
+# : The reference conditions of the main-study comparison: every scanned mask at : clean and medium noise.
 CHECK_SIGMAS = (0.0, 0.01)
 CHECK_MASKS = {"ridge": MTEN, "gappy": MTEN, "mlp": MLP_M}
 TAU = 0.05

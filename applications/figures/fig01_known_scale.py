@@ -1,20 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig01_known_scale.py — JFM v0-2 Fig. 1: known-scale validation (composite).
+fig01_known_scale.py — main figure 1: known-scale validation (composite).
 
-Combines the old manuscript Fig. 2 (analytical benchmark) with the scale-count
-information of old Tables 1 and 12, at the JFM text width (384 pt = 5.33 in):
+The analytical-wake benchmark of the paper, drawn at the text width
+(384 pt = 5.33 in):
 
   (a) representative prescribed-scale analytical wake (streamwise velocity u)
       and the W1-associated carrier field that cases B and E1 remove
   (b) prescribed versus measured scale count for cases A-E2 (B-D = 4/3/2)
   (c) per-band E_direct of the equal-GER cases E1 and E2 (S_full = 4 versus 2)
 
-Data: artifacts/statistics/analytical_benchmark.json for (b) and (c); the field
-in (a) is the same deterministic construction (luna.benchmarks.analytical_wake,
-default parameters). Construction parameters and the complete case table stay in
-supplementary Table S1; no case or baseline is added here.
+Data: artifacts/statistics/analytical_benchmark.json for (b) and (c); the field in (a) is the same deterministic construction (luna.benchmarks.analytical_wake, default parameters), so it is regenerated rather than read from an artifact. The construction parameters and the complete case table are given in supplementary table S1.
 
 Output: artifacts/figures/fig01_known_scale.pdf
 """
@@ -78,8 +75,7 @@ def panel_counts(ax, cases: dict) -> None:
     ax.grid(axis="x", alpha=0.0)
     ax.legend(fontsize=6.5, loc="upper center", bbox_to_anchor=(0.5, 1.30),
               ncol=2, frameon=False, handlelength=1.2, columnspacing=0.9)
-    # the equal-GER pair shares one annotation: GER is equal for E1 and E2
-    # both are streamwise-component errors (GER_u), see the main text
+    # the equal-GER pair shares one annotation: GER is equal for E1 and E2 both are streamwise-component errors (GER_u), see the main text
     ger_e1 = cases["E1_del_W1_only"]["GER_mean"]
     ger_e2 = cases["E2_partial_W3"]["GER_mean"]
     ax.annotate("", xy=(4.30, 4.45), xytext=(5.70, 4.45),

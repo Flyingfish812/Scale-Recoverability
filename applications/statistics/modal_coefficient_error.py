@@ -1,18 +1,12 @@
 """Per-mode error of the recovered POD coefficients.
 
-For every configuration the reconstruction is projected onto the rank-128 POD
-basis and the error of each modal coefficient j is reported as
+For every configuration the reconstruction is projected onto the rank-128 POD basis and the error of each modal coefficient j is reported as
 
     e_j = sqrt( Σ_i (â_ij − a_ij)² / Σ_i a_ij² )
 
-summed over the test snapshots i. Since the modal energy λ_j² spans several
-orders of magnitude, the interesting quantity is the correlation between e_j and
-λ_j² — the mechanism discussed in the paper.
+summed over the test snapshots i. Since the modal energy λ_j² spans several orders of magnitude, the interesting quantity is the correlation between e_j and λ_j² — the mechanism discussed in the paper.
 
-Both the coefficients and the projection use the **physical** fields: the
-convolutional estimator stores its outputs in normalised units, so those are
-de-normalised first. The legacy pipeline omitted that step, which is why this
-module also reports the uncorrected variant for comparison.
+Both the coefficients and the projection use the **physical** fields: the convolutional estimator stores its outputs in normalised units, so those are de-normalised first. The uncorrected variant is reported alongside, for comparison.
 
 Inputs
     artifacts/pod_bases/...            rank-128 POD basis (both components)
@@ -20,8 +14,7 @@ Inputs
 Output
     artifacts/statistics/modal_coefficient_error.json
         per configuration: 128 per-mode errors, the Spearman correlation with
-        the modal energy, and the energy-decile summary of the reported example
-        (MLP at M=20, sigma=0)
+        the modal energy, and the energy-decile summary of the reported example (MLP at M=20, sigma=0)
 
 Usage
     python -m applications.statistics.modal_coefficient_error
@@ -189,9 +182,9 @@ def main() -> int:
 
 
 def verify(records: list[dict]) -> int:
-    """Compare the reported correlations with the values in the manuscript."""
+    """Compare the reported correlations with the values reported in the paper."""
     expected = {("mlp", 20, 0.0): -0.9772, ("vcnn", 20, 0.0): -0.0175}
-    print("\nverification against the manuscript")
+    print("\nverification against the reference values")
     ok = True
     for record in records:
         key = (record["model"], record["sensor_count"], record["noise_sigma"])
@@ -201,7 +194,7 @@ def verify(records: list[dict]) -> int:
         diff = abs(record["spearman_r"] - want)
         flag = "OK" if diff < 5e-3 else "DIFFERS"
         print(f"  {record['model']} M={record['sensor_count']} sigma={record['noise_sigma']}: "
-              f"rho = {record['spearman_r']:+.4f} (manuscript {want:+.4f})  {flag}")
+              f"rho = {record['spearman_r']:+.4f} (paper {want:+.4f})  {flag}")
         ok &= diff < 5e-3
     return 0 if ok else 1
 

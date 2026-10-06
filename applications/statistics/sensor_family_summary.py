@@ -1,16 +1,8 @@
 """Across-family summary of the sensor-placement study.
 
-The main experiments use one nested sensor sequence. To show that the
-conclusions do not depend on that particular sampling, the same protocol is
-repeated on five independently drawn nested sequences, and the convolutional
-estimator is additionally retrained on two of them as an auxiliary check. This
-module reduces those runs to the per-family error levels, the spread across
-families, and the sensor-count trend that the paper reports.
+The main experiments use one nested sensor sequence. To show that the conclusions do not depend on that particular sampling, the same protocol is repeated on five independently drawn nested sequences, and the convolutional estimator is additionally retrained on two of them as an auxiliary check. This module reduces those runs to the per-family error levels, the spread across families, and the sensor-count trend that the paper reports.
 
-Every quantity is evaluated on physical fields: the convolutional runs store
-normalised fields and are converted back with the constants recovered from the
-raw sequence, so the numbers are comparable with the POD-coefficient and
-least-squares estimators.
+Every quantity is evaluated on physical fields: the convolutional runs store normalised fields and are converted back with the constants recovered from the raw sequence, so the numbers are comparable with the POD-coefficient and least-squares estimators.
 
 Inputs
     artifacts/derived/supplementary/predictions/{family}/...   test_raw.npz
@@ -48,13 +40,13 @@ from features.training.estimator_runs import (  # noqa: E402
 )
 
 NOISE_CODES = {noise_code(sigma): sigma for sigma in (0.0, 0.001, 0.01, 0.1)}
-#: Models whose across-family spread the paper reports.
+# : Models whose across-family spread the paper reports.
 FAMILY_MODELS = ("mlp", "ridge", "gappy")
-#: Sensor counts of the auxiliary convolutional validation.
+# : Sensor counts of the auxiliary convolutional validation.
 VCNN_SENSOR_COUNTS = (10, 30, 50)
-#: Noise levels of the auxiliary convolutional validation.
+# : Noise levels of the auxiliary convolutional validation.
 VCNN_SIGMAS = (0.0, 0.1)
-#: Training epochs of every learned estimator in the family study.
+# : Training epochs of every learned estimator in the family study.
 TRAINING_EPOCHS = 2000
 OUT_DIR = ROOT / "artifacts" / "statistics" / "sensor_family"
 OUTPUT = ROOT / "artifacts" / "statistics" / "sensor_family_summary.json"

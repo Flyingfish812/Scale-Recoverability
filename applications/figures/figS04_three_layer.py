@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS04_three_layer.py — Fig. S4 three-layer error decomposition
+figS04_three_layer.py — supplementary figure S4: error decomposition relative to the truncation reference
 
 Purpose
-    Mean per-band relative L2 error split into the total error, the POD
-    truncation part and the model part for one VCNN configuration, with the
-    mean criterion tau as a reference line.
+    Mean per-band relative L2 error split into the total error, the POD truncation part and the model part for one VCNN configuration, with the mean criterion tau as a reference line.
 Data source
     artifacts/statistics/band_error_records.json (via records)
 Output

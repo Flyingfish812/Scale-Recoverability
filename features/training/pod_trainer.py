@@ -1,8 +1,7 @@
 """
 POD model (Ridge/MLP) training for POD coefficient prediction.
 
-Extracted from run_pod_model_sweep.py — provides clean training API
-using luna.models and luna.pod.
+Extracted from run_pod_model_sweep.py — provides clean training API using luna.models and luna.pod.
 """
 
 from __future__ import annotations
@@ -33,16 +32,7 @@ def train_pod_model(
     """Train a POD coefficient prediction model (Ridge or MLP).
 
     Args:
-        model: A PODLinearRegression or PODMLP instance.
-        train_dataset: Training dataset yielding (obs_vec, pod_coeff).
-        val_dataset: Optional validation dataset.
-        batch_size: Mini-batch size.
-        num_epochs: Maximum number of epochs.
-        lr: Learning rate.
-        weight_decay: L2 regularization strength.
-        device: 'auto', 'cuda', or 'cpu'.
-        seed: Random seed.
-        verbose: Print progress.
+        model: A PODLinearRegression or PODMLP instance. train_dataset: Training dataset yielding (obs_vec, pod_coeff). val_dataset: Optional validation dataset. batch_size: Mini-batch size. num_epochs: Maximum number of epochs. lr: Learning rate. weight_decay: L2 regularization strength. device: 'auto', 'cuda', or 'cpu'. seed: Random seed. verbose: Print progress.
 
     Returns:
         Dict with keys: best_val_loss, best_epoch, epochs_ran, train_losses, val_losses.
@@ -164,7 +154,6 @@ def run_pod_model_sweep(
     out.mkdir(parents=True, exist_ok=True)
 
     results: dict[str, Any] = {"config": {}, "models": []}
-    # ... (full sweep implementation would go here)
-    # For now, this is a skeleton showing the API design.
+    # ... (full sweep implementation would go here) For now, this is a skeleton showing the API design.
 
     return results

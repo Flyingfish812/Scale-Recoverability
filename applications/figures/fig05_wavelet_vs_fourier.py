@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig05_wavelet_vs_fourier.py — Fig. 5 scale diagnostics vs Fourier (v3-3, 2026-08-31)
+fig05_wavelet_vs_fourier.py — supplementary figure S6: scale-resolved diagnostics.
 
 Two panels:
-  (a) S_full (wavelet) vs S_FFT (Fourier dyadic) scatter + count labels
-  (b) controlled transform-domain test cases: agreement between the
-      prescribed count and each index (S_full / S_FFT agreement)
-Data sources (verified):
-  - artifacts/statistics/fourier_band_baseline.{csv,json}
-  - artifacts/statistics/transform_symmetry_check.json
+  (a) wavelet S_full against Fourier-dyadic S_FFT, with the count labels (b) controlled transform-domain cases: agreement between the prescribed count and each index
+
+Data: artifacts/statistics/fourier_band_baseline.{csv,json} (a),
+      artifacts/statistics/transform_symmetry_check.json (b).
 """
 
 from __future__ import annotations
@@ -76,8 +74,7 @@ def main() -> int:
     def acc(results):
         """Accuracy = fraction of field-truncation pairs whose index equals k.
 
-        Metrics are pooled over all fields and truncation levels, matching the
-        definition in Sec. 4.3.
+        Metrics are pooled over all fields and truncation levels, matching the definition in Sec. 4.3.
         """
         sub = [r for r in results if r["expected_recoverable"] is not None]
         n = len(sub)

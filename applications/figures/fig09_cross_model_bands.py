@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig09_cross_model_bands.py — Fig. 9 cross-model band errors (v3-3, 2026-08-31)
+fig09_cross_model_bands.py — main figure 5: cross-model band errors.
 
-M=20, σ=0: per-band E_direct for MLP / Ridge (closed-form) / VCNN, τ line +
-first-failed-band labels.
-Data sources: three_layer_errors_full.json (300 test snapshots x 3 seeds) + s05_true_ridge.json
-(verified, closed-form Ridge).
+At (M, sigma) = (20, 0): per-band direct error of MLP, closed-form Ridge and VCNN, with the tolerance line and the first-failed-band labels.
+
+Data: artifacts/statistics/band_error_records.json (MLP and VCNN records,
+      300 test snapshots x 3 seeds) and artifacts/statistics/truncation_reference_audit.json (Ridge summary), both through ``applications/figures/records.py``.
+Output: artifacts/figures/fig09_cross_model_bands.pdf
 """
 
 from __future__ import annotations
@@ -87,8 +88,7 @@ def main() -> int:
     ax.text(-0.50, YMIN * 2.2, f"fail $>\\tau$={TAU}", color=ps.TAU_COLOR,
             fontsize=7.5, va="bottom")
 
-    # first-failed-band labels — vertical arrows point at the bar tops
-    # text sits in one row above the τ line, clear of the line and labels
+    # first-failed-band labels — vertical arrows point at the bar tops text sits in one row above the τ line, clear of the line and labels
     for name, (off, means, color) in bars_data.items():
         k = next((i for i, m in enumerate(means) if m > TAU), None)
         if k is not None:

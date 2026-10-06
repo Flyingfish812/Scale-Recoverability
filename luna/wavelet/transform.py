@@ -1,9 +1,7 @@
 """
 Wavelet transform utilities for 2D fields.
 
-This is the **single authoritative implementation** of wavelet decomposition:
-`decompose_field_2d` maps a 2D field onto the multilevel A4/W4/W3/W2/W1 sub-band
-components, and `recompose_field_2d` inverts that mapping.
+This is the **single authoritative implementation** of wavelet decomposition: `decompose_field_2d` maps a 2D field onto the multilevel A4/W4/W3/W2/W1 sub-band components, and `recompose_field_2d` inverts that mapping.
 """
 
 from __future__ import annotations
@@ -54,18 +52,13 @@ def decompose_field_2d(
 ) -> dict[str, np.ndarray]:
     """Decompose a 2D field into wavelet sub-band components.
 
-    Performs a full DWT, then reconstructs each sub-band independently
-    by zeroing out all other coefficients.
+    Performs a full DWT, then reconstructs each sub-band independently by zeroing out all other coefficients.
 
     Args:
-        field_2d: 2D array (H, W).
-        wavelet: Wavelet name (e.g. 'db2').
-        level: Decomposition level.
-        mode: Boundary extension mode.
+        field_2d: 2D array (H, W). wavelet: Wavelet name (e.g. 'db2'). level: Decomposition level. mode: Boundary extension mode.
 
     Returns:
-        Dict mapping band name → 2D array of that band's spatial component.
-        Keys: 'A4', 'W4', 'W3', 'W2', 'W1' (coarse → fine).
+        Dict mapping band name → 2D array of that band's spatial component. Keys: 'A4', 'W4', 'W3', 'W2', 'W1' (coarse → fine).
     """
     coeffs = pywt.wavedec2(field_2d, wavelet=wavelet, level=level, mode=mode)
     h, w = field_2d.shape
@@ -99,10 +92,7 @@ def recompose_field_2d(
     This is the inverse of decompose_field_2d: sum(A4 + W4 + W3 + W2 + W1).
 
     Args:
-        components: Dict mapping band name → 2D array.
-        wavelet: Wavelet name.
-        level: Decomposition level.
-        mode: Boundary extension mode.
+        components: Dict mapping band name → 2D array. wavelet: Wavelet name. level: Decomposition level. mode: Boundary extension mode.
 
     Returns:
         Reconstructed 2D array.

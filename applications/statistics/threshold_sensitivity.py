@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Recovery-threshold sensitivity.
 
-Recounts the scale count ``S_full`` of the stored test reconstructions at
-τ=0.03, 0.05 and 0.08, for every estimator, sensor count and noise level used
-in the sweep. The default threshold of the main analysis is τ=0.05.
+Recounts the scale count ``S_full`` of the stored test reconstructions at τ=0.03, 0.05 and 0.08, for every estimator, sensor count and noise level used in the sweep. The default threshold of the main analysis is τ=0.05.
 """
 
 import json

@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig05_modal_hierarchy.py — JFM v0-2 Fig. 5: modal interpretation.
-
-Composite of the old appendix Fig. 17a (cumulative band-energy coverage,
-promoted into the main text) and the old Fig. 10a-c (per-modal NRMSE), at the
-JFM text width:
+fig05_modal_hierarchy.py — main figure 4: modal interpretation of the hierarchy.
 
   (a) cumulative band coverage C_b(r) of the retained rank-128 POD basis, with
       the mode count needed for 90 % coverage marked for A4 and W1
-  (b-d) per-modal NRMSE versus lambda_j/lambda_1 at (M, sigma) = (20, 0) for
-      MLP, Ridge and VCNN, with the Spearman correlation and its 95 % bootstrap
-      interval
+  (b-d) per-modal NRMSE against lambda_j/lambda_1 at (M, sigma) = (20, 0) for
+      MLP, Ridge and VCNN, with the Spearman correlation and its 95 % bootstrap interval
 
 Data: artifacts/statistics/mode_scale_energy.json (a),
       artifacts/pod_bases/cylinder2d_q1/pod_base_bundle.npz and
@@ -66,9 +61,7 @@ def panel_coverage(ax, coverage: dict, thresholds: dict) -> None:
         ax.plot(np.arange(1, len(arr) + 1), arr, color=ps.BAND_COLORS[band],
                 lw=1.2, label=band)
     ax.axhline(0.9, color="0.45", ls=":", lw=0.8)
-    # 90 % crossing of the coarsest and the finest band, labelled with the
-    # mode count reported in the text (12 for A4, 92 for W1). The labels are
-    # placed with positive data coordinates: the x axis is logarithmic.
+    # 90 % crossing of the coarsest and the finest band, labelled with the mode count reported in the text (12 for A4, 92 for W1). The labels are placed with positive data coordinates: the x axis is logarithmic.
     for band, factor, ha in [("A4", 1.28, "left"), ("W1", 0.78, "right")]:
         r90 = float(thresholds[band]["0.9"])
         ax.plot([r90], [0.9], marker="o", ms=4.0, color=ps.BAND_COLORS[band],

@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS01_oracle.py — Fig. S1 oracle truncation audit (RDB / SST)
+figS01_oracle.py — supplementary figure S3: oracle truncation audit (RDB / SST)
 
 Purpose
-    Mean per-band truncation error of the oracle band-POD reference as a
-    function of the POD rank, one panel per dataset, with the mean criterion
-    tau drawn as a reference line.
+    Mean per-band truncation error of the oracle band-POD reference as a function of the POD rank, one panel per dataset, with the mean criterion tau drawn as a reference line.
 Data source
     artifacts/statistics/truncation_reference_audit.json
 Output

@@ -1,13 +1,8 @@
 """Stability of the band norms used as denominators of the band errors.
 
-Every band error in the paper is a relative error, so a band whose coefficient
-norm is close to zero would inflate the ratio. This module audits the
-denominators of the 300 test snapshots: it reports the distribution of the band
-norms, their share of the total energy, and how many snapshots fall below an
-absolute or relative threshold.
+Every band error in the paper is a relative error, so a band whose coefficient norm is close to zero would inflate the ratio. This module audits the denominators of the 300 test snapshots: it reports the distribution of the band norms, their share of the total energy, and how many snapshots fall below an absolute or relative threshold.
 
-The quantities are evaluated in the wavelet coefficient domain, which is the
-domain in which the band errors of the paper are defined.
+The quantities are evaluated in the wavelet coefficient domain, which is the domain in which the band errors of the paper are defined.
 
 Inputs
     artifacts/<estimator runs>/    the target fields of one test split
@@ -41,7 +36,7 @@ from features.metrics.band_error.denominator_audit import (  # noqa: E402
 )
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
 
-#: Any run of the test split provides the same target fields.
+# : Any run of the test split provides the same target fields.
 REFERENCE_RUN = ("mlp", 10, 0.0, 0)
 OUTPUT = ROOT / "artifacts" / "statistics" / "band_denominator_check.json"
 OUTPUT_CSV = ROOT / "artifacts" / "statistics" / "band_denominator_check.csv"
@@ -161,7 +156,7 @@ def main() -> int:
 
 
 def _verify(report: dict) -> int:
-    """Compare with the audit reported in the submitted manuscript."""
+    """Compare with the audit reported in the paper."""
     submitted = ROOT / "artifacts" / "derived" / "supplementary" / "band_denominator_audit.json"
     if not submitted.exists():
         print("   submitted audit not available; nothing to compare")

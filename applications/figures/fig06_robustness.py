@@ -1,22 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig06_robustness.py — main-text robustness figure (v0-3).
+fig06_robustness.py — main figure 6: robustness of the scale count.
 
-Two compact panels for the discussion of §4.1, so that the sensitivity claims
-are supported by a figure in the main text rather than by the supplement only:
+Two compact panels that support the robustness discussion with main-text figures rather than with the supplement alone:
 
   (a) mean S_full of Ridge, MLP and VCNN in the five tested wavelet bases
-      (NC, M = 30, sigma = 0, tau = 0.05). The modal counts of the same
-      configurations are printed above the Ridge bars, because the text cites
-      them; the complete table stays in the supplement.
-  (b) mean S_full versus sensor count for tau = 0.03, 0.05 and 0.08 (MLP),
+      (NC, M = 30, sigma = 0, tau = 0.05). The modal counts of the same configurations are printed above the Ridge bars because the text cites them; the complete table stays in the supplement.
+  (b) mean S_full against sensor count for tau = 0.03, 0.05 and 0.08 (MLP),
       solid lines for clean measurements and dashed lines for sigma = 10^-2.
 
 Data: artifacts/statistics/wavelet_sensitivity.json (a),
       artifacts/statistics/threshold_sensitivity.json (b).
-Nothing is recomputed: both artifacts are the sources of the published
-sensitivity tables.
+Both artifacts are also the sources of the published sensitivity tables.
 
 Output: artifacts/figures/fig06_robustness.pdf
 """

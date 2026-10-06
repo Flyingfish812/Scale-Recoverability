@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Fourier spectral baseline.
 
-Companion to the wavelet band metrics: the same reconstructions are scored with
-standard Fourier quantities, so that the band decomposition can be compared with
-the usual spectral summary.
+Companion to the wavelet band metrics: the same reconstructions are scored with standard Fourier quantities, so that the band decomposition can be compared with the usual spectral summary.
 
 Metrics
 -------
@@ -13,8 +11,7 @@ RMSE_low      reconstruction error below the cut-off wavenumber.
 RMSE_high     reconstruction error above the cut-off wavenumber.
 S_FFT         number of dyadic frequency shells below the error threshold.
 
-The script also reports the correlation of these quantities with``S_full`` over
-the equal-GER pairs.
+The script also reports the correlation of these quantities with``S_full`` over the equal-GER pairs.
 
 Output
 ------
@@ -72,8 +69,7 @@ def fourier_low_high_rmse(
     """Low-frequency and high-frequency RMSE in Fourier domain.
 
     Splits the 2D frequency plane at k_cutoff = cutoff_ratio * k_max.
-      Low:  ‖k‖ ≤ k_cutoff
-      High: ‖k‖ > k_cutoff
+      Low:  ‖k‖ ≤ k_cutoff High: ‖k‖ > k_cutoff
 
     Returns:
         {"low_rmse": ..., "high_rmse": ..., "low_rmse_rel": ..., "high_rmse_rel": ...}
@@ -329,8 +325,7 @@ def run_fourier_spectral_analysis(
 def analyze_equal_ger_subset(results: list[dict]) -> dict:
     """Analyze samples with similar GER but different S_full.
 
-    Finds pairs with GER difference < 5% and S_full difference ≥ 2.
-    Compares their spectral metrics.
+    Finds pairs with GER difference < 5% and S_full difference ≥ 2. Compares their spectral metrics.
     """
     n = len(results)
     pairs = []
@@ -421,9 +416,7 @@ def print_summary(result: dict) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fourier Spectral Baseline — Standard Metrics")
     parser.add_argument("--test-npz", default=None)
-    # The VCNN test file holds the full 300-snapshot held-out set used
-    # throughout the paper; score all of them so that the Fourier baseline and
-    # the wavelet band metrics share one test population.
+    # The VCNN test file holds the full 300-snapshot held-out set used throughout the paper; score all of them so that the Fourier baseline and the wavelet band metrics share one test population.
     parser.add_argument("--n-samples", type=int, default=300)
     parser.add_argument("--tau", type=float, default=TAU_DEFAULT)
     parser.add_argument("--wavelet", default=DEFAULT_WAVELET)

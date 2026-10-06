@@ -1,12 +1,6 @@
 """Check that the raw arrays the paper is computed from are in place.
 
-Raw fields are not shipped with the repository: they have to be fetched from the
-public sources listed in ``scripts/download_data.sh`` and placed under ``data/``.
-This step is the gate in front of the pipeline. It verifies that each array is
-present and has the shape the paper's experiments assume, and it prints the
-fetch instructions of the ones that are missing or unusable, so that a failure
-says what to download instead of surfacing later as a shape error inside the
-POD decomposition or the statistics layer.
+Raw fields are not shipped with the repository: they have to be fetched from the public sources listed in ``scripts/download_data.sh`` and placed under ``data/``. This step is the gate in front of the pipeline. It verifies that each array is present and has the shape the paper's experiments assume, and it prints the fetch instructions of the ones that are missing or unusable, so that a failure says what to download instead of surfacing later as a shape error inside the POD decomposition or the statistics layer.
 
 Prerequisites
     none (this is the first step of the pipeline)
@@ -16,11 +10,7 @@ Verified arrays (sources, layouts and download steps: scripts/download_data.sh)
     data/rdb_h5.npy          (5050, 128, 128, 1)  RDB, rank-adequacy check
     data/sst_weekly.npy      (1914, 180, 360, 1)  SST, rank-adequacy check
 
-Paths come from the dataset registry (``luna.data.registry``), which is the
-single source of truth for where a dataset lives. The expected shapes are stated
-here, because they describe the experiments of the paper rather than the
-filesystem: they are the shapes of the arrays the published artifacts were
-produced from.
+Paths come from the dataset registry (``luna.data.registry``), which is the single source of truth for where a dataset lives. The expected shapes are stated here, because they describe the experiments of the paper rather than the filesystem: they are the shapes of the arrays the published artifacts were produced from.
 
 Outputs
     none (the step reads data/ and reports)
@@ -35,8 +25,7 @@ Usage
     python applications/pipelines/01_prepare_data.py --datasets nc
     python applications/pipelines/01_prepare_data.py --check
 
-``--check`` runs the same verification and only drops the surrounding notes,
-which is convenient when the status of the arrays is read from a script.
+``--check`` runs the same verification and only drops the surrounding notes, which is convenient when the status of the arrays is read from a script.
 """
 
 from __future__ import annotations
@@ -53,21 +42,20 @@ if str(ROOT) not in sys.path:
 from luna.data.io import load_npy  # noqa: E402
 from luna.data.registry import get_dataset  # noqa: E402
 
-#: Datasets of the paper, in the order of scripts/download_data.sh.
+# : Datasets of the paper, in the order of scripts/download_data.sh.
 DEFAULT_DATASETS = ("nc", "rdb_h5", "sst_weekly")
 
-#: Shape of the raw array of each dataset; see scripts/download_data.sh for the
-#: public source and the cropping or packing steps that produce it.
+# : Shape of the raw array of each dataset; see scripts/download_data.sh for the : public source and the cropping or packing steps that produce it.
 EXPECTED_SHAPES = {
     "nc": (1501, 80, 160, 2),
     "rdb_h5": (5050, 128, 128, 1),
     "sst_weekly": (1914, 180, 360, 1),
 }
 
-#: Tag of each dataset in the section headings of scripts/download_data.sh.
+# : Tag of each dataset in the section headings of scripts/download_data.sh.
 SOURCE_TAG = {"nc": "NC", "rdb_h5": "RDB", "sst_weekly": "SST"}
 
-#: The fetch instructions that this step prints when an array is unusable.
+# : The fetch instructions that this step prints when an array is unusable.
 DOWNLOAD_SCRIPT = ROOT / "scripts" / "download_data.sh"
 
 

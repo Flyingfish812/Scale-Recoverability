@@ -1,14 +1,12 @@
 """Regenerate every figure of the paper.
 
-Each script in this directory draws one figure or one group of figures from the
-artifacts written by the statistics layer, and writes a vector PDF into
-``artifacts/figures``. Publishing those PDFs into the paper tree is a separate,
-explicit step (``applications/figures/publish_figures.py``), so that the
-repository itself never contains generated output.
+Each module in this directory draws one figure, or one group of figures, from the artifacts written by the statistics layer, and writes a vector PDF into ``artifacts/figures``. The registry below lists the scripts in the order of the paper, main text first and supplementary material after it. ``style.py`` fixes the shared publication style and ``records.py`` loads the artifact records.
+
+Publishing the PDFs into the paper tree is a separate, explicit step (``applications/figures/publish_figures.py``), so the repository itself never contains generated output.
 
 Usage
     python applications/figures/make_all_figures.py
-    python applications/figures/make_all_figures.py --only fig06_results.py
+    python applications/figures/make_all_figures.py --only fig03_sensor_noise.py
 """
 
 from __future__ import annotations
@@ -20,23 +18,24 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = [
+    # main text, in figure order
+    "fig01_known_scale.py",
+    "fig02_global_vs_scale.py",
+    "fig03_sensor_noise.py",
+    "fig05_modal_hierarchy.py",
+    "fig09_cross_model_bands.py",
+    "fig06_robustness.py",
+    # supplementary material, in figure order
     "fig01_method_framework.py",
     "fig02_analytical_benchmark.py",
-    "fig03_counterexample.py",
-    "fig04_equal_ger.py",
-    "fig05_wavelet_vs_fourier.py",
-    "fig06_results.py",
-    "fig08_recoverability_chain.py",
-    "fig09_cross_model_bands.py",
-    "fig10_energy_vs_nrmse.py",
-    "fig11_wavelet_sensitivity.py",
     "figS01_oracle.py",
+    "figS04_three_layer.py",
+    "fig03_counterexample.py",
+    "fig05_wavelet_vs_fourier.py",
     "figS02_phase.py",
+    "figS05_mode_scale_energy.py",
     "figS03_diagnostics.py",
     "figS03c_pod_dominant.py",
-    "figS04_three_layer.py",
-    "figS05_mode_scale_energy.py",
-    "figS06_tau_sensitivity.py",
     "figS07_sensor_family_ger.py",
     "figS08_sensor_family_paired.py",
 ]

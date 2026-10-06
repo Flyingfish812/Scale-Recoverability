@@ -1,9 +1,6 @@
 """How much of the scale count is training-seed variation?
 
-Each configuration of the sweep is trained with three seeds. This module pools the
-test snapshots of those seeds and gives the uncertainty of the mean scale count of
-the configuration from a percentile bootstrap, so that the reported differences
-between configurations can be read against the noise floor of the training.
+Each configuration of the sweep is trained with three seeds. This module pools the test snapshots of those seeds and gives the uncertainty of the mean scale count of the configuration from a percentile bootstrap, so that the reported differences between configurations can be read against the noise floor of the training.
 
 Output
 ------

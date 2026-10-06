@@ -1,14 +1,8 @@
 """Access to trained estimator runs and their physical-unit convention.
 
-Every training run writes one ``test_raw.npz`` per test noise level under a path
-that encodes estimator, sensor count, training seed and noise level. This module
-owns that layout so that the statistics producers do not each re-derive it.
+Every training run writes one ``test_raw.npz`` per test noise level under a path that encodes estimator, sensor count, training seed and noise level. This module owns that layout so that the statistics producers do not each re-derive it.
 
-The two estimator families also store their fields in different units: the
-POD-coefficient estimators write physical fields, whereas the convolutional
-estimator writes fields normalised with the per-channel mean and standard
-deviation kept in its checkpoint. ``load_run`` returns both fields in physical
-units, which is the convention of every table and figure in the paper.
+The two estimator families also store their fields in different units: the POD-coefficient estimators write physical fields, whereas the convolutional estimator writes fields normalised with the per-channel mean and standard deviation kept in its checkpoint. ``load_run`` returns both fields in physical units, which is the convention of every table and figure in the paper.
 """
 
 from __future__ import annotations
@@ -19,26 +13,23 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: Raw snapshot sequence, used to recover the normalisation of runs whose
-#: checkpoint was not kept.
+# : Raw snapshot sequence, used to recover the normalisation of runs whose : checkpoint was not kept.
 RAW_SEQUENCE = ROOT / "data" / "cylinder2d_q1.npy"
 
-#: Roots of the trained runs, one per estimator family.
+# : Roots of the trained runs, one per estimator family.
 ESTIMATOR_ROOTS = {
     "mlp": ROOT / "artifacts" / "pod_model_sweep_nc",
     "vcnn": ROOT / "artifacts" / "vcnn_results",
     "ridge": ROOT / "artifacts" / "ridge_closed_form_sweep_nc",
 }
 
-#: Root of the Gappy POD runs of the main sequence. Gappy POD is gappy only in
-#: its sensor count, so it is trained once per configuration.
+# : Root of the Gappy POD runs of the main sequence. Gappy POD is gappy only in : its sensor count, so it is trained once per configuration.
 GAPPY_ROOT = ROOT / "artifacts" / "gappy_closed_form_sweep_nc"
 
-#: Root of the sensor-family study, in which the estimators are retrained on the
-#: five independently sampled nested sensor sequences under the same protocol.
+# : Root of the sensor-family study, in which the estimators are retrained on the : five independently sampled nested sensor sequences under the same protocol.
 FAMILY_ROOT = ROOT / "artifacts" / "derived" / "supplementary" / "predictions"
 
-#: Suffix encoding a noise level in a run path (``s0010`` = 1e-3).
+# : Suffix encoding a noise level in a run path (``s0010`` = 1e-3).
 NOISE_CODES = {0.0: "s0000", 0.001: "s0010", 0.01: "s0100", 0.1: "s1000"}
 
 
@@ -53,8 +44,7 @@ def run_path(model: str, sensor_count: int, sigma: float, seed: int) -> Path | N
     """Path to the test output of one configuration, or ``None`` if absent.
 
     The linear estimator is deterministic and therefore has no training seed;
-    seed 0 of the convolutional estimator is stored under a bespoke directory
-    name inherited from the original sweep.
+    seed 0 of the convolutional estimator is stored under a bespoke directory name inherited from the original sweep.
     """
     code = noise_code(sigma)
     if model == "mlp":
@@ -79,8 +69,7 @@ def run_path(model: str, sensor_count: int, sigma: float, seed: int) -> Path | N
                 / f"vcnn_n{sensor_count:04d}_seed000_custom" / "tests" / code / "test_raw.npz"
             )
     elif model == "gappy":
-        # Gappy POD is deterministic: the validation-selected rank replaces the
-        # training seed, so every configuration is stored under seed000.
+        # Gappy POD is deterministic: the validation-selected rank replaces the training seed, so every configuration is stored under seed000.
         path = (
             GAPPY_ROOT / f"gappy_n{sensor_count:04d}" / "seed000"
             / "tests" / code / "test_raw.npz"
@@ -118,11 +107,7 @@ def normalisation_from_sequence(
 ) -> tuple[np.ndarray, np.ndarray]:
     """Recover the normalisation constants of a run from its stored test fields.
 
-    A run whose checkpoint was not kept can still be converted back to physical
-    units: its test snapshots are a subset of the raw sequence, and the
-    normalisation is an exact per-channel affine map, so solving for the affine
-    coefficients recovers the constants. The fit is verified against the raw
-    fields, which turns a silent unit mismatch into an error.
+    A run whose checkpoint was not kept can still be converted back to physical units: its test snapshots are a subset of the raw sequence, and the normalisation is an exact per-channel affine map, so solving for the affine coefficients recovers the constants. The fit is verified against the raw fields, which turns a silent unit mismatch into an error.
     """
     raw = np.load(str(RAW_SEQUENCE), mmap_mode="r")
     physical = np.asarray(raw[np.asarray(indices)], dtype=np.float64).transpose(0, 3, 1, 2)
@@ -158,10 +143,7 @@ def normalisation_from_sequence(
 def load_run(path: Path) -> tuple[np.ndarray, np.ndarray]:
     """Target and reconstruction of one run, both in physical units.
 
-    The POD-coefficient estimators store physical fields. The convolutional
-    estimator stores normalised fields and its constants are read from the
-    checkpoint when it is kept, and otherwise recovered from the stored test
-    fields themselves.
+    The POD-coefficient estimators store physical fields. The convolutional estimator stores normalised fields and its constants are read from the checkpoint when it is kept, and otherwise recovered from the stored test fields themselves.
     """
     data = np.load(path, allow_pickle=True)
     target = np.asarray(data["target_nchw"], dtype=np.float64)

@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig01_method_framework.py — Fig. 1 journal-quality schematic (v3-3, 2026-09-02)
+fig01_method_framework.py — supplementary figure S1: workflow schematic.
 
 Layout:
-  - canvas 6.0 x 3.6 in, main chain and reference branch split 62% / 30%,
-    symmetric left and right margins (4%);
-  - the POD truncation reference branch sits in the same horizontal band as
-    the reconstruction box of the main chain;
-  - all boxes square, line width 0.9 pt, uniform arrows; white background,
-    black and grey plus one accent colour;
-  - main chain: Sparse measurements -> Reconstruction models
-    -> Reconstructed field -> Wavelet scale evaluation;
-  - inside Reconstruction: POD-based (Ridge / Gappy POD / MLP) and
-    End-to-end (VCNN) stacked in two groups.
+  - canvas 6.0 x 3.6 in, main chain and reference branch split 62% / 30%, symmetric left and right margins (4%);
+  - the POD truncation reference branch sits in the same horizontal band as the reconstruction box of the main chain;
+  - all boxes square, line width 0.9 pt, uniform arrows; white background, black and grey plus one accent colour;
+  - main chain: Sparse measurements -> Reconstruction models -> Reconstructed field -> Wavelet scale evaluation;
+  - inside Reconstruction: POD-based (Ridge / Gappy POD / MLP) and End-to-end (VCNN) stacked in two groups.
 
 Workflow: build SVG -> (optionally tweak in Inkscape) -> export vector PDF with cairosvg.
 Output: fig01_method_framework.{svg,pdf} under artifacts/figures.

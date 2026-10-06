@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Equal-GER pairs over the full 42,000-configuration search space.
+"""Equal-``GER_u`` pairs over the full 42,000-configuration search space.
+
+Pairs are matched on the streamwise-component global error ``GER_u``, the same quantity that carries ``S_full`` and the derivative metrics; the two-component model-level ``GER`` is stored alongside for reference. Matching is one-to-one within a configuration (no record enters more than one pair).
 
 Search space:
   MLP   20 configurations x 3 training seeds = 60 runs
   VCNN  20 configurations x 3 training seeds = 60 runs
   Ridge 20 configurations, closed form   = 20 runs
-
-The AdamW ridge runs of the retired sweep are no longer used; the closed-form
-ridge replaces them.
 
 Output
 ------
@@ -16,6 +15,10 @@ artifacts/statistics/equal_ger_pairs.json         pairs, statistics,
                                                  representative pair
 artifacts/statistics/equal_ger_pairs_strict.json  per-configuration summary,
                                                  cross-model pairs
+
+Usage
+    python applications/statistics/equal_ger_pairs.py
+    python applications/statistics/equal_ger_pairs.py --force   # re-run every pair
 """
 
 from __future__ import annotations
@@ -86,11 +89,12 @@ def main() -> None:
     print("  42,000-record equal-GER full recomputation (closed-form Ridge)")
     print("=" * 72)
 
-    # Skip when the artifacts already exist (local make only checks + plots; --force recomputes)
-    json_fig3 = OUT_DIR / "equal_ger_pairs.json"
-    json_s33 = OUT_DIR / "equal_ger_pairs_strict.json"
-    if json_fig3.exists() and json_s33.exists() and "--force" not in sys.argv:
-        print(f"[skip] {json_fig3.name} / {json_s33.name} already exist (--force to recompute)")
+    # Skip when the artifacts already exist (local
+    # make only checks + plots; --force recomputes)
+    json_pairs = OUT_DIR / "equal_ger_pairs.json"
+    json_strict = OUT_DIR / "equal_ger_pairs_strict.json"
+    if json_pairs.exists() and json_strict.exists() and "--force" not in sys.argv:
+        print(f"[skip] {json_pairs.name} / {json_strict.name} already exist (--force to recompute)")
         return 0
 
     # ── Phase 1: load the 140 configuration metrics ────────────
@@ -108,16 +112,14 @@ def main() -> None:
                         skipped += 1
                         print(f"  [skip] missing: {npz_path}")
                         continue
-                    # ``load_run`` restores the physical field for VCNN, whose
-                    # stored arrays are normalised; the raw arrays would put the
-                    # band errors and GER of that estimator in a different space.
+                    # ``load_run`` restores the physical field for VCNN, whose stored arrays are normalised; the raw arrays would put the band errors and GER of that estimator in a different space.
                     tgt, out = load_run(npz_path)
                     B = out.shape[0]
                     key = f"{model}_M{mask}_σ{sigma}_seed{seed}"
                     ger_list, sfull_list, metrics_list = [], [], []
                     for i in range(B):
                         m = compute_sample_metrics(out, tgt, i)
-                        ger_list.append(m["GER"])
+                        ger_list.append(m["GER_u"])
                         sfull_list.append(m["S_full"])
                         metrics_list.append(m)
                     all_config_metrics[key] = {
@@ -150,7 +152,7 @@ def main() -> None:
         by_model[p["config_key"].split("_")[0]] += 1
     print(f"  by model: {dict(by_model)}")
 
-    # ── Phase 3: cross-model matching (same as s33) ───────────
+    # ── Phase 3: cross-model matching (same snapshot) ────────
     print("\n[Phase 3] cross-model matching (same snapshot)...")
     cross_model_pairs = []
     for mask in MASK_NUMS:
@@ -215,6 +217,8 @@ def main() -> None:
     best = all_pairs_data[0]
     rep_pair = {
         "GER_low": best["GER_low"], "GER_high": best["GER_high"],
+        "model_GER_low": best["metrics_low"]["GER"],
+        "model_GER_high": best["metrics_high"]["GER"],
         "S_full_low": best["S_full_low"], "S_full_high": best["S_full_high"],
         "S_full_diff": best["S_full_diff"], "GER_diff": best["GER_diff"],
         "vorticity_RMSE_low": best["metrics_low"]["vorticity_RMSE"],
@@ -226,7 +230,7 @@ def main() -> None:
     print(f"    {best['config_key']}: GER {rep_pair['GER_low']:.6f}/{rep_pair['GER_high']:.6f}, "
           f"S_full {rep_pair['S_full_low']}/{rep_pair['S_full_high']}")
 
-    # ── Phase 6: write fig03_data.json ─────────────────────────
+    # ── Phase 6: write the pair statistics ────────────
     output_pairs = [{
         "config_key": p["config_key"], "idx_low": p["idx_low"], "idx_high": p["idx_high"],
         "GER_low": p["GER_low"], "GER_high": p["GER_high"],
@@ -246,6 +250,7 @@ def main() -> None:
             "same_M": True, "same_sigma": True, "same_seed": True, "same_model": True,
             "different_snapshots": True, "ger_tolerance": "1% (relative)",
             "min_sfull_gap": 2, "one_to_one_no_reuse": True,
+            "matched_metric": "GER_u (streamwise-component relative error)",
         },
         "search_scope": "42,000 records = (MLP+VCNN: 40 configs x 3 seeds) + (Ridge: 20 closed-form deterministic)",
         "n_configs_searched": len(all_config_metrics),
@@ -257,14 +262,12 @@ def main() -> None:
         "paired_statistics": paired_stats,
         "cluster_bootstrap_ci": cluster_ci,
         "all_pairs": output_pairs,
-        "supersedes": "artifacts/derived/main/statistics/fig03_data.json "
-                      "(AdamW-Ridge pairs retired)",
     }
     json_path = OUT_DIR / "equal_ger_pairs.json"
     json_path.write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"  JSON: {json_path}")
 
-    # ── Phase 7: write s33 summary (within + cross-model) ──────
+    # ── Phase 7: write the strict within-configuration summary ──────
     internal_examples = {}
     for key, val in all_config_metrics.items():
         n_int = config_pair_counts.get(key, 0)
@@ -277,9 +280,8 @@ def main() -> None:
                 "sfull_mean": float(np.mean(val["sfull"])),
                 "first_pair": first,
             }
-    s33_report = {
-        "task": "S3.3b",
-        "description": "Strict within-configuration equal-GER matching (42,000-configuration space, closed-form Ridge)",
+    strict_report = {
+        "description": "Strict within-configuration equal-GER_u matching (42,000-configuration space)",
         "matching_criteria": {
             "same_M": True, "same_sigma": True, "same_seed": True,
             "same_model_type": "for internal pairs; cross-model for cross pairs",
@@ -291,19 +293,16 @@ def main() -> None:
         "n_cross_model_pairs": len(cross_model_pairs),
         "internal_pair_examples": internal_examples,
         "cross_model_examples": cross_model_pairs[:20],
-        "supersedes": "artifacts/derived/main/statistics/s33_strict_equal_ger.json "
-                      "(AdamW-Ridge pairs retired)",
         "evaluation": (
             f"Found {n_total_pairs} strict within-configuration internal pairs "
             f"and {len(cross_model_pairs)} cross-model pairs (42,000 records, closed-form Ridge)."
         ),
     }
-    s33_path = OUT_DIR / "equal_ger_pairs_strict.json"
-    s33_path.write_text(json.dumps(s33_report, indent=2), encoding="utf-8")
-    print(f"  JSON: {s33_path}")
+    strict_path = OUT_DIR / "equal_ger_pairs_strict.json"
+    strict_path.write_text(json.dumps(strict_report, indent=2), encoding="utf-8")
+    print(f"  JSON: {strict_path}")
 
-    # The figure itself is drawn by applications/figures/fig04_equal_ger.py from
-    # the JSON written above; this producer only computes the numbers.
+    # The figure is drawn by applications/figures/fig02_global_vs_scale.py from the JSON written above; this producer only computes the numbers.
 
     print(f"\n{'=' * 72}")
     print(f"  done ({time.time() - t_start:.1f}s)")

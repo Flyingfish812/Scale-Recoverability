@@ -1,8 +1,7 @@
 """
 Global constants used across the Luna project.
 
-All band ordering, wavelet parameters, and numerical tolerances
-are defined here as the single source of truth.
+All band ordering, wavelet parameters, and numerical tolerances are defined here as the single source of truth.
 """
 
 from __future__ import annotations

@@ -1,17 +1,13 @@
 """Training of the estimators compared in the paper.
 
-POD-coefficient estimators (linear / MLP / gappy) operate on a rank-r POD
-representation of the field; the convolutional estimator maps the sparse
-observation grid directly to the field.
+POD-coefficient estimators (linear / MLP / gappy) operate on a rank-r POD representation of the field; the convolutional estimator maps the sparse observation grid directly to the field.
 
 Modules
     pod_sweep.py    per-configuration runners for the POD-coefficient estimators;
-                    each writes test_raw.npz (target and reconstruction) that the
-                    statistics stage consumes
+                    each writes test_raw.npz (target and reconstruction) that the statistics stage consumes
     pod_trainer.py  generic training loop shared by the POD-coefficient models
     vcnn_sweep.py   sensor-mask sweep for the convolutional estimator
-    vcnn_trainer.py training loop of the convolutional estimator
-    vcnn_config.py  configuration dataclasses for the sweep above
+    vcnn_trainer.py training loop of the convolutional estimator vcnn_config.py  configuration dataclasses for the sweep above
 """
 
 from features.training.pod_sweep import (

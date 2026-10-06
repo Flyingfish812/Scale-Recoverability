@@ -25,8 +25,7 @@ def select_gappy_rank(M, candidate_ranks, val_scores, cap=None):
 
     ``cap`` maps M to the upper bound; it defaults to the paper's rule
     (``scalar_cap``). Pass ``cap=lambda m: m`` for the older sensor-location
-    convention. Candidates above the cap are clamped and deduplicated, then the
-    smallest validation error wins.
+    convention. Candidates above the cap are clamped and deduplicated, then the smallest validation error wins.
 
     Returns: (rank, trace), where trace is the clamped candidate set (traceable).
     """
@@ -61,8 +60,7 @@ def test_paper_cap_is_two_M():
     scores = {4: 0.9, 8: 0.2, 16: 0.5, 32: 0.7, 64: 0.1}
     rank, trace = select_gappy_rank(M=20, candidate_ranks=candidates, val_scores=scores)
     assert trace == [4, 8, 16, 32, 40]      # 64 clamped to 2M = 40
-    # Scores are keyed by candidate value, so the clamped candidate 40 is unscored
-    # and the smallest *scored* candidate wins; the cap is what this test pins.
+    # Scores are keyed by candidate value, so the clamped candidate 40 is unscored and the smallest *scored* candidate wins; the cap is what this test pins.
     assert rank == 8
 
 

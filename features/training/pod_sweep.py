@@ -1,10 +1,7 @@
 """
 Supplementary — POD model sweep core (MLP training / closed-form Ridge / Gappy POD).
 
-Replicates the reference training and NPZ protocol exactly (same split via
-torch.Generator().manual_seed(seed), same noise protocol, same test_raw.npz
-schema) but parameterizes the sensor-mask family so the 5 supplementary families
-share the SAME test snapshots per seed (cross-family comparability).
+Replicates the reference training and NPZ protocol exactly (same split via torch.Generator().manual_seed(seed), same noise protocol, same test_raw.npz schema) but parameterizes the sensor-mask family so the 5 supplementary families share the SAME test snapshots per seed (cross-family comparability).
 
 Protocol notes (locked to the reference runs):
   - split: random_split with torch.Generator().manual_seed(training_seed);
@@ -36,9 +33,7 @@ from luna.models.pod_mlp import build_pod_mlp_model
 
 EPS = 1e-12
 
-#: Candidate retained ranks of the Gappy POD validation search: multiples of
-#: four up to the largest rank the scalar-observation cap can admit at the
-#: largest sensor count. Ranks above the cap are dropped per sensor count.
+# : Candidate retained ranks of the Gappy POD validation search: multiples of : four up to the largest rank the scalar-observation cap can admit at the : largest sensor count. Ranks above the cap are dropped per sensor count.
 GAPPY_CANDIDATE_RANKS = (4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128)
 
 # Authoritative test split (300-sample snapshot of MLP seed0); reused by Ridge/Gappy
@@ -465,8 +460,7 @@ def run_ridge_closed_form_case(
         noise is added in the physical domain and standardized back)
         | "physical" (the data themselves are physical, noise added directly, e.g. RDB);
       - obs_normalize_from_mask: when True the observation mean/std are computed strictly
-        from the mask positions (for RDB the first n_obs entries of the flattened grid
-        include constant points, giving obs_std≈1e-8 and numerical blow-up;
+        from the mask positions (for RDB the first n_obs entries of the flattened grid include constant points, giving obs_std≈1e-8 and numerical blow-up;
         NC keeps the default False, consistent with compute_ridge_closed_form)."""
     if lambda_grid is None:
         lambda_grid = np.logspace(-8, 2, 21)
@@ -491,8 +485,7 @@ def run_ridge_closed_form_case(
             o[i] = fields_sel[i, obs_idx[:, 0], obs_idx[:, 1], :].ravel()
         return o
 
-    # Observation normalization parameters (NC protocol: first n_obs entries of the
-    # flattened grid; RDB: mask positions)
+    # Observation normalization parameters (NC protocol: first n_obs entries of the flattened grid; RDB: mask positions)
     tr_obs_raw = obs_matrix(train_f)
     if obs_normalize_from_mask:
         obs_mean_m = tr_obs_raw.mean(axis=0)
@@ -592,8 +585,7 @@ def run_gappy_case(
 ) -> dict[str, Any]:
     """Gappy POD (deterministic), on the seed0 split.
 
-    The rank is chosen on noise-free validation data from a fixed candidate grid
-    and clamped by ``rank_cap``: ``"scalars"`` (default, the convention of the
+    The rank is chosen on noise-free validation data from a fixed candidate grid and clamped by ``rank_cap``: ``"scalars"`` (default, the convention of the
     paper: r <= m_obs = 2M, the number of independent scalar observations) or
     ``"locations"`` (r <= M, the earlier convention, kept for the cap
     sensitivity).

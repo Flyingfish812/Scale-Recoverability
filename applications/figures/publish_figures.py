@@ -1,12 +1,8 @@
-"""Copy the generated figures into the manuscript tree.
+"""Copy the generated figures into the directory that holds the paper sources.
 
-The figure scripts write into ``artifacts/figures`` and the repository contains
-no generated output. The manuscript keeps its own copy of the PDFs next to the
-LaTeX sources, because a submission has to be self-contained; this module is the
-explicit step that updates that copy.
+The figure scripts write into ``artifacts/figures`` and the repository contains no generated output. A submission has to be self-contained, so the paper sources keep their own copy of the PDFs next to the LaTeX files; this module is the explicit step that updates that copy.
 
-The destination defaults to the manuscript tree used for the submission and can
-be pointed elsewhere with ``--destination``.
+The destination defaults to the paper directory used locally and can be pointed elsewhere with ``--destination``. ``--check`` reports the differences without copying anything.
 
 Usage
     python applications/figures/publish_figures.py
@@ -24,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "artifacts" / "figures"
-DEFAULT_DESTINATION = ROOT / "thesis_work" / "manuscript_src" / "figures"
+DEFAULT_DESTINATION = ROOT / "thesis_work" / "manuscript_jfm" / "figures"
 
 
 def digest(path: Path) -> str:
@@ -42,7 +38,7 @@ def main() -> int:
     if not SOURCE.exists():
         raise SystemExit(f"no figures generated yet: {SOURCE}")
     if not destination.exists():
-        raise SystemExit(f"manuscript figure directory not found: {destination}")
+        raise SystemExit(f"figure directory not found: {destination}")
 
     published = unchanged = 0
     for figure in sorted(SOURCE.glob("*.pdf")):

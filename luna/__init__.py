@@ -2,9 +2,7 @@
 Luna — Scale-Resolved Field Reconstruction Evaluation Framework
 ==============================================================
 
-Common layer: core data structures, wavelet operations, POD decomposition, model
-definitions, and configuration management. It contains no executable script logic,
-only reusable functions and classes.
+Common layer: core data structures, wavelet operations, POD decomposition, model definitions, and configuration management. It contains no executable script logic, only reusable functions and classes.
 
 Layer architecture:
     luna/core       — base types and constants

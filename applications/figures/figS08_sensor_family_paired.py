@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS08_sensor_family_paired.py — Fig. S8 paired MLP-VCNN comparison
+figS08_sensor_family_paired.py — supplementary figure S14: paired MLP-VCNN comparison
 
 Purpose
-    Paired difference (MLP minus VCNN) of every reported metric with its
-    confidence interval, so that the sign of the difference can be read off
-    one axis.
+    Paired difference (MLP minus VCNN) of every reported metric with its confidence interval, so that the sign of the difference can be read off one axis.
 Data source
     artifacts/statistics/paired_model_comparison.json
 Output

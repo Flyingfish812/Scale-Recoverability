@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 """Transform-symmetry control experiment.
 
-The band metrics are defined with a wavelet decomposition, so validating them on
-targets built from wavelet bands would favour them by construction. This script
-builds three families of controlled targets and compares how the wavelet and the
-Fourier summaries respond:
+The band metrics are defined with a wavelet decomposition, so validating them on targets built from wavelet bands would favour them by construction. This script builds three families of controlled targets and compares how the wavelet and the Fourier summaries respond:
 
 1. wavelet-band-limited targets, with energy only in one chosen band;
 2. Fourier-annulus-limited targets, with energy only in one chosen annulus;
 3. local perturbations, a missing high-frequency patch or a local vortex pair.
 
-The comparison shows where the two summaries disagree: the Fourier summary
-measures global frequency content, while the wavelet summary retains scale and
-spatial locality.
+The comparison shows where the two summaries disagree: the Fourier summary measures global frequency content, while the wavelet summary retains scale and spatial locality.
 
 Output
 ------
@@ -59,9 +54,7 @@ def build_wavelet_band_target(
     """Build target containing only specified wavelet bands.
 
     Args:
-        field: Source 2D field (H, W).
-        keep_bands: List of band names to keep (e.g. ['A4'], ['A4', 'W4']).
-        wavelet, level, mode: Wavelet parameters.
+        field: Source 2D field (H, W). keep_bands: List of band names to keep (e.g. ['A4'], ['A4', 'W4']). wavelet, level, mode: Wavelet parameters.
 
     Returns:
         (H, W) filtered field with only the specified bands.
@@ -138,10 +131,8 @@ def build_local_perturbation_target(
     Args:
         field: Source 2D field (H, W).
         perturbation_type:
-            "high_freq_dropout": Remove high-frequency content in a local region.
-            "wake_perturb": Add noise in the wake region.
-        region: "wake" (right portion), "center", "random_block".
-        severity: Strength of perturbation (0-1).
+            "high_freq_dropout": Remove high-frequency content in a local region. "wake_perturb": Add noise in the wake region.
+        region: "wake" (right portion), "center", "random_block". severity: Strength of perturbation (0-1).
 
     Returns:
         (H, W) perturbed field.
@@ -184,8 +175,7 @@ def build_local_perturbation_target(
         # Low-pass filter: keep only k < severity * k_nyq
         low_pass = kmag < severity * k_nyq
 
-        # Apply low-pass only in masked region
-        # Convert to spatial domain: for each pixel in mask, replace with low-passed version
+        # Apply low-pass only in masked region Convert to spatial domain: for each pixel in mask, replace with low-passed version
         F_low = F * low_pass
         field_low = np.real(np.fft.ifft2(F_low)).astype(np.float64)
 
@@ -269,8 +259,7 @@ def run_symmetric_control(
 ) -> list[dict]:
     """Run symmetric control experiments comparing S_full vs S_FFT.
 
-    Tests three families of controlled targets and evaluates whether
-    each metric correctly identifies the known scale content.
+    Tests three families of controlled targets and evaluates whether each metric correctly identifies the known scale content.
 
     Args:
         field: Source 2D field (H, W).
@@ -351,9 +340,7 @@ def run_symmetric_control(
     for label, ptype, region, severity in local_configs:
         target = build_local_perturbation_target(field, ptype, region, severity)
 
-        # Expected: depends on perturbation severity
-        # For high_freq_dropout, fine scales are lost → S_full should drop
-        # For wake_perturb, all scales may be affected
+        # Expected: depends on perturbation severity For high_freq_dropout, fine scales are lost → S_full should drop For wake_perturb, all scales may be affected
         s_full = compute_S_full(target, field, tau, wavelet, level, mode)
         s_fft = compute_S_FFT(target, field, tau, n_fourier_bands)
         ger = float(np.linalg.norm((target - field).ravel()) / (np.linalg.norm(field.ravel()) + EPS))
@@ -439,9 +426,7 @@ def main() -> None:
     parser.add_argument("--level", type=int, default=DEFAULT_LEVEL)
     parser.add_argument("--mode", default=DEFAULT_MODE)
     parser.add_argument("--n-fourier-bands", type=int, default=5)
-    # Use the same controlled field set as the transform-domain truncation
-    # tables (Appendix E), so that own-domain and cross-domain accuracies
-    # share one population.
+    # Use the same controlled field set as the transform-domain truncation tables (Appendix E), so that own-domain and cross-domain accuracies share one population.
     parser.add_argument("--n-test-fields", type=int, default=100)
     parser.add_argument("--output-dir", default="artifacts/statistics")
     parser.add_argument("--lite", action="store_true")

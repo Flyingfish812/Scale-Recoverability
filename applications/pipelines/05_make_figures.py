@@ -1,11 +1,6 @@
 """Draw every figure of the paper.
 
-The figures are drawn by the scripts under ``applications/figures``, one module
-per figure or group of figures, from the artifacts written by the statistics
-layer. ``applications.figures.make_all_figures`` runs them in order and writes a
-vector PDF per figure into ``artifacts/figures``; this module is the entry point
-of the pipeline step, so that the sequence of the repository is read from
-``applications/pipelines`` alone.
+The figures are drawn by the scripts under ``applications/figures``, one module per figure or group of figures, from the artifacts written by the statistics layer. ``applications.figures.make_all_figures`` runs them in the order of the paper and writes a vector PDF per figure into ``artifacts/figures``; this module is the entry point of the pipeline step, so that the sequence of the repository is read from ``applications/pipelines`` alone.
 
 Prerequisites
     the statistics under artifacts/statistics/
@@ -15,13 +10,12 @@ Outputs
     artifacts/figures/*.pdf
 
 Pipeline
-    previous  applications/pipelines/04_compute_statistics.py
-    this step writes artifacts/figures/
+    previous  applications/pipelines/04_compute_statistics.py this step writes artifacts/figures/
     next      applications/figures/publish_figures.py (copy into the paper tree)
 
 Usage
     python applications/pipelines/05_make_figures.py
-    python -m applications.figures.make_all_figures --only fig06_results.py
+    python -m applications.figures.make_all_figures --only fig03_sensor_noise.py
 """
 
 from __future__ import annotations

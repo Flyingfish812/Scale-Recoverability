@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-publication_style.py — unified publication style for the manuscript figures
-(v3-3 visual rework, 2026-08-31)
+style.py — one publication style for every data figure of the paper.
 
 Design goals:
   1. one shared style for all Matplotlib data figures, not chosen per script;
   2. axis/legend font >= 8 pt, panel label 9-10 pt after final embedding;
-  3. one font family (Times-like, matching TeX Gyre Termes in the manuscript);
+  3. one font family (Times-like, matching the body font of the paper);
   4. shared axis lines, line widths and markers;
   5. shared colours for MLP / VCNN / Ridge / Gappy / Oracle and bands A4..W1;
   6. every figure must stay readable in greyscale (Okabe-Ito palette,
@@ -31,8 +30,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # ---------------------------------------------------------------------------
-# Global font: Times-like (Liberation Serif matches TeX Gyre Termes metrics)
-# mathtext uses STIX (Times-style math)
+# Global font: Times-like (Liberation Serif matches TeX Gyre Termes metrics) mathtext uses STIX (Times-style math)
 # ---------------------------------------------------------------------------
 FONT_FAMILY = "Liberation Serif"
 MATHTEXT_FONT = "stix"
@@ -45,7 +43,7 @@ TITLE_FONT = 9.0       # panel titles (keep short, conclusions in the caption)
 
 
 def apply() -> None:
-    """Apply the shared manuscript figure style (call once before drawing)."""
+    """Apply the shared figure style (call once before drawing)."""
     plt.rcParams.update({
         # fonts
         "font.family": "serif",
@@ -135,8 +133,8 @@ TAU = 0.05
 
 # ---------------------------------------------------------------------------
 # Figure size conventions
-#   full width (figure*):  6.6 in   (final width=\textwidth)
-#   half width (figure):   3.25 in  (final width=\linewidth)
+# full width (figure*):  6.6 in   (final width=\textwidth)
+# half width (figure):   3.25 in  (final width=\linewidth)
 # height follows the content, 2.5-5.2 in
 # ---------------------------------------------------------------------------
 def figure(width_in: float, height_in: float, nrows: int = 1, ncols: int = 1,
@@ -174,11 +172,9 @@ def style_axis(ax, xlabel: str | None = None, ylabel: str | None = None,
 
 
 def save(fig, out_dir, stem: str, dpi: int = 300) -> None:
-    """Write the figure as the vector PDF that the manuscript includes.
+    """Write the figure as the vector PDF that the paper includes.
 
-    The creation timestamp is omitted so that the file is deterministic: a
-    regenerated figure can then be compared with the published one directly,
-    and no diff appears when the drawing has not changed.
+    The creation timestamp is omitted so that the file is deterministic: a regenerated figure can then be compared with the published one directly, and no diff appears when the drawing has not changed.
     """
     from pathlib import Path
 

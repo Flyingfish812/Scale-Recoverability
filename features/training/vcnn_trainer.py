@@ -1,10 +1,6 @@
 """Training loop for the convolutional estimator.
 
-Trains the observation-to-field network on a fixed sensor mask and writes, for
-every test noise level, the reconstructions consumed by the statistics stage:
-``test_raw.npz`` holding ``target_nchw`` (ground truth) and ``output_nchw``
-(reconstruction) in normalised units, with the normalisation constants stored in
-the checkpoint next to the run.
+Trains the observation-to-field network on a fixed sensor mask and writes, for every test noise level, the reconstructions consumed by the statistics stage: ``test_raw.npz`` holding ``target_nchw`` (ground truth) and ``output_nchw`` (reconstruction) in normalised units, with the normalisation constants stored in the checkpoint next to the run.
 
 Entry point: ``applications/pipelines/03_train_estimators.py``.
 """

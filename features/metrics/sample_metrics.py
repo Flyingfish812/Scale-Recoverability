@@ -1,12 +1,9 @@
 """Sample-level error metrics used throughout the paper.
 
-Definitions follow the conventions of the main text: the global error (GER) is
-computed over both channels, while the wavelet-band errors, the recoverability
-counts S_full/S_coh and the vorticity/gradient diagnostics use the streamwise
+Definitions follow the conventions of the main text: the global error (GER) is computed over both channels, while the wavelet-band errors, the recoverability counts S_full/S_coh and the vorticity/gradient diagnostics use the streamwise
 vorticity channel only.
 
-The wavelet decomposition is db2 with periodic boundary handling at level 4, so
-the five bands are A4, W4, W3, W2 and W1.
+The wavelet decomposition is db2 with periodic boundary handling at level 4, so the five bands are A4, W4, W3, W2 and W1.
 """
 
 from __future__ import annotations
@@ -53,15 +50,9 @@ def gradient_rmse(target: np.ndarray, pred: np.ndarray) -> float:
 def band_errors(target_2d: np.ndarray, pred_2d: np.ndarray, tau: float = 0.05) -> dict:
     """Per-band relative errors, ``S_full`` and the band count below ``tau``.
 
-    ``S_full`` is the quantity defined by the paper: the number of consecutive
-    bands, counted from the coarsest, whose own relative error is at or below
-    ``tau`` (the count stops at the first failed band). It is computed by the
-    authoritative implementation in :mod:`luna.wavelet.metrics`.
+    ``S_full`` is the quantity defined by the paper: the number of consecutive bands, counted from the coarsest, whose own relative error is at or below ``tau`` (the count stops at the first failed band). It is computed by the authoritative implementation in :mod:`luna.wavelet.metrics`.
 
-    ``n_bands_below_tau`` is a *different* diagnostic: the total number of
-    bands below ``tau``, regardless of order. A reconstruction that fails W3
-    but passes W2 and W1 has a larger ``n_bands_below_tau`` than ``S_full``, so
-    the two must not be reported under the same name.
+    ``n_bands_below_tau`` is a *different* diagnostic: the total number of bands below ``tau``, regardless of order. A reconstruction that fails W3 but passes W2 and W1 has a larger ``n_bands_below_tau`` than ``S_full``, so the two must not be reported under the same name.
     """
     coeffs_pred = pywt.wavedec2(pred_2d, WAVELET, level=LEVEL, mode="periodization")
     coeffs_target = pywt.wavedec2(target_2d, WAVELET, level=LEVEL, mode="periodization")
@@ -97,9 +88,7 @@ def compute_sample_metrics(
 ) -> dict:
     """All sample-level metrics for one snapshot of a batch.
 
-    Returns ``GER`` over both channels, ``S_full`` (number of bands with a
-    relative error below ``tau``), the five per-band errors, and the vorticity
-    and gradient RMSE on the streamwise channel.
+    Returns ``GER`` over both channels, ``GER_u`` on the streamwise channel, ``S_full`` (number of bands with a relative error below ``tau``), the five per-band errors, and the vorticity and gradient RMSE on the streamwise channel.
     """
     o = output_nchw[sample_idx].ravel()
     t = target_nchw[sample_idx].ravel()
@@ -107,6 +96,8 @@ def compute_sample_metrics(
 
     out_2d = output_nchw[sample_idx, 0]
     tgt_2d = target_nchw[sample_idx, 0]
+    ger_u = float(np.linalg.norm(out_2d.ravel() - tgt_2d.ravel())
+                  / (np.linalg.norm(tgt_2d.ravel()) + EPS))
 
     band = band_errors(tgt_2d, out_2d, tau=tau)
     errs = band["band_errors"]
@@ -114,6 +105,7 @@ def compute_sample_metrics(
 
     return {
         "GER": ger,
+        "GER_u": ger_u,
         "S_full": band["S_full"],
         "n_bands_below_tau": band["n_bands_below_tau"],
         "E_W1": errs.get("W1", float("nan")),

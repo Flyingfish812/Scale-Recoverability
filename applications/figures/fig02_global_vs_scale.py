@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig02_global_vs_scale.py — JFM v0-2 Fig. 2: scale information beyond global error.
+fig02_global_vs_scale.py — main figure 2: scale information beyond the global relative error.
 
-Composite of the old Fig. 3a (low-GER cross-model example), old Fig. 4a (matched
-pairs) and old Fig. 4b (pooled derivative statistics), at the JFM text width:
+The four panels share one text-width row layout. Every global error shown here is the streamwise-component relative error GER_u, consistent with the metric the pairs are matched on:
 
-  (a) low-GER cross-model example: Ridge versus VCNN per-band E_direct at
+  (a) low-GER_u cross-model example: Ridge versus VCNN per-band E_direct at
       (M, sigma) = (30, 0), snapshot 49. The two global errors are NOT equal;
-      the panel is not an equal-GER pair.
-  (b) representative within-configuration equal-GER pair (MLP, M = 50,
+      the panel is not a matched pair.
+  (b) representative within-configuration matched pair (MLP, M = 50,
       sigma = 10^-3, seed 0; snapshots 98 and 227): per-band E_direct of the two
-      members, whose global errors agree to 1.6e-4 in relative terms.
-  (c) ECDF of the relative GER difference over all matched pairs, grouped by
-      Delta S_full (the panel kept from the old Fig. 4a), with the published
-      1 % relative matching criterion shown as a dotted line.
+      members, whose GER_u values agree to within the 1 % matching criterion.
+  (c) ECDF of the relative GER_u difference over all matched pairs, grouped by
+      Delta S_full, with the 1 % relative matching criterion shown as a dotted
+      line.
   (d) pooled statistics of the same pairs: median W1 band error, Laplacian RMSE
-      and gradient RMSE for the low- and high-S_full member, with the
-      snapshot-clustered bootstrap p-values.
+      and gradient RMSE for the low- and high-S_full member, with the snapshot-clustered bootstrap p-values.
 
 Data: artifacts/statistics/band_error_decomposition.json (a),
       artifacts/statistics/band_error_records.json (b),
@@ -45,8 +43,8 @@ STATS = _ROOT / "artifacts" / "statistics"
 # (a): closed-form Ridge and VCNN on the same snapshot, flagged in Fig. 3a
 TYPE_A = [("ridge", 30, 0.0, 49, 0, "Ridge"),
           ("vcnn", 30, 0.0, 49, 202, "VCNN")]
-# (b): the representative pair of the equal-GER search
-PAIR = dict(model="mlp", sensors=50, sigma=0.001, seed=0, idx=(98, 227))
+# (b): the representative pair of the equal-GER_u search
+PAIR = dict(model="mlp", sensors=20, sigma=0.001, seed=0, idx=(240, 194))
 # published matching criterion of the pair search: 1 % relative GER difference
 GER_TOL = 0.01
 BANDS = ps.BANDS
@@ -55,7 +53,7 @@ TICK = 6.5
 
 
 def panel_low_ger(ax, records: list) -> None:
-    """(a) low-GER cross-model example, per-band error bars."""
+    """(a) low-GER_u cross-model example, per-band error bars."""
     x = np.arange(len(BANDS))
     width = 0.36
     for i, (model, mask, sigma, snap, seed, name) in enumerate(TYPE_A):
@@ -66,7 +64,8 @@ def panel_low_ger(ax, records: list) -> None:
         errs = [rec["band_errors"][b]["total"] for b in BANDS]
         off = -width / 2 if i == 0 else width / 2
         ax.bar(x + off, errs, width, color=ps.MODEL_COLORS[name], alpha=0.9,
-               label=f"{name}: GER {rec['global_error']:.5f}, "
+               label=f"{name}: $\\mathrm{{GER}}_u$ "
+                     f"{rec.get('global_error_u', rec['global_error']):.5f}, "
                      f"$S_{{\\mathrm{{full}}}}$ = {rec['s_full']}")
         fail = next((k for k, e in enumerate(errs) if e > ps.TAU), None)
         if fail is not None:
@@ -114,7 +113,7 @@ def panel_pair(ax, records: list, pairs: dict) -> None:
     ax.set_ylabel("$E_{\\mathrm{direct}}(b)$", fontsize=TICK + 0.5)
     ax.tick_params(labelsize=TICK)
     rep = pairs["representative_pair"]
-    ax.set_title(f"matched pair, GER {rep['GER_low']:.5f} in both",
+    ax.set_title(f"matched pair, $\\mathrm{{GER}}_u$ {rep['GER_low']:.5f} in both",
                  fontsize=6.8, pad=3)
     ax.legend(fontsize=TICK, loc="lower right", frameon=False, handlelength=1.0,
               handletextpad=0.4, borderaxespad=0.2)
@@ -122,7 +121,7 @@ def panel_pair(ax, records: list, pairs: dict) -> None:
 
 
 def panel_ecdf(ax, pairs: dict) -> None:
-    """(c) relative GER difference of all matched pairs."""
+    """(c) relative GER_u difference of all matched pairs."""
     ger_diff = np.array([p["GER_diff"] for p in pairs["all_pairs"]])
     sfull_diff = np.array([p["S_full_diff"] for p in pairs["all_pairs"]])
     for value, color in [(2, ps.MODEL_COLORS["MLP"]),
@@ -138,7 +137,7 @@ def panel_ecdf(ax, pairs: dict) -> None:
     ax.set_xlim(3e-7, 3e-2)
     ax.set_ylim(-0.03, 1.05)
     ax.set_yticks([0, 0.5, 1.0])
-    ax.set_xlabel("relative $\\Delta$GER", fontsize=TICK + 0.5)
+    ax.set_xlabel("relative $\\Delta\\mathrm{GER}_u$", fontsize=TICK + 0.5)
     ax.set_ylabel("cumulative fraction", fontsize=TICK + 0.5)
     ax.tick_params(labelsize=TICK)
     ax.legend(fontsize=TICK - 0.5, loc="upper left", frameon=False,

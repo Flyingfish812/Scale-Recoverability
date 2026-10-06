@@ -1,8 +1,7 @@
 """
 Physical scale estimation for POD spatial modes.
 
-Uses Fourier energy centroid or peak-finding to estimate the
-characteristic spatial scale (ℓ_x, ℓ_y) of each POD mode.
+Uses Fourier energy centroid or peak-finding to estimate the characteristic spatial scale (ℓ_x, ℓ_y) of each POD mode.
 
 Migrated from l1_pod/scales.py.
 """
@@ -117,10 +116,7 @@ def estimate_mode_scales(
     """Estimate characteristic spatial scales (ℓ_x, ℓ_y) for a 2D POD mode.
 
     Args:
-        mode_hw: (H, W) POD spatial mode.
-        dx, dy: Grid spacing.
-        method: 'energy_centroid' or 'peak'.
-        scale_definition: 'half_period' or 'full_period'.
+        mode_hw: (H, W) POD spatial mode. dx, dy: Grid spacing. method: 'energy_centroid' or 'peak'. scale_definition: 'half_period' or 'full_period'.
 
     Returns:
         Dict with ell_x_med, ell_y_med, ell_min, ell_geo, etc.
@@ -164,8 +160,7 @@ def reduce_mode_channels(
     """Reduce multi-channel POD modes to a single channel.
 
     Args:
-        q_modes_rhwc: (R, H, W, C) array of spatial modes.
-        reduce_mode: 'l2' (L2 norm), 'sum', 'u' (channel 0), 'v' (channel 1).
+        q_modes_rhwc: (R, H, W, C) array of spatial modes. reduce_mode: 'l2' (L2 norm), 'sum', 'u' (channel 0), 'v' (channel 1).
 
     Returns:
         (R, H, W) array.
@@ -196,10 +191,7 @@ def build_scale_table(
     """Build a per-mode physical scale table.
 
     Args:
-        q_modes_rhw: (R, H, W) or (R, H, W, C) spatial modes.
-        dx, dy: Grid spacing.
-        method: Scale estimation method.
-        scale_definition: Period factor.
+        q_modes_rhw: (R, H, W) or (R, H, W, C) spatial modes. dx, dy: Grid spacing. method: Scale estimation method. scale_definition: Period factor.
 
     Returns:
         List of per-mode dicts with scale statistics.

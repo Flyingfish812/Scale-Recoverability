@@ -1,10 +1,6 @@
 """Does the coherent-only reading of the scale count agree with the total-error one?
 
-``S_full`` counts the bands whose total error, truncation plus estimator error, is
-below τ. ``S_coh`` repeats the count after a per-band POD has absorbed the part of
-the error that lies inside the band, so it answers a different question: is the
-band present, rather than is it present in every coefficient. This module compares
-the two counts configuration by configuration and reports how often they differ.
+``S_full`` counts the bands whose total error, truncation plus estimator error, is below τ. ``S_coh`` repeats the count after a per-band POD has absorbed the part of the error that lies inside the band, so it answers a different question: is the band present, rather than is it present in every coefficient. This module compares the two counts configuration by configuration and reports how often they differ.
 
 Output
 ------

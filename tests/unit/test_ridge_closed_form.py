@@ -1,7 +1,6 @@
 """Ridge closed-form solution tests.
 
-Verifies: the closed form (normal equations, unregularized bias) matches sklearn
-Ridge under the same standardization; repeated runs are deterministic.
+Verifies: the closed form (normal equations, unregularized bias) matches sklearn Ridge under the same standardization; repeated runs are deterministic.
 """
 
 import numpy as np

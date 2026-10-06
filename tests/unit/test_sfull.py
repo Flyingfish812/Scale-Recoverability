@@ -1,7 +1,6 @@
 """S_full tests.
 
-Covers: all pass / A4 fails / middle failure / a later band passes again / error
-exactly at the threshold / NaN and zero denominator / different decomposition levels.
+Covers: all pass / A4 fails / middle failure / a later band passes again / error exactly at the threshold / NaN and zero denominator / different decomposition levels.
 """
 
 import numpy as np

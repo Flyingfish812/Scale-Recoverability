@@ -1,8 +1,6 @@
 """Configuration objects for the convolutional estimator and its sweeps.
 
-Dataclasses only: data source, sensor mask, network, training and checkpoint
-settings. The values that define the paper's runs are set by the pipeline step
-``applications/pipelines/03_train_estimators.py``.
+Dataclasses only: data source, sensor mask, network, training and checkpoint settings. The values that define the paper's runs are set by the pipeline step ``applications/pipelines/03_train_estimators.py``.
 """
 
 from __future__ import annotations

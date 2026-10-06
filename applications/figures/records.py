@@ -1,11 +1,6 @@
 """Views of the band-error records used by the figure scripts.
 
-``applications/statistics/band_error_records.py`` stores one nested record per
-(snapshot, estimator, sensor count, noise level, training seed) under
-``artifacts/statistics/band_error_records.json``. The figures were written
-against an older flat layout, so this module exposes the fields they need without
-duplicating the file: a flat record view and, for the closed-form estimator, the
-per-band means of one configuration.
+``applications/statistics/band_error_records.py`` stores one nested record per (snapshot, estimator, sensor count, noise level, training seed) under ``artifacts/statistics/band_error_records.json``. This module exposes the fields the figures need without duplicating the file: a flat record view and, for the closed-form estimator, the per-band means of one configuration.
 """
 
 from __future__ import annotations
@@ -23,8 +18,7 @@ _CACHE: list[dict] | None = None
 def band_records(path: Path | None = None) -> list[dict]:
     """All records in the flat layout the figure scripts expect.
 
-    Each entry carries the configuration, the global error, the scale count and
-    the per-band total and reference band errors of one reconstruction.
+    Each entry carries the configuration, the global error, the scale count and the per-band total and reference band errors of one reconstruction.
     """
     global _CACHE
     if _CACHE is not None and path is None:

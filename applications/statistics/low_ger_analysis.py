@@ -1,25 +1,15 @@
 """Low-GER share of each estimator's test snapshots.
 
-Splits every configuration of the main comparison at the median global error of
-its test snapshots and asks how often the better half fails to recover the three
-coarsest wavelet bands (``S_full < 3``). A large share means that the scale
-index does not simply follow the global error: reconstructions that are accurate
-on average still lose the coarse scales.
+Splits every configuration of the main comparison at the median global error of its test snapshots and asks how often the better half fails to recover the three coarsest wavelet bands (``S_full < 3``). A large share means that the scale index does not simply follow the global error: reconstructions that are accurate on average still lose the coarse scales.
 
-The three estimators of the main comparison are reported separately and jointly.
-The least-squares map is deterministic and contributes one run per configuration;
-the POD-coefficient network and the convolutional estimator contribute one run
-per training seed, and the seeds are pooled inside a configuration before the
-median split.
+The three estimators of the main comparison are reported separately and jointly. The least-squares map is deterministic and contributes one run per configuration; the POD-coefficient network and the convolutional estimator contribute one run per training seed, and the seeds are pooled inside a configuration before the median split.
 
 Inputs
     artifacts/statistics/band_error_records.json   per-snapshot global error and
                                                    S_full of every configuration
 Output
     artifacts/statistics/low_ger_analysis.json     one block per estimator plus
-                                                   ``all``, each holding
-                                                   ``low_ger_samples``,
-                                                   ``sfull_lt_3`` and ``pct``
+                                                   ``all``, each holding ``low_ger_samples``, ``sfull_lt_3`` and ``pct``
 
 Usage
     python -m applications.statistics.low_ger_analysis
@@ -44,15 +34,15 @@ from applications.config import get_config  # noqa: E402
 
 RECORDS = ROOT / "artifacts" / "statistics" / "band_error_records.json"
 OUTPUT = ROOT / "artifacts" / "statistics" / "low_ger_analysis.json"
-#: Frozen artifact of the earlier analysis of the same quantity, read by --verify.
+# : Frozen artifact of the earlier analysis of the same quantity, read by --verify.
 REFERENCE = (ROOT / "artifacts" / "derived" / "main" / "statistics"
              / "s08b_low_ger_final.json")
 
-#: Estimators reported separately, in the order of the artifact.
+# : Estimators reported separately, in the order of the artifact.
 MODELS = ("ridge", "mlp", "vcnn")
-#: A snapshot counts as resolved when it recovers the three coarsest bands.
+# : A snapshot counts as resolved when it recovers the three coarsest bands.
 RESOLVED_BANDS = 3
-#: Fields the paper reads from every block of the artifact.
+# : Fields the paper reads from every block of the artifact.
 FIELDS = ("low_ger_samples", "sfull_lt_3", "pct")
 
 
@@ -64,9 +54,7 @@ def sigma_key(sigma: float) -> float:
 def low_ger_table(records: list[dict], cfg) -> dict:
     """Below-median share per estimator, with the median taken per configuration.
 
-    Every configuration is one (model, sensor count, noise level) cell; the
-    training seeds inside a cell are pooled, as the comparison is between
-    configurations rather than between runs.
+    Every configuration is one (model, sensor count, noise level) cell; the training seeds inside a cell are pooled, as the comparison is between configurations rather than between runs.
     """
     samples: dict[tuple[str, int, float], list[tuple[float, int]]] = defaultdict(list)
     seeds: dict[tuple[str, int, float], set[int]] = defaultdict(set)

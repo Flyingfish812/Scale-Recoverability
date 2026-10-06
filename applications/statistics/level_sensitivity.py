@@ -1,9 +1,6 @@
 """Sensitivity of the scale-recoverability index to the wavelet level.
 
-The index counts bands, so a fair comparison across decomposition levels uses
-the normalised value S_full / (L + 1). This module evaluates that quantity for
-L = 3, 4, 5 on one representative run and reports, per level, the band errors
-and the index.
+The index counts bands, so a fair comparison across decomposition levels uses the normalised value S_full / (L + 1). This module evaluates that quantity for L = 3, 4, 5 on one representative run and reports, per level, the band errors and the index.
 
 Two band-error definitions are computed:
 
@@ -48,7 +45,7 @@ from luna.wavelet.metrics import contiguous_recoverable_index  # noqa: E402
 from applications.statistics.band_error_decomposition import load_run, run_path  # noqa: E402
 
 OUTPUT = ROOT / "artifacts" / "statistics" / "level_sensitivity.json"
-#: Reference values of the earlier level analysis, kept for the --verify path.
+# : Reference values of the earlier level analysis, kept for the --verify path.
 REFERENCE = (ROOT / "artifacts" / "derived" / "main" / "statistics"
              / "mechanism_analysis" / "level_sensitivity.json")
 MODEL, SENSOR_COUNT, SIGMA, SEED = "mlp", 20, 0.0, 0

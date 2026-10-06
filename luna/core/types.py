@@ -19,8 +19,7 @@ import numpy as np
 class BandErrorDict:
     """Per-band error metrics for a single sample.
 
-    Each key is a band name (A4, W4, W3, W2, W1).
-    Values are dicts with keys: E_total, E_trunc, E_pred, E_direct.
+    Each key is a band name (A4, W4, W3, W2, W1). Values are dicts with keys: E_total, E_trunc, E_pred, E_direct.
     """
 
     errors: dict[str, dict[str, float]] = field(default_factory=dict)

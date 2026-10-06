@@ -1,7 +1,7 @@
 """
 Configuration loader — reads JSON/TOML config files and produces typed config objects.
 
-Supports both legacy JSON configs and new TOML configs.
+Both file formats are supported; the JSON reader is kept for the configs that were written before the TOML ones.
 """
 
 from __future__ import annotations
@@ -32,14 +32,14 @@ def _try_import_toml() -> bool:
         try:
             import tomli  # third-party backport
             return True
-    except ImportError:
-        return False
+        except ImportError:
+            return False
 
 
 _HAS_TOML = _try_import_toml()
 
 
-# ── JSON loader (legacy compat) ────────────────────────────────────
+# ── JSON loader ────────────────────────────────────────────────────
 
 def _load_json(path: Path) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:

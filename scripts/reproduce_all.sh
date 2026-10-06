@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # ============================================================================
 # Scale-Recoverability — full main-paper reproduction
-#
-# Usage:  bash scripts/reproduce_all.sh [env-name]
-#
+
+# Usage:
+# bash scripts/reproduce_all.sh [env-name]
+
 # Requires:
-#   - conda environment with the dependencies in environment/environment.yml
-#   - data/cylinder2d_q1.npy (see scripts/download_data.sh)
-#   - trained runs under artifacts/ (applications/pipelines/03_train_estimators.py)
-#
+# - conda environment with the dependencies in environment/environment.yml
+# - data/cylinder2d_q1.npy (see scripts/download_data.sh)
+# - trained runs under artifacts/ (applications/pipelines/03_train_estimators.py)
+
 # The pipeline regenerates the statistics and the figures of the paper. Figures
-# are written to artifacts/figures; copying them into the manuscript tree is a
-# separate step (applications/figures/publish_figures.py), which is only
-# meaningful when the private manuscript tree is present.
+# are written to artifacts/figures; copying them into the directory that holds the
+# paper sources is a separate step (applications/figures/publish_figures.py).
 # ============================================================================
 set -euo pipefail
 ENV_NAME="${1:-luna}"

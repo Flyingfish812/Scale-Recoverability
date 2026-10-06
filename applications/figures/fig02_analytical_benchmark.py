@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig02_analytical_benchmark.py — Fig. 2 known-scale validation (v3-3, 2026-09-01)
+fig02_analytical_benchmark.py — supplementary figure S2: measured scale counts of the prescribed carrier-removal cases.
 
-Field panels keep the 2:1 aspect ratio of the data, and a colorbar is added only
-where the neighbouring panel leaves room. Figures show data only; conclusions
-stay in the caption.
+Field panels keep the 2:1 aspect ratio of the data, and a colorbar is added only where the neighbouring panel leaves room. The figure shows data only; the conclusions stay in the caption.
 
-Manuscript version: (a) Target u | (b) Band A4 | (c) Band W3
-             (d) E1 recon | (e) E2 recon | (f) per-band error E1 vs E2
-Appendix full version: keeps all (a)-(m) band decomposition panels.
+Panels: (a) target u, (b) band A4, (c) band W3, (d) reconstruction of case E1, (e) reconstruction of case E2, (f) per-band error of E1 and E2. ``--full`` also writes the complete band-decomposition variant.
 """
 
 from __future__ import annotations
@@ -99,8 +95,7 @@ def main() -> int:
     print(f"  E1: GER={cE1['GER_mean']:.4f} S_full={cE1['S_full_mean']:.2f} (expected 4)")
     print(f"  E2: GER={cE2['GER_mean']:.4f} S_full={cE2['S_full_mean']:.2f} (expected 2)")
 
-    # ── manuscript version: 3 rows x 2 cols, fields kept at 2:1 ──
-    # each column ~3.1in wide, field ~1.5in tall (2:1); tight row spacing
+    # ── main variant: 3 rows x 2 cols, fields kept at 2:1 ── each column ~3.1in wide, field ~1.5in tall (2:1); tight row spacing
     fig = plt.figure(figsize=(6.6, 5.6))
     gs = fig.add_gridspec(3, 2, height_ratios=[1.0, 1.0, 1.15],
                           hspace=0.38, wspace=0.30,

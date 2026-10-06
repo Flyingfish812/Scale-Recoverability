@@ -1,20 +1,22 @@
 #=============================================================================
 # Luna — .gitignore
-# 本仓库作为论文 (Scale Recoverability) 的 Code Availability 源码链接。
-# 原则: 只保留运行时代码与可复现输入/配置; 剔除所有中间产物、大型二进制与论文源码。
-# 更新: 2026-08-13
+#
+# This repository holds the code that accompanies the paper. It carries the
+# runtime code and the reproducibility inputs only; intermediate products,
+# large binaries and the paper sources live outside version control.
 #=============================================================================
 
 #---------------------------------------------------------------------------
-# 大型中间产物 / 运行输出 (不可提交)
+# Generated products and run outputs
 #---------------------------------------------------------------------------
 artifacts/
 artifacts_*
 _legacy/
 data/*.npy
-# data/ 下的本地工作文档 (如数据溯源报告), 不随代码链接发布
+# local working notes under data/ (data-provenance reports and similar)
 data/*.md
-# 论文源码独立仓 (含 thesis_src_planA/ 与 thesis_src_planB/): 仅本地写作/编译使用, 不随代码仓同步
+# the manuscript is kept in its own directory
+# (thesis_src_planA/ and thesis_src_planB/ are local writing copies)
 thesis_work/
 /figures/
 /results/
@@ -27,9 +29,10 @@ references
 *.tar.gz
 
 #---------------------------------------------------------------------------
-# applications/paper_* 内的生成输出 (代码保留, 输出剔除)
-# 注意: figures/ 与 tables/ 目录内含 .py 生成脚本(代码), 不能整目录忽略;
-#       生成产物集中在 build/ 下, 另按扩展名兜底.
+# Output written next to the scripts under applications/
+# The figures/ and tables/ directories also contain the plotting code, so they
+# cannot be ignored as a whole: generated files are excluded by extension and
+# the build/ directory is excluded as a whole.
 #---------------------------------------------------------------------------
 applications/**/results/
 applications/**/reports/
@@ -41,7 +44,7 @@ applications/**/tables/*.tex
 applications/**/tables/*.csv
 
 #---------------------------------------------------------------------------
-# Python 字节码 / 构建产物
+# Python bytecode and build products
 #---------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
@@ -51,13 +54,13 @@ dist/
 *.egg-info/
 .eggs/
 
-# 虚拟环境
+# Virtual environments
 .venv/
 venv/
 env/
 ENV/
 
-# 测试 / 类型检查缓存
+# Test and type-check caches
 .pytest_cache/
 .mypy_cache/
 .pytype/
@@ -69,32 +72,32 @@ htmlcov/
 # Jupyter
 .ipynb_checkpoints/
 
-# IDE / 编辑器 (本地设置不随源码链接发布)
+# IDE and editor settings
 .vscode/
 .idea/
 
-# OS / 备份文件
+# OS and backup files
 .DS_Store
 Thumbs.db
 *~
 
-# 日志与临时文件
+# Logs and temporary files
 *.log
 *.tmp
 *.temp
 
-# 训练检查点 / 中间数组
+# Training checkpoints and intermediate arrays
 *.pt
 *.ckpt
 *.npz
 
-# 内部工作文档 (不随源码链接发布)
+# Internal working documents
 agent-docs/
-# 外部独立仓库克隆 (SNL-UCSB/paper-writing-skill), 不随代码仓同步
+# separate clone of another repository, not part of this code base
 paper-writing-skill/
 .github/skills/
 
-# 掩码 / 数据目录 / 目录清单 (本地生成, 不随源码链接发布)
+# Sensor masks, data directories and local catalogues (generated locally)
 /masks/
 /masks2/
 /masks_expand/
@@ -104,16 +107,17 @@ paper-writing-skill/
 /results*/
 /figures_expand/
 
-# 内部工具与旧编排层 (本地保留, 不随源码链接发布)
+# Local tooling and the retired orchestration layer
 /tools/
 /tools_active/
 /pipelines/
 
-# application 层整体随源码链接发布: applications/pipelines (01--05 复现入口),
-# applications/statistics (每个统计产物的生产者) 与 applications/figures (绘图脚本)。
-# 生成物仍按扩展名兜底忽略 (见本文件上半部分)。
+# The applications/ layer is published in full: applications/pipelines (steps
+# 01--05), applications/statistics (one producer per statistic) and
+# applications/figures (one script per figure). Generated files below those
+# directories are still excluded by extension (see above).
 
-# 其他大型二进制兜底
+# Remaining large binaries, excluded by extension
 *.nc
 *.h5
 *.hdf5

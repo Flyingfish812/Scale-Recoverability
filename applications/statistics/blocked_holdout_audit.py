@@ -2,24 +2,9 @@
 
 Two questions are answered from one deterministic pass over the canonical runs.
 
-*Estimator table.* Each estimator is retrained with contiguous
-train/validation/test blocks separated by a guard gap; the module rebuilds the
-reported mean global relative error and mean ``S_full`` of every model and
-placement at the representative condition $(M,\sigma)=(20,0)$, evaluating the
-inner \FBlockedNTest{} snapshots of the test block in physical units over both
-velocity components. This is the table the supplementary material prints, so the
-numbers have a reproducible source rather than being read off a one-off script.
+*Estimator table.* Each estimator is retrained with contiguous train/validation/test blocks separated by a guard gap; the module rebuilds the reported mean global relative error and mean ``S_full`` of every model and placement at the representative condition $(M,\sigma)=(20,0)$, evaluating the inner \FBlockedNTest{} snapshots of the test block in physical units over both velocity components. This is the table the supplementary material prints, so the numbers have a reproducible source rather than being read off a one-off script.
 
-*Representation audit.* Placement 2 degrades far more than placements 0 and 1,
-and it degrades the two deterministic baselines along with the learned ones, so
-the cause cannot be estimator-specific. The module therefore also evaluates the
-exact rank-128 POD coefficient reconstruction of each held-out window, with no
-observation model and no noise: if the representation describes the window, the
-extra error belongs to the estimators; if it does not, the window lies outside
-the span of a basis trained on the remaining snapshots. The placement-2 window is
-additionally evaluated with the basis of the random split, which separates a
-basis effect from a state-interval effect, and the leading limit-cycle harmonic
-is compared between each training set and its own held-out window.
+*Representation audit.* Placement 2 degrades far more than placements 0 and 1, and it degrades the two deterministic baselines along with the learned ones, so the cause cannot be estimator-specific. The module therefore also evaluates the exact rank-128 POD coefficient reconstruction of each held-out window, with no observation model and no noise: if the representation describes the window, the extra error belongs to the estimators; if it does not, the window lies outside the span of a basis trained on the remaining snapshots. The placement-2 window is additionally evaluated with the basis of the random split, which separates a basis effect from a state-interval effect, and the leading limit-cycle harmonic is compared between each training set and its own held-out window.
 
 Output
 ------
@@ -62,8 +47,7 @@ def _load_training_pipeline():
 PIPELINE = _load_training_pipeline()
 
 BLOCKED_ROOT = ROOT / "results" / "20260930_blocked_canonical"
-#: directory tag -> placement. The convolutional estimator was trained in two
-#: halves, one per sensor count, so placement 2 has two output roots.
+# : directory tag -> placement. The convolutional estimator was trained in two : halves, one per sensor count, so placement 2 has two output roots.
 TAG_TO_PLACEMENT = {"p0": 0, "p1": 1, "p2": 2, "p2_m20": 2, "p2_m30": 2}
 SEEDS = ("seed000", "seed101", "seed202")
 MODELS = ("mlp", "vcnn", "ridge", "gappy")

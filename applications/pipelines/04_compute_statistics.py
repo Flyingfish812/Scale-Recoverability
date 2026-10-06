@@ -1,10 +1,6 @@
 """Produce every statistic the paper reports.
 
-Each producer in ``applications/statistics`` writes one artifact under
-``artifacts/statistics``; this module runs them in dependency order so that the
-whole statistics layer can be rebuilt with one command. Producers are
-independent Python programs, so a failure is reported but does not stop the
-remaining steps, and the exit status of the whole run is non-zero if any of them
+Each producer in ``applications/statistics`` writes one artifact under ``artifacts/statistics``; this module runs them in dependency order so that the whole statistics layer can be rebuilt with one command. Producers are independent Python programs, so a failure is reported but does not stop the remaining steps, and the exit status of the whole run is non-zero if any of them
 failed.
 
 Prerequisites
@@ -13,8 +9,7 @@ Prerequisites
              (see applications/pipelines/02_build_pod_bases.py)
 
 Pipeline
-    previous  applications/pipelines/03_train_estimators.py
-    this step writes artifacts/statistics/
+    previous  applications/pipelines/03_train_estimators.py this step writes artifacts/statistics/
     next      applications/pipelines/05_make_figures.py
 
 Outputs
@@ -40,8 +35,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
-#: Producers in dependency order: a producer only reads artifacts written by the
-#: steps above it (or by the training pipeline).
+# : Producers in dependency order: a producer only reads artifacts written by the : steps above it (or by the training pipeline).
 PRODUCERS = [
     "applications.statistics.truncation_reference_audit",
     "applications.statistics.analytical_benchmark",
@@ -80,8 +74,8 @@ PRODUCERS = [
     "applications.statistics.scoh_vs_sfull",
 ]
 
-#: Producers that evaluate one configuration per worker accept a worker count;
-#: passing it keeps the reproduction within minutes instead of hours.
+# : Producers that evaluate one configuration per worker accept a worker count;
+# : passing it keeps the reproduction within minutes instead of hours.
 WORKER_FLAG = {
     "applications.statistics.paired_model_comparison": "--jobs",
     "applications.statistics.scoh_vs_sfull": "--jobs",

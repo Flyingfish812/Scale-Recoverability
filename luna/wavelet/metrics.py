@@ -67,9 +67,7 @@ def band_errors_all(
     """Compute per-band relative L2 errors for all 5 bands.
 
     Args:
-        target: Ground truth 2D field (H, W).
-        pred: Predicted 2D field (H, W).
-        wavelet, level, mode: Wavelet parameters.
+        target: Ground truth 2D field (H, W). pred: Predicted 2D field (H, W). wavelet, level, mode: Wavelet parameters.
 
     Returns:
         Dict: {'A4': 0.012, 'W4': 0.034, 'W3': 0.056, 'W2': 0.089, 'W1': 0.123}
@@ -91,8 +89,7 @@ def contiguous_recoverable_index(
     """Count how many bands (from coarsest A4 downward) satisfy error ≤ τ.
 
     Args:
-        errors_coarse_to_fine: Array of 5 band errors [A4, W4, W3, W2, W1].
-        tau: Error threshold.
+        errors_coarse_to_fine: Array of 5 band errors [A4, W4, W3, W2, W1]. tau: Error threshold.
 
     Returns:
         Integer 0–5: number of contiguous recoverable bands.
@@ -122,10 +119,7 @@ def compute_S_full(
     0 = no band recoverable; 5 = all 5 bands (A4..W1) recoverable.
 
     Args:
-        target: Ground truth 2D field.
-        pred: Predicted 2D field.
-        tau: Error threshold for band recoverability.
-        wavelet, level, mode: Wavelet parameters.
+        target: Ground truth 2D field. pred: Predicted 2D field. tau: Error threshold for band recoverability. wavelet, level, mode: Wavelet parameters.
 
     Returns:
         S_full value.
@@ -148,16 +142,12 @@ def compute_S_coh(
 ) -> int:
     """Compute S_coh: recoverable scale level within POD-coherent subspace.
 
-    Projects both target and prediction onto each band's POD subspace,
-    then computes band errors in the projected space.
+    Projects both target and prediction onto each band's POD subspace, then computes band errors in the projected space. The basis in ``band_pod_models`` is fitted to the same field the count refers to.
 
     Args:
-        target: Ground truth 2D field.
-        pred: Predicted 2D field.
-        band_pod_models: Dict from band_pod_fit:
+        target: Ground truth 2D field. pred: Predicted 2D field. band_pod_models: Dict from band_pod_fit:
             {band: {'mean': ndarray, 'basis': ndarray}}.
-        tau: Error threshold.
-        wavelet, level, mode: Wavelet parameters.
+        tau: Error threshold. wavelet, level, mode: Wavelet parameters.
 
     Returns:
         S_coh value ∈ {0..5}.
@@ -206,31 +196,25 @@ def band_error_decomposition(
 
         u - û = (u - u_ref) + (u_ref - û)
 
-    and this function evaluates the norm of each term inside every wavelet
-    band. All three terms use the **same** denominator, ‖W_b(u)‖₂:
+    and this function evaluates the norm of each term inside every wavelet band. All three terms use the **same** denominator, ‖W_b(u)‖₂:
 
         total(b)      = ‖W_b(u) − W_b(û)‖₂      / ‖W_b(u)‖₂
         truncation(b) = ‖W_b(u) − W_b(u_ref)‖₂  / ‖W_b(u)‖₂
         prediction(b) = ‖W_b(u_ref) − W_b(û)‖₂  / ‖W_b(u)‖₂
 
-    With a shared denominator the decomposition is consistent with the
-    triangle inequality, band by band:
+    With a shared denominator the decomposition is consistent with the triangle inequality, band by band:
 
         total(b) ≤ truncation(b) + prediction(b)
 
-    Normalising the prediction term by ‖W_b(u_ref)‖₂ instead (an earlier
-    variant of this analysis) breaks that inequality, so it is not used.
+    Normalising the prediction term by ‖W_b(u_ref)‖₂ instead (an earlier variant of this analysis) breaks that inequality, so it is not used.
 
     Args:
-        target: Ground-truth field u.
-        pred: Reconstructed field û.
-        reference: Representation reference u_ref (here the rank-r POD
+        target: Ground-truth field u. pred: Reconstructed field û. reference: Representation reference u_ref (here the rank-r POD
             truncation of the same field).
         wavelet, level, mode: Wavelet parameters.
 
     Returns:
-        ``{band: {"total": …, "truncation": …, "prediction": …}}`` for the
-        bands A4, W4, W3, W2, W1 (coarse to fine).
+        ``{band: {"total": …, "truncation": …, "prediction": …}}`` for the bands A4, W4, W3, W2, W1 (coarse to fine).
     """
     target_bands = decompose_field_2d(target, wavelet, level, mode)
     pred_bands = decompose_field_2d(pred, wavelet, level, mode)
@@ -256,13 +240,11 @@ def global_error(
 ) -> float:
     """Global error ratio (GER) of a reconstruction.
 
-    Defined on the **full state** (all components stacked), which is the
-    convention used for the reported GER throughout the paper:
+    Defined on the **full state** (all components stacked), which is the convention used for the reported GER throughout the paper:
 
         GER = ‖u − û‖₂ / ‖u‖₂
 
-    Scale-resolved quantities (band errors, S_full, S_coh) are evaluated on
-    the streamwise component alone; see the paper's Methods for the rationale.
+    Scale-resolved quantities (band errors, S_full, S_coh) are evaluated on the streamwise component alone; see the paper's Methods for the rationale.
     """
     return rel_l2(pred, target, eps=eps)
 
@@ -285,9 +267,7 @@ def compute_oracle_audit_table(
     Args:
         target_fields: Array of shape (N, H, W) — single-channel, or (N, H, W, C) — multi-channel.
         pod_basis_flat: POD basis, shape (max_rank, D) where D = H*W (*C if multi-channel).
-        pod_mean_flat: POD mean, shape (D,).
-        ranks: List of truncation ranks to evaluate.
-        wavelet, level, mode: Wavelet parameters.
+        pod_mean_flat: POD mean, shape (D,). ranks: List of truncation ranks to evaluate. wavelet, level, mode: Wavelet parameters.
 
     Returns:
         {rank: {'A4': max_E_trunc, 'W4': ..., 'W3': ..., 'W2': ..., 'W1': ...}}

@@ -1,9 +1,7 @@
 """
-Band-wise POD fitting — POD decomposition applied independently to each
-wavelet sub-band of the data.
+Band-wise POD fitting — POD decomposition applied independently to each wavelet sub-band of the data.
 
-This combines wavelet decomposition with POD to produce a band-specific
-low-dimensional subspace, used for S_coh computation.
+This combines wavelet decomposition with POD to produce a band-specific low-dimensional subspace, used for S_coh computation.
 """
 
 from __future__ import annotations
@@ -31,10 +29,7 @@ def fit_band_pod(
     """Fit POD on each wavelet sub-band independently.
 
     Args:
-        fields: (N, H, W) array of fields.
-        pod_max_rank: Maximum number of POD modes per band.
-        pod_energy_threshold: Energy threshold for mode truncation.
-        wavelet, level, mode: Wavelet parameters.
+        fields: (N, H, W) array of fields. pod_max_rank: Maximum number of POD modes per band. pod_energy_threshold: Energy threshold for mode truncation. wavelet, level, mode: Wavelet parameters.
 
     Returns:
         {band: {'mean': (D_b,), 'basis': (r_b, D_b), 'singular_values': (r0_b,)}}
@@ -91,8 +86,7 @@ def band_pod_project(
     """Project a single band field onto its band-POD subspace.
 
     Args:
-        field_band: (D_b,) or (H_b, W_b) band field.
-        band_model: {'mean': (D_b,), 'basis': (r_b, D_b)}.
+        field_band: (D_b,) or (H_b, W_b) band field. band_model: {'mean': (D_b,), 'basis': (r_b, D_b)}.
 
     Returns:
         Projected band field, same shape as input.

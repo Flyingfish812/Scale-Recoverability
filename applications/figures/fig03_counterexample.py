@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig03_counterexample.py — Fig. 3 counterexamples (v3-3, 2026-08-31)
+fig03_counterexample.py — supplementary figure S5: low-error counterexamples.
 
-  (a) Type A: Ridge vs VCNN per-band E_direct (M=30, σ=0), red circle on the failed band
-  (b) Type B: MLP E_direct vs E_coh (M=50, σ=0.01), red circle on the E_direct failed band
-Only the first-failed-band marker is kept; conditions and conclusions go in the caption.
+  (a) Type A: Ridge against VCNN per-band direct error (M=30, sigma=0), red
+      circle on the first failed band
+  (b) Type B: MLP direct error against the POD-dominant error (M=50,
+      sigma=0.01), red circle on the first failed band
 
-Data sources (same convention as the manuscript facts):
+The submitted supplementary figure uses panel (b); panel (a) is an alternative rendering of the example shown in main figure 2a. Conditions and conclusions go in the caption.
+
+Data
   - Type A: artifacts/statistics/band_error_decomposition.json
-            (M=30, σ=0, snapshot 49: closed-form Ridge and VCNN on the same snapshot)
-  - Type B: MLP M=50 σ=0.01 seed=0 sample_idx=90
-            (band-POD protocol)
+            (M=30, sigma=0, snapshot 49: closed-form Ridge and VCNN on the same snapshot)
+  - Type B: MLP M=50 sigma=0.01 seed=0 sample_idx=90 (band-POD protocol)
 """
 
 from __future__ import annotations

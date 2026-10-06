@@ -75,8 +75,7 @@ GOLDEN = [
 def test_s_full_is_the_consecutive_band_count():
     """S_full must agree with the authoritative contiguous implementation.
 
-    A reconstruction that fails one middle band but passes the finer ones has
-    ``n_bands_below_tau > S_full``; the two definitions must not be conflated.
+    A reconstruction that fails one middle band but passes the finer ones has ``n_bands_below_tau > S_full``; the two definitions must not be conflated.
     """
     rng = np.random.default_rng(3)
     target = rng.normal(size=(80, 160))

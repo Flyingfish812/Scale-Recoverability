@@ -1,8 +1,7 @@
 """DWT orthogonality identity tests.
 
 Verifies: ‖u−û‖₂² = Σ_b ‖W_b(u−û)‖₂²
-The relative residual is allowed to be < 1e-4 (float32 band components, adjusted to
-the actual floating-point precision).
+The relative residual is allowed to be < 1e-4 (float32 band components, adjusted to the actual floating-point precision).
 """
 
 import numpy as np

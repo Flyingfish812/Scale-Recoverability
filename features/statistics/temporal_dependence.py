@@ -1,14 +1,9 @@
 """
 Temporal dependence diagnostics.
 
-Computes ACF, integrated autocorrelation time (IACT), effective sample size
-(ESS) and dominant period for a time series, and suggests a block length for
-block bootstrap.
+Computes ACF, integrated autocorrelation time (IACT), effective sample size (ESS) and dominant period for a time series, and suggests a block length for block bootstrap.
 
-Note on the NC dataset: the 300 test snapshots are NOT a consecutive time
-series (they are sampled from the 1501-snapshot cylinder-wake sequence with
-irregular gaps). Physical periodicity must therefore be estimated on the FULL
-1501-snapshot sequence (equally spaced), which this module supports.
+Note on the NC dataset: the 300 test snapshots are NOT a consecutive time series (they are sampled from the 1501-snapshot cylinder-wake sequence with irregular gaps). Physical periodicity must therefore be estimated on the FULL 1501-snapshot sequence (equally spaced), which this module supports.
 """
 
 from __future__ import annotations
@@ -65,8 +60,7 @@ def dominant_period(x: np.ndarray) -> Dict[str, float]:
     """Dominant FFT period (in samples) + peak spectral fraction.
 
     Returns:
-        {period, peak_frac}: period in samples; peak_frac is the share of the
-        dominant spectral line in the total variance (excluding DC).
+        {period, peak_frac}: period in samples; peak_frac is the share of the dominant spectral line in the total variance (excluding DC).
     """
     x = np.asarray(x, dtype=np.float64).reshape(-1)
     n = x.size

@@ -1,10 +1,6 @@
 """Does the recovery threshold change the ranking of the estimators?
 
-The scale count is quoted at τ=0.05. This module re-ranks the three estimators by
-their probability of recovering at least three scales at τ=0.03, 0.05 and 0.08,
-for every sensor count, and records where the ordering differs from the reference
-threshold. A ranking that survives a 1.7× change of the threshold is evidence
-that the comparison does not hinge on the choice of τ.
+The scale count is quoted at τ=0.05. This module re-ranks the three estimators by their probability of recovering at least three scales at τ=0.03, 0.05 and 0.08, for every sensor count, and records where the ordering differs from the reference threshold. A ranking that survives a 1.7× change of the threshold is evidence that the comparison does not hinge on the choice of τ.
 
 Output
 ------
@@ -47,8 +43,7 @@ def main() -> int:
             ridge = pass_probability[("ridge", mask, tau)]
             mlp = pass_probability[("mlp", mask, tau)]
             vcnn = pass_probability[("vcnn", mask, tau)]
-            # The closed-form estimator is never better than a learned one; at the
-            # coarse thresholds both pass probabilities are zero, hence "not above".
+            # The closed-form estimator is never better than a learned one; at the coarse thresholds both pass probabilities are zero, hence "not above".
             ridge_below_mlp += int(ridge <= mlp)
             ridge_below_vcnn += int(ridge <= vcnn)
 

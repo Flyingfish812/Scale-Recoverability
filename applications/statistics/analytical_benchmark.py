@@ -1,18 +1,13 @@
 """Analytical multiscale benchmark: does the index recover the prescribed scales?
 
-The benchmark builds synthetic fields with known coarse-scale content, removes
-one or two prescribed Fourier-carrier groups, and asks whether the wavelet index
-reports the change. Because the content is prescribed, the correct value of
-S_full is known in advance, which makes the benchmark an absolute check on the
-index rather than a relative comparison between models.
+The benchmark builds synthetic fields with known coarse-scale content, removes one or two prescribed Fourier-carrier groups, and asks whether the wavelet index reports the change. Because the content is prescribed, the correct value of S_full is known in advance, which makes the benchmark an absolute check on the index rather than a relative comparison between models.
 
 Two blocks are produced:
 
     cases      the six benchmark cases, with the expected and the measured
                scale count, the global error and the per-band errors
     real_nc    the same wavelet index applied to the NC reconstructions, for
-               each wavelet family, which is the sensitivity check of the
-               transform choice
+               each wavelet family, which is the sensitivity check of the transform choice
 
 Inputs
     nothing (the analytical fields are constructed here)
@@ -58,12 +53,11 @@ from luna.wavelet.transform import decompose_field_2d  # noqa: E402
 
 SOURCE = ROOT / "artifacts" / "statistics"
 OUTPUT = ROOT / "artifacts" / "statistics" / "analytical_benchmark.json"
-#: Consolidated values of the submitted manuscript, frozen for --verify.
+# : Reference values reported in the paper, checked by ``--verify``.
 SUBMITTED = (ROOT / "artifacts" / "derived" / "main" / "statistics"
              / "p0_consolidated.json")
 
-#: Snapshots used for the band-POD fit behind the coherent-only index, and for the
-#: ensemble statistics. The two groups must not overlap.
+# : Snapshots used for the band-POD fit behind the coherent-only index, and for the : ensemble statistics. The two groups must not overlap.
 N_TRAIN_POD = 200
 N_TEST = 100
 SEED_OFFSET = 1000
@@ -72,14 +66,14 @@ WAVELETS = ["haar", "db2", "db4", "sym4", "coif1"]
 MODELS = ["ridge", "mlp", "vcnn"]
 CASES = ["A_full", "B_del_W1", "C_del_W1W2", "D_del_W3", "E1_del_W1_only",
          "E2_partial_W3"]
-#: Scale count each case must report, by construction.
+# : Scale count each case must report, by construction.
 EXPECTED_SCALES = {"A_full": 5, "B_del_W1": 4, "C_del_W1W2": 3, "D_del_W3": 2,
                    "E1_del_W1_only": 4, "E2_partial_W3": 2}
-#: Energy share of each band in the NC test fields, for reference.
+# : Energy share of each band in the NC test fields, for reference.
 NC_BAND_ENERGY_FRACTIONS = {"A4": 0.966, "W4": 0.029, "W3": 0.004, "W2": 0.001,
                             "W1": 0.000}
 
-#: Fourier carriers carried by each scale group of the construction (band 1 = A4).
+# : Fourier carriers carried by each scale group of the construction (band 1 = A4).
 CARRIER_WAVENUMBERS = {
     1: [(1, 1), (2, 1), (3, 2)],
     2: [(6, 4), (7, 4)],
@@ -179,8 +173,7 @@ def consolidate(benchmark: dict, sensitivity: dict) -> dict:
 
     ``sensitivity`` is the transform-sensitivity block of the paper's runs
     (``applications/statistics/wavelet_sensitivity.py``). It is merged in when
-    available; a checkout without trained runs passes ``None`` and the block is
-    omitted, so the benchmark itself needs no data.
+    available; a checkout without trained runs passes ``None`` and the block is omitted, so the benchmark itself needs no data.
     """
     statistics = benchmark["ensemble_stats"]
     representative = benchmark["representative_seed0"]
@@ -225,8 +218,7 @@ def consolidate(benchmark: dict, sensitivity: dict) -> dict:
         "nc_band_energy_fractions": NC_BAND_ENERGY_FRACTIONS,
     }
     if sensitivity is not None:
-        # Appended last, so the key order of the artifact is unchanged when the
-        # block is present.
+        # Appended last, so the key order of the artifact is unchanged when the block is present.
         result["wavelet_sensitivity"] = {
             "representative_case": sensitivity.get("representative_case"),
             "real_nc": {
@@ -258,8 +250,7 @@ def load_sensitivity() -> dict | None:
     """Transform-sensitivity block of the paper's runs, or ``None`` if absent.
 
     The block is produced by ``applications/statistics/wavelet_sensitivity.py``
-    from trained runs, so it cannot be regenerated here; the analytical
-    benchmark constructs its own fields and runs without it.
+    from trained runs, so it cannot be regenerated here; the analytical benchmark constructs its own fields and runs without it.
     """
     path = SOURCE / "wavelet_sensitivity.json"
     if not path.exists():
@@ -272,7 +263,7 @@ def load_sensitivity() -> dict | None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--verify", action="store_true",
-                        help="compare with the consolidated values of the manuscript")
+                        help="compare with the reference values reported in the paper")
     args = parser.parse_args()
 
     start = time.time()
@@ -309,7 +300,7 @@ def _close(got, want, tolerance: float = 1e-12) -> bool:
 
 
 def _verify(result: dict) -> int:
-    """Compare with the consolidated values used by the submitted manuscript."""
+    """Compare with the reference values reported in the paper."""
     if not SUBMITTED.exists():
         print("   consolidated values not available; nothing to compare")
         return 1

@@ -1,14 +1,8 @@
 """Temporal dependence of the flow and the resulting bootstrap block length.
 
-The 300 test snapshots are drawn from the 1501-snapshot sequence with a random
-stride of between 1 and 22 steps, so a block length measured in test snapshots
-would be meaningless. The shedding period is therefore estimated on the full
-equally spaced sequence, from the vortex-shedding pair of POD modes, and then
-converted into test-snapshot units for the block bootstrap used elsewhere.
+The 300 test snapshots are drawn from the 1501-snapshot sequence with a random stride of between 1 and 22 steps, so a block length measured in test snapshots would be meaningless. The shedding period is therefore estimated on the full equally spaced sequence, from the vortex-shedding pair of POD modes, and then converted into test-snapshot units for the block bootstrap used elsewhere.
 
-This module also recomputes the two summary intervals quoted for the primary
-configuration, using time blocks as well as a snapshot-cluster resampling, so
-that the effect of the choice can be compared directly.
+This module also recomputes the two summary intervals quoted for the primary configuration, using time blocks as well as a snapshot-cluster resampling, so that the effect of the choice can be compared directly.
 
 Inputs
     data/cylinder2d_q1.npy                 full snapshot sequence
@@ -44,7 +38,7 @@ from features.statistics.temporal_dependence import (  # noqa: E402
 )
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
 
-#: Configuration whose summary intervals are quoted in the paper.
+# : Configuration whose summary intervals are quoted in the paper.
 PRIMARY = ("mlp", 20, 0.001, 0)
 POD_BUNDLE = ROOT / "artifacts" / "pod_bases" / "cylinder2d_q1" / "pod_base_bundle.npz"
 OUTPUT = ROOT / "artifacts" / "statistics" / "temporal_dependence.json"
@@ -99,10 +93,7 @@ def main() -> int:
     path = run_path(*PRIMARY)
     if path is None:
         raise SystemExit(f"missing run for the primary configuration {PRIMARY}")
-    # Both fields come from load_run so that the estimator's stored unit
-    # convention (normalised for the convolutional model) is undone in one
-    # place; reading `target_nchw` directly would mismatch the reconstruction
-    # for any configuration that stores normalised fields.
+    # Both fields come from load_run so that the estimator's stored unit convention (normalised for the convolutional model) is undone in one place; reading `target_nchw` directly would mismatch the reconstruction for any configuration that stores normalised fields.
     target, reconstruction = load_run(path)
     data = np.load(path, allow_pickle=True)
     test_indices = np.asarray(sorted(set(data["test_indices"].tolist())), dtype=np.int64)

@@ -2,14 +2,9 @@
 """
 Wavelet-family sensitivity of the scale-recoverability conclusions.
 
-The scale count is computed in a db2 basis. This module repeats the analysis in
-four other bases and reports how the conclusions move: one representative real-NC
-configuration (M=30, sigma=0), the three estimators at that configuration, and
-the wavelets haar, db2, db4, sym4 and coif1. The decomposition level, the mode,
-the threshold and the fields themselves are held fixed; nothing is retrained.
+The scale count is computed in a db2 basis. This module repeats the analysis in four other bases and reports how the conclusions move: one representative real-NC configuration (M=30, sigma=0), the three estimators at that configuration, and the wavelets haar, db2, db4, sym4 and coif1. The decomposition level, the mode, the threshold and the fields themselves are held fixed; nothing is retrained.
 
-The six analytical cases are measured under each basis as well, so the benchmark
-of Fig 2 can be read against the same choice.
+The six analytical cases are measured under each basis as well, so the benchmark of Fig 2 can be read against the same choice.
 
 Outputs
 -------
@@ -77,10 +72,7 @@ def audit_real_nc(wavelet: str, level: int, mode: str, tau: float) -> dict:
 
     out: dict[str, dict] = {}
     for model, path in NC_PATHS.items():
-        # Both fields come from load_run, which returns physical units for every
-        # estimator; the convolutional runs store normalised fields, and reading
-        # them raw would put this model on a different scale from the two
-        # POD-coefficient estimators in the same table.
+        # Both fields come from load_run, which returns physical units for every estimator; the convolutional runs store normalised fields, and reading them raw would put this model on a different scale from the two POD-coefficient estimators in the same table.
         target, recon = load_run(path)
         u = target[:, 0, :, :].astype(np.float64)    # (300, H, W)
         uh = recon[:, 0, :, :].astype(np.float64)

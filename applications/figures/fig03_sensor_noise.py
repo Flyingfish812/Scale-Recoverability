@@ -1,21 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-fig03_sensor_noise.py — JFM v0-2 Fig. 3: sensor count and measurement noise.
+fig03_sensor_noise.py — main figure 3: sensor count and measurement noise.
 
-Composite of the old Fig. 6a (clean global error versus sensor count) and the
-old Fig. 7 (mean S_full versus sensor count at four noise levels), at the JFM
-text width:
+  (a) mean GER against M under clean measurements (NC MLP)
+  (b) mean S_full against M for sigma = 0, 10^-3, 10^-2, 10^-1 (NC MLP)
 
-  (a) mean GER versus M under clean measurements (NC MLP)
-  (b) mean S_full versus M for sigma = 0, 10^-3, 10^-2, 10^-1 (NC MLP)
-
-Both panels keep the published record convention: one representative MLP run for
-the scale index, and the same GER records as the manuscript macro
-\\FMLPGERMTen. The old Fig. 6b,c panels and the numeric table move to the
-supplementary material; no reference line or fit is drawn here (the old phase
-panel carried a level at S_full = 3, which is not retained because the text
-describes the regimes by the levels 4 and 1).
+Both panels use one representative MLP run for the scale index and the same records as the model comparison table. No reference line or fit is drawn; the supplementary material carries the phase diagrams and the numeric tables.
 
 Data: artifacts/statistics/band_error_decomposition.json (a),
       artifacts/statistics/sensor_noise_phase.json (b).

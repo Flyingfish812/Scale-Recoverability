@@ -96,8 +96,7 @@ def get_field_loss(loss_type: str = "mae", obs_weight: float = 1.0) -> nn.Module
 class VCNN(nn.Module):
     """Minimal fully-convolutional field reconstructor.
 
-    Architecture: Conv → ReLU → (Conv → ReLU) × (L−2) → Conv
-    All convolutions use same padding to preserve spatial dimensions.
+    Architecture: Conv → ReLU → (Conv → ReLU) × (L−2) → Conv All convolutions use same padding to preserve spatial dimensions.
     """
 
     def __init__(

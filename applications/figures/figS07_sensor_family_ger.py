@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-figS07_sensor_family_ger.py — Fig. S7 sensor-family GER
+figS07_sensor_family_ger.py — supplementary figure S13: sensor-family GER
 
 Purpose
-    Per-sequence mean GER of the MLP, ridge and greedy-POD estimators against
-    the sensor count M at two noise levels, with the spread over the sensor
-    families shown as error bars.
+    Per-sequence mean GER of the MLP, ridge and greedy-POD estimators against the sensor count M at two noise levels, with the spread over the sensor families shown as error bars.
 Data source
     artifacts/statistics/sensor_family/sensor_count_effect.csv
 Output

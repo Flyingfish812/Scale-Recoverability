@@ -1,7 +1,6 @@
 """Sensor-mask generation and observation construction.
 
-Turns a sensor mask into the observation feature that the estimators consume,
-and provides the mask generators used by the training sweeps:
+Turns a sensor mask into the observation feature that the estimators consume, and provides the mask generators used by the training sweeps:
 
     mask generation        random / regular grid / from a CSV file
     observation features   sparse, nearest-seed and Voronoi features

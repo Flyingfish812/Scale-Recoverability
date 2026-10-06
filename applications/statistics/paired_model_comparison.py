@@ -1,25 +1,19 @@
 """Paired comparison of the two learned estimators on identical inputs.
 
-The main text compares the POD-coefficient network (MLP) with the convolutional
-estimator (VCNN). Comparing two pools of runs with a rank test would treat
-snapshots of the same configuration as independent samples, so the comparison is
-made pair-wise instead: for every (snapshot, sensor count, noise level, training
-seed) the two estimators are evaluated on the very same measurement, and the
-per-snapshot difference of each metric is bootstrapped in time blocks to obtain
-a confidence interval that respects the temporal correlation of the flow.
+The main text compares the POD-coefficient network (MLP) with the convolutional estimator (VCNN). Comparing two pools of runs with a rank test would treat snapshots of the same configuration as independent samples, so the comparison is made pair-wise instead: for every (snapshot, sensor count, noise level, training seed) the two estimators are evaluated on the very same measurement, and the per-snapshot difference of each metric is bootstrapped in time blocks to obtain a confidence interval that respects the temporal correlation of the flow.
 
 Reported metrics
     GER            relative L2 error over the full two-component state
-    S_full         number of wavelet bands whose relative error is below tau
-    S_coh          number of bands recoverable from the band-POD subspace
+    S_full         number of consecutive bands, from the coarsest, below tau
+    S_coh          the same count on the POD-dominant band error
     W1             relative error of the finest wavelet band
-    vorticity_RMSE RMSE of the discrete Laplacian on the streamwise component
-    gradient_RMSE  RMSE of the first spatial derivatives on the streamwise
-                   component
+    vorticity_RMSE RMSE of the discrete Laplacian on the streamwise component gradient_RMSE  RMSE of the first spatial derivatives on the streamwise component
+
+Both counts and the band errors are evaluated on the streamwise velocity, and the band basis of S_coh is fitted to that same field, as in luna.wavelet.metrics.compute_S_coh.
 
 Inputs
     artifacts/<estimator runs>/       one test_raw.npz per configuration
-    artifacts/wavelet_pod_nc_2000/    band-POD bundle used by S_coh
+    data/cylinder2d_q1.npy            training snapshots behind the band basis
 Output
     artifacts/statistics/paired_model_comparison.json
     artifacts/statistics/paired_model_comparison.csv
@@ -29,10 +23,7 @@ Usage
     python -m applications.statistics.paired_model_comparison
     python -m applications.statistics.paired_model_comparison --verify
 
-``--verify`` re-runs the analysis and compares the result with the stored one, so
-that the table in the paper can be regenerated and checked deterministically.
-The previously submitted summary was computed on the normalised convolutional
-outputs and is therefore reported separately for the record.
+``--verify`` re-runs the analysis and compares the result with the stored one, so that the table in the paper can be regenerated and checked deterministically. When a stored summary from an earlier run is present, it is printed alongside for comparison.
 """
 
 from __future__ import annotations
@@ -51,10 +42,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from applications.config import get_config  # noqa: E402
-from features.metrics.band_error.coherent_scoh import (  # noqa: E402
-    compute_scoh_with_target_bands,
-    compute_target_bands_bundle,
-)
+from applications.statistics.scoh_vs_sfull import band_pod_models  # noqa: E402
 from features.metrics.sample_metrics import compute_sample_metrics  # noqa: E402
 from features.statistics.block_bootstrap import block_bootstrap_ci  # noqa: E402
 from features.training.estimator_runs import (  # noqa: E402
@@ -62,19 +50,18 @@ from features.training.estimator_runs import (  # noqa: E402
     run_path,
     snapshot_indices,
 )
-from luna.pod.band_pod import load_band_pod_bundle  # noqa: E402
+from luna.wavelet.metrics import compute_S_coh  # noqa: E402
 
 METRICS = ["GER", "S_full", "S_coh", "W1", "vorticity_RMSE", "gradient_RMSE"]
 BANDS = ["A4", "W4", "W3", "W2", "W1"]
-BAND_POD_BUNDLE = ROOT / "artifacts" / "wavelet_pod_nc_2000" / "band_pod_bundle.npz"
-TARGET_BANDS_CACHE = ROOT / "artifacts" / "statistics" / "cache" / "test_target_bands.npz"
+# : Training run that defines the band basis of the POD-dominant count.
+BAND_POD_REFERENCE = ("mlp", 20, 0.0, 0)
 OUTPUT = ROOT / "artifacts" / "statistics" / "paired_model_comparison.json"
 OUTPUT_CSV = ROOT / "artifacts" / "statistics" / "paired_model_comparison.csv"
 OUTPUT_TEX = ROOT / "artifacts" / "statistics" / "tables" / "paired_model_comparison.tex"
-# Summary of the submitted manuscript, kept for the record in --verify.
+# Stored summary of an earlier run, printed by --verify when present.
 SUBMITTED = ROOT / "artifacts" / "derived" / "supplementary" / "paired_mlp_vcnn_summary.json"
-# Agreement required between the target fields of the two estimators, which
-# differ only by the normalisation convention of the stored fields.
+# Agreement required between the target fields of the two estimators, which differ only by the normalisation convention of the stored fields.
 TARGET_TOLERANCE = 1e-5
 
 
@@ -82,8 +69,7 @@ def metrics_of(
     output_nchw: np.ndarray,
     target_nchw: np.ndarray,
     index: int,
-    band_pod,
-    target_bands_i: np.ndarray,
+    band_pod: dict,
     tau: float,
     wavelet: str,
     level: int,
@@ -92,41 +78,12 @@ def metrics_of(
     """All six metrics of one snapshot, on the physical fields."""
     values = compute_sample_metrics(output_nchw, target_nchw, index, tau=tau)
     values["W1"] = values.pop("E_W1")
-    prediction_hwc = np.asarray(output_nchw[index], dtype=np.float64).transpose(1, 2, 0)
-    values["S_coh"] = int(
-        compute_scoh_with_target_bands(
-            prediction_hwc, target_bands_i, band_pod, tau=tau,
-            wavelet=wavelet, level=level, mode=mode,
-        )
-    )
+    values["S_coh"] = int(compute_S_coh(
+        np.asarray(target_nchw[index], dtype=np.float64)[0],
+        np.asarray(output_nchw[index], dtype=np.float64)[0],
+        band_pod, tau=tau, wavelet=wavelet, level=level, mode=mode,
+    ))
     return values
-
-
-def load_target_bands(
-    target_nchw: np.ndarray, wavelet: str, level: int, mode: str, n_samples: int
-) -> np.ndarray:
-    """Wavelet-band components of the test targets, cached across configurations.
-
-    The targets do not depend on the estimator, so the decomposition is computed
-    once for the full test split and reused for every configuration.
-    """
-    if TARGET_BANDS_CACHE.exists() and not n_samples:
-        cached = np.load(str(TARGET_BANDS_CACHE))["bands"]
-        if cached.shape[0] == target_nchw.shape[0]:
-            return cached
-        print(f"   [cache] stale ({cached.shape[0]} snapshots), recomputing")
-        TARGET_BANDS_CACHE.unlink()
-    print("   [cache] decomposing test targets into wavelet bands ...")
-    start = time.time()
-    targets = target_nchw[:n_samples] if n_samples else target_nchw
-    bands = compute_target_bands_bundle(
-        targets, bands=BANDS, wavelet=wavelet, level=level, mode=mode
-    )
-    if not n_samples:
-        TARGET_BANDS_CACHE.parent.mkdir(parents=True, exist_ok=True)
-        np.savez(str(TARGET_BANDS_CACHE), bands=bands)
-    print(f"   [cache] ready ({time.time() - start:.1f}s)")
-    return bands
 
 
 def block_length(cfg) -> int:
@@ -162,11 +119,9 @@ def paired_summary(
 def compare_configuration(job: tuple) -> dict | None:
     """Metrics and paired differences of every snapshot of one configuration.
 
-    Runs in a worker process when ``--jobs`` is used, hence the flat argument
-    tuple: the band-POD bundle and the target-band cache are loaded once per
-    worker process, because together they are far larger than the returned data.
+    Runs in a worker process when ``--jobs`` is used, hence the flat argument tuple: the band basis is fitted once per worker process, because it is far larger than the returned data.
     """
-    sensors, sigma, seed, n_samples, settings, cache_path = job
+    sensors, sigma, seed, n_samples, settings = job
     wavelet, level, mode, tau, block_len, n_resamples, method, bootstrap_seed = settings
 
     mlp_path = run_path("mlp", sensors, sigma, seed)
@@ -175,8 +130,7 @@ def compare_configuration(job: tuple) -> dict | None:
         print(f"   [skip] run absent (M={sensors}, sigma={sigma}, seed={seed})")
         return None
 
-    band_pod = load_band_pod_bundle(str(BAND_POD_BUNDLE))
-    target_bands = np.load(str(cache_path))["bands"]
+    band_pod = band_pod_models(run_path(*BAND_POD_REFERENCE))
     target_mlp, out_mlp = load_run(mlp_path)
     target_vcnn, out_vcnn = load_run(vcnn_path)
 
@@ -191,12 +145,8 @@ def compare_configuration(job: tuple) -> dict | None:
     diffs = {m: np.empty(n) for m in METRICS}
     model_values = {model: {m: np.empty(n) for m in METRICS} for model in ("mlp", "vcnn")}
     for i in range(n):
-        first = metrics_of(
-            out_mlp, target_mlp, i, band_pod, target_bands[i], tau, wavelet, level, mode
-        )
-        second = metrics_of(
-            out_vcnn, target_vcnn, i, band_pod, target_bands[i], tau, wavelet, level, mode
-        )
+        first = metrics_of(out_mlp, target_mlp, i, band_pod, tau, wavelet, level, mode)
+        second = metrics_of(out_vcnn, target_vcnn, i, band_pod, tau, wavelet, level, mode)
         for m in METRICS:
             diffs[m][i] = first[m] - second[m]
             model_values["mlp"][m][i] = float(first[m])
@@ -240,8 +190,6 @@ def main() -> int:
     first_mlp = run_path("mlp", cfg.M_values[0], cfg.sigma_values[0], cfg.mlp_seeds[0])
     if first_mlp is None:
         raise SystemExit("no trained runs found; run the training pipeline first")
-    target, _ = load_run(first_mlp)
-    load_target_bands(target, wavelet, level, mode, args.max_samples)
 
     start = time.time()
     print(f"== paired MLP-VCNN comparison (block={block_len} test units, {method}, "
@@ -249,8 +197,7 @@ def main() -> int:
 
     jobs = [
         (sensors, sigma, seed, args.max_samples,
-         (wavelet, level, mode, tau, block_len, n_resamples, method, int(bootstrap["seed"])),
-         TARGET_BANDS_CACHE)
+         (wavelet, level, mode, tau, block_len, n_resamples, method, int(bootstrap["seed"])))
         for sensors in cfg.M_values
         for sigma in cfg.sigma_values
         for seed in cfg.mlp_seeds
@@ -294,8 +241,7 @@ def main() -> int:
             stats[f"{model}_mean"] = float(values.mean())
             stats[f"{model}_median"] = float(np.median(values))
         # ``ci_low``/``ci_high`` are the time-block interval of the mean, as
-        # quoted in the paper; the spread of the individual paired differences
-        # is reported separately because it answers a different question.
+        # quoted in the paper; the spread of the individual paired differences is reported separately because it answers a different question.
         stats["spread_low"] = float(np.percentile(pooled, 2.5))
         stats["spread_high"] = float(np.percentile(pooled, 97.5))
         aggregate[m] = stats
@@ -379,7 +325,7 @@ def _verify(aggregate: dict, n_configs: int) -> int:
 
     if SUBMITTED.exists():
         old = json.loads(SUBMITTED.read_text(encoding="utf-8"))["metrics"]
-        print("   submitted summary (normalised convolutional outputs, superseded):")
+        print("   stored summary from an earlier run:")
         for metric in aggregate:
             if metric in old:
                 print(f"      {metric:15s} old={old[metric]['mean_diff']:+.5f} "

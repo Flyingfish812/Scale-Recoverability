@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================================
 # Scale-Recoverability — data acquisition helper
-#
-# This repository intentionally does NOT ship raw data, derived arrays,
-# trained models, or masks.  This script explains what is needed to
-# reproduce the main-paper experiments and where to get the raw public
+
+# This repository intentionally does NOT ship raw data, derived arrays, trained models, or masks.  This script explains what is needed to reproduce the main-paper experiments and where to get the raw public
 # sources.  Files land in git-ignored directories (data/, masks*/, ...).
-#
-# The main-paper experiments run on the NC dataset; RDB and SST belong to
-# experiments that are not part of this public pipeline.
+
+# The main-paper experiments run on the NC dataset; RDB and SST belong to experiments that are not part of this public pipeline.
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."

@@ -1,8 +1,6 @@
 """Full band-error record set: every configuration, every test snapshot.
 
-Extends the 50-snapshot sample of ``band_error_decomposition`` to all 300 test
-snapshots of each training run, which is what the cross-model figures and the
-cross-model scale-recoverability means are built from.
+Extends the 50-snapshot sample of ``band_error_decomposition`` to all 300 test snapshots of each training run, which is what the cross-model figures and the cross-model scale-recoverability means are built from.
 
 For each record the module reports, band by band,
 
@@ -10,12 +8,9 @@ For each record the module reports, band by band,
     truncation(b) = ‖W_b(u) − W_b(u_ref)‖₂  / ‖W_b(u)‖₂
     prediction(b) = ‖W_b(u_ref) − W_b(û)‖₂  / ‖W_b(u)‖₂
 
-together with the global error of the reconstruction and of the rank-r POD
-truncation, both on the full two-component state, and the index S_full computed
-on the streamwise component. Fields are in physical units.
+together with the global error of the reconstruction and of the rank-r POD truncation, both on the full two-component state, and the index S_full computed on the streamwise component. Fields are in physical units.
 
-Because the truncation reference depends only on (training run, snapshot), it is
-computed once per run and reused across the M x sigma grid.
+Because the truncation reference depends only on (training run, snapshot), it is computed once per run and reused across the M x sigma grid.
 
 Inputs
     data/cylinder2d_q1.npy, artifacts/pod_bases/..., artifacts/<estimator runs>/
@@ -163,10 +158,9 @@ def main() -> int:
 
 
 def verify(records: list[dict]) -> int:
-    """Compare the band-wise terms with the frozen baseline of the manuscript.
+    """Compare the band-wise terms with the reference values of the paper.
 
-    The baseline stores three training runs in row blocks ordered
-    [seed0, seed101, seed202] and leaves the seed column at zero.
+    The baseline stores three training runs in row blocks ordered [seed0, seed101, seed202] and leaves the seed column at zero.
     """
     baseline = json.loads(BASELINE.read_text(encoding="utf-8"))
     rows = baseline["results"] if isinstance(baseline, dict) else baseline
@@ -198,7 +192,7 @@ def verify(records: list[dict]) -> int:
                         abs(record["band_errors"][band]["truncation"] - reference[f"E_trunc_{band}"]))
         compared += 1
 
-    print("\nverification against the frozen baseline")
+    print("\nverification against the reference values")
     print(f"  records compared            : {compared} (skipped {skipped})")
     print(f"  max |band error difference| : {worst:.3e}")
     print(f"  max |S_full difference|     : {worst_s_full}")

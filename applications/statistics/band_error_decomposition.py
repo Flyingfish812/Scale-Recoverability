@@ -1,8 +1,6 @@
 """Band-wise error decomposition of every trained reconstruction.
 
-For each configuration (model, sensor count M, noise level sigma, training run)
-this module compares the reconstruction with the rank-r POD truncation of the
-same target field and reports, band by band,
+For each configuration (model, sensor count M, noise level sigma, training run) this module compares the reconstruction with the rank-r POD truncation of the same target field and reports, band by band,
 
     total(b)      = ‖W_b(u) − W_b(û)‖₂      / ‖W_b(u)‖₂
     truncation(b) = ‖W_b(u) − W_b(u_ref)‖₂  / ‖W_b(u)‖₂
@@ -15,8 +13,7 @@ together with two scalars per output:
     truncation_global_error the same quantity for the rank-r POD truncation
                             itself, i.e. the representation floor of the snapshot
 
-The band-wise terms and the scale indices (S_full) are evaluated on the
-streamwise component u; the global errors use the full two-component state.
+The band-wise terms and the scale indices (S_full) are evaluated on the streamwise component u; the global errors use the full two-component state.
 
 Inputs
     data/cylinder2d_q1.npy            raw snapshots
@@ -29,9 +26,7 @@ Usage
     python -m applications.statistics.band_error_decomposition
     python -m applications.statistics.band_error_decomposition --verify
 
-``--verify`` compares the recomputed records with the frozen baseline of the
-submitted manuscript (band errors and S_full must match exactly; the global
-error is reported for information because its definition was unified here).
+``--verify`` compares the recomputed records with the reference values reported in the paper (band errors and S_full must match exactly; the global error is reported for information).
 """
 
 from __future__ import annotations
@@ -76,8 +71,7 @@ OUTPUT = ROOT / "artifacts" / "statistics" / "band_error_decomposition.json"
 BASELINE = ROOT / "artifacts" / "derived" / "main" / "statistics" / "three_layer_fixed.json"
 
 # ── Where the estimator runs live ───────────────────────────────────────
-# The run layout and the unit convention of each estimator family are defined
-# once, in features.training.estimator_runs, and shared by all producers.
+# The run layout and the unit convention of each estimator family are defined once, in features.training.estimator_runs, and shared by all producers.
 
 
 def decompose_configuration(
@@ -107,6 +101,7 @@ def decompose_configuration(
             "training_seed": seed,
             "snapshot_index": index,
             "global_error": global_error(truth, prediction),
+            "global_error_u": global_error(truth[:, :, 0], prediction[:, :, 0]),
             "truncation_global_error": global_error(truth, reference),
             "s_full": compute_S_full(truth[:, :, 0], prediction[:, :, 0], TAU_DEFAULT),
             "band_errors": bands,
@@ -118,7 +113,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--verify", action="store_true",
-                        help="compare with the frozen manuscript baseline")
+                        help="compare with the reference values of the paper")
     parser.add_argument("--verify-only", action="store_true",
                         help="verify an existing output file without recomputing")
     args = parser.parse_args()
@@ -170,6 +165,7 @@ def main() -> int:
             "tau": TAU_DEFAULT,
             "scale_component": "streamwise",
             "global_error_component": "both",
+            "global_error_u_component": "streamwise",
         },
         "records": records,
     }
@@ -185,17 +181,12 @@ def main() -> int:
 
 
 def verify(records: list[dict]) -> int:
-    """Compare against the frozen baseline of the submitted manuscript.
+    """Compare against the reference values reported in the paper.
 
-    The band-wise quantities of the POD-coefficient and convolutional estimators
-    must reproduce the baseline exactly (to floating-point storage precision).
-    The Ridge records are excluded: the baseline mixed in a deprecated
-    AdamW-trained Ridge, which this refactor replaces with the closed-form Ridge
-    used everywhere else in the paper.
+    The band-wise quantities of the POD-coefficient and convolutional estimators must reproduce the reference values exactly (to floating-point storage precision). The Ridge records are excluded because the reference stores a Ridge estimator that differs from the closed form used elsewhere.
     """
     baseline = json.loads(BASELINE.read_text(encoding="utf-8"))["results"]
-    # The baseline stores three training runs per configuration in row blocks,
-    # with the seed column left at zero; rows are ordered [seed0, seed101, seed202].
+    # The reference stores three training runs per configuration in row blocks, with the seed column left at zero; rows are ordered [seed0, seed101, seed202].
     expected: dict[tuple, list[dict]] = {}
     for row in baseline:
         key = (row["model_type"], row["mask_num"], row["noise_sigma"], row["sample_idx"])
@@ -225,7 +216,7 @@ def verify(records: list[dict]) -> int:
                                             abs(record["band_errors"][band]["truncation"] - reference[f"E_trunc_{band}"]))
         compared += 1
 
-    print("\nverification against the frozen baseline")
+    print("\nverification against the reference values")
     print(f"  records compared            : {compared}")
     print(f"  max |band error difference| : {worst['band error']:.3e}")
     print(f"  max |truncation difference| : {worst['truncation error']:.3e}")
