@@ -1,4 +1,6 @@
-# Luna
+# Scale-Recoverability
+
+> In this workspace, we use `luna` as a workspace code which refers to this project. It has no practical meanings.
 
 **How much spatial-scale information can be recovered from sparse sensor observations of a physical field?**
 
