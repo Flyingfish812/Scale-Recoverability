@@ -175,12 +175,26 @@ def main(argv: list[str] | None = None) -> None:
             tag = f"r{rank}/mlp/M{mask_num}"
             try:
                 t0 = time.time()
-                print(f"[{tag}] training MLP (r={rank}) ...", flush=True)
-                case = run_mlp_case(
-                    family=FAMILY, M=mask_num, training_seed=0, data_path=DATA,
-                    pod_bundle_path=bundle, mask_hw=load_mask(mask_num),
-                    out_root=out_root, test_sigmas=SIGMAS, n_modes=rank, verbose=False)
-                dt = time.time() - t0
+                codes = [f"s{int(round(float(s) * 10000)):04d}" for s in SIGMAS]
+                existing = {
+                    float(s): out_root / f"mlp_n{mask_num:04d}" / "seed000"
+                    / "tests" / code / "test_raw.npz"
+                    for s, code in zip(SIGMAS, codes)
+                }
+                if all(path.exists() for path in existing.values()):
+                    # Reuse runs of an earlier scan invocation, mirroring the
+                    # skip-if-exists behaviour of the ridge and Gappy runners.
+                    print(f"[{tag}] reuse existing runs (skip training)",
+                          flush=True)
+                    case = {"npz_paths": {s: str(p) for s, p in existing.items()}}
+                    dt = time.time() - t0
+                else:
+                    print(f"[{tag}] training MLP (r={rank}) ...", flush=True)
+                    case = run_mlp_case(
+                        family=FAMILY, M=mask_num, training_seed=0, data_path=DATA,
+                        pod_bundle_path=bundle, mask_hw=load_mask(mask_num),
+                        out_root=out_root, test_sigmas=SIGMAS, n_modes=rank, verbose=False)
+                    dt = time.time() - t0
                 print(f"[{tag}] done in {dt:.1f}s", flush=True)
                 for sigma in SIGMAS:
                     npz = Path(case["npz_paths"][float(sigma)])

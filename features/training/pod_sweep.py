@@ -432,6 +432,18 @@ def run_mlp_case(
     return out
 
 
+def add_physical_noise(fields: np.ndarray, sigma: float, seed: int = 42) -> np.ndarray:
+    """Test-time Gaussian noise of standard deviation ``sigma`` in field units.
+
+    The stored fields are physical (free-stream-velocity units), so the noise is
+    added directly to the values, with the same standard deviation for both
+    components. The learned estimators use the same convention, so a sigma label
+    means the same physical perturbation for every model.
+    """
+    noise = np.random.RandomState(seed).randn(*fields.shape).astype(np.float64) * sigma
+    return np.asarray(fields, dtype=np.float64) + noise
+
+
 def run_ridge_closed_form_case(
     *,
     family: str,
@@ -443,10 +455,7 @@ def run_ridge_closed_form_case(
     test_sigmas: Sequence[float] = (0.0, 0.001, 0.01, 0.1),
     n_modes: int = 128,
     lambda_grid: Optional[np.ndarray] = None,
-    phys_mean: Optional[np.ndarray] = None,
-    phys_std: Optional[np.ndarray] = None,
     test_indices: Optional[np.ndarray] = None,
-    noise_domain: str = "normalized",
     obs_normalize_from_mask: bool = False,
     verbose: bool = True,
 ) -> dict[str, Any]:
@@ -454,11 +463,7 @@ def run_ridge_closed_form_case(
     but parameterized by mask family; uses training_seed=0 split & noise seed 42.
 
     paper-expand:
-      - phys_mean/phys_std override the physical-domain noise parameters (NC default);
       - test_indices overrides the test set (NC default: the 300 samples of MLP seed0);
-      - noise_domain: "normalized" (default, NC: data live in the standardized domain,
-        noise is added in the physical domain and standardized back)
-        | "physical" (the data themselves are physical, noise added directly, e.g. RDB);
       - obs_normalize_from_mask: when True the observation mean/std are computed strictly
         from the mask positions (for RDB the first n_obs entries of the flattened grid include constant points, giving obs_std≈1e-8 and numerical blow-up;
         NC keeps the default False, consistent with compute_ridge_closed_form)."""
@@ -522,13 +527,9 @@ def run_ridge_closed_form_case(
     out = {"family": family, "model": "ridge", "M": M, "training_seed": 0,
            "case_dir": str(case_dir), "npz_paths": {}, "best_val_loss": best_loss}
 
-    # deterministic noise (RandomState(42)) on physical domain — same as the reference runs
-    if phys_mean is None:
-        phys_mean = np.asarray([1.0004944, -0.00017817653], dtype=np.float64)
-    if phys_std is None:
-        phys_std = np.asarray([0.21863055, 0.19121747], dtype=np.float64)
-    mean_v = np.asarray(phys_mean, dtype=np.float64).reshape(-1)
-    std_v = np.asarray(phys_std, dtype=np.float64).reshape(-1)
+    # deterministic test noise (RandomState(42)) added directly in field units,
+    # with the same standard deviation for both components; this is the physical
+    # perturbation convention of the learned estimators as well.
     tgt_nchw = np.asarray(test_f).transpose(0, 3, 1, 2).astype(np.float32)
     for sigma in test_sigmas:
         code = f"s{int(round(float(sigma) * 10000)):04d}"
@@ -537,17 +538,7 @@ def run_ridge_closed_form_case(
         if npz_path.exists():
             out["npz_paths"][float(sigma)] = str(npz_path)
             continue
-        if sigma == 0.0:
-            te_f = test_f
-        elif noise_domain == "physical":
-            # The data themselves are physical (e.g. RDB): noise is added to the raw values
-            noise = np.random.RandomState(42).randn(*test_f.shape).astype(np.float64) * sigma
-            te_f = test_f + noise
-        else:
-            # NC protocol: standardized domain → add noise in the physical domain → standardize back
-            phys = test_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
-            noise = np.random.RandomState(42).randn(*phys.shape).astype(np.float64) * sigma
-            te_f = (phys + noise - mean_v[None, None, None, :]) / std_v[None, None, None, :]
+        te_f = test_f if sigma == 0.0 else add_physical_noise(test_f, sigma)
         te_obs = (obs_matrix(te_f) - obs_mean_m) / obs_std_m
         te_X = np.concatenate([te_obs, np.ones((te_obs.shape[0], 1))], axis=1)
         pred = (te_X @ best_Wmat) * coeff_std + coeff_mean
@@ -577,10 +568,7 @@ def run_gappy_case(
     candidate_ranks: Sequence[int] = GAPPY_CANDIDATE_RANKS,
     rank_cap: str = "scalars",
     rank_select_noise: str = "clean",
-    phys_mean: Optional[np.ndarray] = None,
-    phys_std: Optional[np.ndarray] = None,
     test_indices: Optional[np.ndarray] = None,
-    noise_domain: str = "normalized",
     verbose: bool = True,
 ) -> dict[str, Any]:
     """Gappy POD (deterministic), on the seed0 split.
@@ -590,10 +578,9 @@ def run_gappy_case(
     ``"locations"`` (r <= M, the earlier convention, kept for the cap
     sensitivity).
 
-    paper-expand: phys_mean/phys_std override the physical-domain noise parameters (NC
-    default), test_indices overrides the test set (NC default: the 300 samples of MLP
-    seed0), noise_domain: "normalized" (default, NC) | "physical" (physical data, noise
-    added directly)."""
+    paper-expand: test_indices overrides the test set (NC default: the 300 samples of MLP
+    seed0); test noise is added directly to the physical fields with standard deviation
+    sigma (same for both components), matching the learned estimators."""
     fields = np.load(str(data_path), mmap_mode="r").astype(np.float64, copy=False)
     T, H, W, C = fields.shape
     pod = np.load(str(pod_bundle_path))
@@ -662,35 +649,10 @@ def run_gappy_case(
         if npz_path.exists():
             out["npz_paths"][float(sigma)] = str(npz_path)
             continue
-        if sigma == 0.0:
-            te_f = test_f
-        elif noise_domain == "physical":
-            noise = np.random.RandomState(42).randn(*test_f.shape).astype(np.float64) * sigma
-            te_f = test_f + noise
-        else:
-            if phys_mean is None:
-                phys_mean = np.asarray([1.0004944, -0.00017817653], dtype=np.float64)
-            if phys_std is None:
-                phys_std = np.asarray([0.21863055, 0.19121747], dtype=np.float64)
-            mean_v = np.asarray(phys_mean, dtype=np.float64).reshape(-1)
-            std_v = np.asarray(phys_std, dtype=np.float64).reshape(-1)
-            phys = test_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
-            noise = np.random.RandomState(42).randn(*phys.shape).astype(np.float64) * sigma
-            te_f = (phys + noise - mean_v[None, None, None, :]) / std_v[None, None, None, :]
+        te_f = test_f if sigma == 0.0 else add_physical_noise(test_f, sigma)
         rank_use = best_rank
         if rank_select_noise == "match":
-            if sigma == 0.0:
-                va_f = val_f
-            elif noise_domain == "physical":
-                va_f = val_f + np.random.RandomState(42).randn(*val_f.shape) * sigma
-            else:
-                mean_v = np.asarray([1.0004944, -0.00017817653] if phys_mean is None else phys_mean,
-                                    dtype=np.float64).reshape(-1)
-                std_v = np.asarray([0.21863055, 0.19121747] if phys_std is None else phys_std,
-                                   dtype=np.float64).reshape(-1)
-                va_phys = val_f * std_v[None, None, None, :] + mean_v[None, None, None, :]
-                va_phys = va_phys + np.random.RandomState(42).randn(*va_phys.shape) * sigma
-                va_f = (va_phys - mean_v[None, None, None, :]) / std_v[None, None, None, :]
+            va_f = val_f if sigma == 0.0 else add_physical_noise(val_f, sigma)
             rank_use, val_err = _select_rank(obs_matrix(va_f), va_f)
             if verbose:
                 print(f"  [Gappy] {family} M={M} σ={sigma}: rank={rank_use} "

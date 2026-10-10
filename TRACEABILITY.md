@@ -118,7 +118,7 @@ These are the conventions the paper uses; the same definitions are implemented i
 - **Gappy POD rank** — selected on validation data, capped by the number of scalar observations, `r ≤ m_obs = 2M`.
 - **Ridge / MLP** — fixed rank-128 representation, which is underdetermined; the rank rule differs from that of Gappy POD and both are stated in the paper.
 - **Splits** — random 70/10/20 for the primary study, contiguous temporal holdout (three placements, 300 held-out snapshots each) for the sensitivity.
-- **Noise** — independent Gaussian noise on every scalar observation, with the standard deviation set to `σ × s_c`, where `s_c` is the training-set standard deviation of that component.
+- **Noise** — independent Gaussian noise on every scalar observation, with the standard deviation set to `σ` in free-stream-velocity units (`U_∞ = 1`), applied identically to both velocity components; `σ ∈ {0, 0.001, 0.01, 0.1}` spans clean data to a ten-per-cent perturbation of the free-stream speed.
 
 ## 6. Generated inputs, and how to rebuild them
 

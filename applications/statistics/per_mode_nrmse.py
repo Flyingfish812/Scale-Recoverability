@@ -189,7 +189,10 @@ def recovery_rates(bands: list[str], tau: float) -> dict:
     weight.
     """
     payload = json.loads(RECORD_SET.read_text(encoding="utf-8"))
-    records = payload["records"]
+    # The table pools the model-comparison record set (MLP, VCNN, closed-form
+    # Ridge; 42,000 records). Gappy POD records are a separate reconstruction
+    # class and are reported through the model-comparison table only.
+    records = [r for r in payload["records"] if r["model"] in ESTIMATORS]
     total = len(records)
 
     def rates(subset: list[dict]) -> dict[str, dict]:
