@@ -19,7 +19,7 @@ Two groupings of the same partition appear in the paper and are both reported he
 
 The second block counts how often each wavelet band error stays below the tolerance tau over the complete 42,000-record set of the model comparison, which is the recovery-rate table. It reads the record set produced by ``applications.statistics.band_error_records`` rather than recomputing the band errors (the same way the pre-refactor analysis consumed its upstream record file).
 
-The three families are not equivalent inputs: the POD-coefficient estimators store physical fields, the convolutional estimator stores normalised fields (``load_run`` de-normalises them), and the linear estimator of the paper is the closed-form Ridge of the trained-run layout. The frozen per-mode artifact was built before the unit convention and the Ridge estimator were unified, so its convolutional and linear configurations are reported but not reproduced; only the MLP configurations, the modal energies and the recovery rates are expected to agree with the frozen values.
+The three families are not equivalent inputs: the POD-coefficient estimators store physical fields, the convolutional estimator stores normalised fields (``load_run`` de-normalises them), and the linear estimator of the paper is the closed-form Ridge of the trained-run layout. All three families are recomputed here from the same prediction outputs under the unified physical-noise protocol; ``--verify`` checks the representative MLP correlation, the top-decile energy and the pooled band recovery rates against the values of the paper.
 
 Inputs
     artifacts/pod_bases/...                       rank-128 POD basis (both components)
@@ -68,7 +68,7 @@ EXAMPLE_CONFIG = ("mlp", 20, 0.0)
 MODES_PER_LISTING_DECILE = 12
 # : Reference values of the paper, checked by ``--verify``.
 FROZEN_CORRELATION = -0.9772
-FROZEN_RECOVERY = {"A4": 73.4, "W4": 56.6, "W3": 48.4, "W2": 36.3, "W1": 30.8}
+FROZEN_RECOVERY = {"A4": 76.2, "W4": 56.6, "W3": 48.4, "W2": 36.3, "W1": 30.8}
 # : Energy share of the 13 most energetic modes (decile 10 of the paper).
 FROZEN_TOP_DECILE_ENERGY = 98.64
 

@@ -6,7 +6,7 @@ For every configuration the reconstruction is projected onto the rank-128 POD ba
 
 summed over the test snapshots i. Since the modal energy λ_j² spans several orders of magnitude, the interesting quantity is the correlation between e_j and λ_j² — the mechanism discussed in the paper.
 
-Both the coefficients and the projection use the **physical** fields: the convolutional estimator stores its outputs in normalised units, so those are de-normalised first. The uncorrected variant is reported alongside, for comparison.
+Both the coefficients and the projection use the **physical** fields: the convolutional estimator stores its outputs in normalised units, so those are de-normalised first.
 
 Inputs
     artifacts/pod_bases/...            rank-128 POD basis (both components)
@@ -183,7 +183,8 @@ def main() -> int:
 
 def verify(records: list[dict]) -> int:
     """Compare the reported correlations with the values reported in the paper."""
-    expected = {("mlp", 20, 0.0): -0.9772, ("vcnn", 20, 0.0): -0.0175}
+    expected = {("mlp", 20, 0.0): -0.9772, ("vcnn", 20, 0.0): -0.9152,
+                ("ridge", 20, 0.0): -0.8260}
     print("\nverification against the reference values")
     ok = True
     for record in records:

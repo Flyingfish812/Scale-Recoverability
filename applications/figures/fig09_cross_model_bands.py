@@ -99,9 +99,10 @@ def main() -> int:
                         arrowprops=dict(arrowstyle="->", color=color, lw=0.9),
                         fontsize=7, color=color, ha="center")
         else:
-            # all pass: plain text (no arrow) in the free upper-right area
-            ax.text(3.05, 0.30, f"{name}: mean all pass", fontsize=7, color=color,
-                    ha="center")
+            # all pass: plain text (no arrow) in the free upper-right area; the
+            # criterion is on the band errors averaged over the records first.
+            label = f"{name}: all mean band errors below " + r"$\tau$"
+            ax.text(3.05, 0.30, label, fontsize=7, color=color, ha="center")
 
     ax.set_xlabel("Wavelet band")
     ax.set_ylabel("Mean $E_{\\mathrm{direct}}(b)$")
