@@ -17,6 +17,7 @@ paper objects      main figures 1–6, table 1, supplementary figures S1–S14,
 
 | Step | Entry point | Writes |
 |---|---|---|
+| 00 | `features/sensors/incremental_masks.py` | the sensor masks under `masks2/` and `masks_families/` |
 | 01 | `applications/pipelines/01_prepare_data.py` | checks the raw arrays under `data/` |
 | 02 | `applications/pipelines/02_build_pod_bases.py` | `artifacts/pod_bases/<dataset>/pod_base_bundle.npz` |
 | 03 | `applications/pipelines/03_train_estimators.py` | the estimator runs under `artifacts/` |
@@ -24,7 +25,7 @@ paper objects      main figures 1–6, table 1, supplementary figures S1–S14,
 | 05 | `applications/pipelines/05_make_figures.py` | `artifacts/figures/` |
 
 Each step can be run on its own; `--list` on step 04 shows the statistics it
-runs, `--only` on step 05 runs a subset of the figure scripts. The pipeline never writes into the tracked tree.
+runs, `--only` on step 05 runs a subset of the figure scripts. The pipeline never writes into the tracked tree. Step 00 draws one candidate set per family from the seeds listed in `features/sensors/mask_registry.py`, and `--exclude-cylinder-body` drops candidates inside the cylinder section, where the field is identically zero.
 
 ## 2. Figures
 
@@ -100,7 +101,7 @@ Every statistic of the paper is one JSON file under `artifacts/statistics/`, wri
 | RDB | `data/rdb_h5.npy` | PDEBench, 2-D shallow-water radial dam break, doi 10.18419/DARUS-2986 | POD-rank adequacy only (supplementary fig. S3, tables S4–S6) |
 | SST | `data/sst_weekly.npy` | NOAA OISST weekly sea-surface temperature, packaged by the Senseiver dataset, doi 10.5281/zenodo.8290040 | POD-rank adequacy only |
 
-Sensor masks and the trained runs are generated locally and are not distributed; `scripts/download_data.sh` and `scripts/reproduce_all.sh` describe the inputs and the order of the steps.
+You build the sensor masks and the trained runs locally: `features/sensors/incremental_masks.py` draws the masks from their seeds, and `applications/pipelines/03_train_estimators.py` trains the estimators. `scripts/download_data.sh` and `scripts/reproduce_all.sh` list the inputs and the order of the steps.
 
 ## 5. Metric conventions
 
@@ -119,9 +120,9 @@ These are the conventions the paper uses; the same definitions are implemented i
 - **Splits** — random 70/10/20 for the primary study, contiguous temporal holdout (three placements, 300 held-out snapshots each) for the sensitivity.
 - **Noise** — independent Gaussian noise on every scalar observation, with the standard deviation set to `σ × s_c`, where `s_c` is the training-set standard deviation of that component.
 
-## 6. Not shipped, and how to regenerate
+## 6. Generated inputs, and how to rebuild them
 
-Raw data, derived arrays, sensor masks, trained models, artifacts and the paper sources are outside version control. To rebuild the numbers from scratch:
+The raw arrays, the derived arrays, the sensor masks, the trained models and the artifacts are built locally into git-ignored directories, and the manuscript lives in its own repository. The tracked tree therefore stays code while every reported number remains rebuildable. To rebuild from scratch:
 
 ```bash
 bash scripts/download_data.sh          # fetch the three public datasets
@@ -129,4 +130,4 @@ conda env create -f environment/environment.yml -n luna
 bash scripts/reproduce_all.sh          # steps 01-05, writes artifacts/
 ```
 
-Several producers accept `--verify`, which compares the freshly computed values with the reference values reported in the paper; the reference files live in the artifacts tree and are only present after a full run.
+Several producers accept `--verify`, which compares the freshly computed values with the reference values reported in the paper; the reference files appear in the artifacts tree once you have completed a full run.

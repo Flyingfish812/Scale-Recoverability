@@ -1,7 +1,5 @@
 # Scale-Recoverability
 
-> In this workspace, we use `luna` as a workspace code which refers to this project. It has no practical meanings.
-
 **How much spatial-scale information can be recovered from sparse sensor observations of a physical field?**
 
 This repository hosts the code that accompanies the paper *Multiscale recoverability in sparse-sensor flow reconstruction* . It provides (i) the core evaluation metrics, (ii) the reconstruction methods compared in the paper, and (iii) a one-command pipeline that regenerates the paper's statistics and figures.
@@ -71,7 +69,7 @@ The experiments use three public field datasets. The raw sources are listed belo
 | **RDB** | 2-D shallow-water **radial dam break** (128×128) | PDEBench, *PDEBench Datasets* on DaRUS — DOI [10.18419/DARUS-2986](https://darus.uni-stuttgart.de/dataset.xhtml?persistentId=doi%3A10.18419%2Fdarus-2986) (`2D/shallow-water/2D_rdb_NA_NA.h5`) |
 | **SST** | weekly sea-surface temperature (NOAA OISST, 180×360) | NOAA OISST field; packaged `.mat` file from *The Senseiver Dataset*, Zenodo — DOI [10.5281/zenodo.8290040](https://zenodo.org/records/8290040) |
 
-The experimental arrays (cropped / normalized npy snapshots, sensor masks, POD bases) and all trained models are **not** distributed in this repository. They are regenerated locally into git-ignored directories (`data/`, `masks*/`, `artifacts/`) — see *Reproducing the paper* below.
+From these sources you build everything the experiments use — the cropped and normalised snapshot arrays, the sensor masks, the POD bases and the trained models — into git-ignored directories (`data/`, `masks*/`, `artifacts/`). Each step is one command, and *Reproducing the paper* below walks through them in order.
 
 ## Installation
 
@@ -85,7 +83,7 @@ conda activate luna
 Core dependencies: `numpy`, `scipy`, `matplotlib`, `PyWavelets`,
 `scikit-learn`, `torch`, `pandas`, `pyyaml`, `h5py`, `pytest`.
 
-## Quick start (no data required)
+## Quick start
 
 The **analytical benchmark** validates the metrics on a synthetic, NC-inspired multiscale wake field whose ground-truth scale content is strictly known. It is fully self-contained and is the recommended starting point:
 
@@ -101,7 +99,7 @@ Run the unit tests (metric identities, DWT orthogonality, S_full / S_coh consist
 make test            # pytest tests/unit
 ```
 
-`make test` needs no data: the tests that exercise the five sampled sensor-mask families skip when those masks have not been generated locally (they are large sampling patterns and are not shipped with the code).
+`make test` runs right away: the tests that exercise the five sampled sensor-mask families switch on as soon as you generate those masks locally (`features/sensors/incremental_masks.py`), and stay dormant until then.
 
 ## Reproducing the paper
 
@@ -115,8 +113,16 @@ Prerequisites, in order:
 
 1. **Raw data** — fetch and prepare the three dataset arrays into `data/` (see `scripts/download_data.sh`).
 2. **POD bases** — the truncation basis every estimator is expressed in is rebuilt from the raw arrays by `02`.
-3. **Trained models** — the learned estimators (POD-Ridge, POD-MLP, VCNN) are produced by the training code under `features/training/` and stored under `artifacts/`. Because training all configurations is compute-intensive, the paper's published numbers were generated from these artifacts; the pipeline re-runs every analysis step on whatever artifacts are present.
-4. **Run the pipeline** — the entry points are numbered in the order they have to run:
+3. **Sensor masks** — the nested sensor sequences are drawn from their seeds by `features/sensors/incremental_masks.py` into `masks2/` and `masks_families/`; you may run the script to build your masks locally. `features/sensors/mask_registry.py` lists the seeds of the families the paper uses, for example:
+
+   ```bash
+   python -m features.sensors.incremental_masks --out-dir masks2 --seed 20260522
+   python -m features.sensors.incremental_masks --out-dir masks_families/family_02 --seed 20260806 --exclude-cylinder-body
+   ```
+
+   The flag drops candidate points inside the cylinder section, where the field is identically zero; every family used in the paper places no sensor there.
+4. **Trained models** — the learned estimators (POD-Ridge, POD-MLP, VCNN) are produced by the training code under `features/training/` and stored under `artifacts/`. Because training all configurations is compute-intensive, the paper's published numbers were generated from these artifacts; the pipeline re-runs every analysis step on whatever artifacts are present.
+5. **Run the pipeline** — the entry points are numbered in the order they have to run:
 
    ```bash
    python applications/pipelines/01_prepare_data.py              # raw arrays of data/
@@ -128,11 +134,19 @@ Prerequisites, in order:
 
    The statistics step runs the producers of `applications/statistics/` in dependency order (`--list` shows them, `--only` runs a subset).
 
-Outputs are written to git-ignored directories; they are never committed.
+Every output lands in a git-ignored directory, so your working tree stays clean while you regenerate as much as you need.
 
-## Policy of this repository
+## What is included, and what you generate
 
-This is a **source-code-only** repository. Raw data, derived intermediate products, trained models, figures, and the paper sources with the internal working notes are intentionally excluded from version control (via `.gitignore`) and are not pushed. Everything needed to go from code to the paper's quantitative results is either included (code, configs, tests) or regenerable from the public data sources listed above.
+The repository carries the code, the configurations and the tests. The datasets, the sensor masks, the POD bases, the trained models and the figures are yours to build locally, each into a git-ignored directory (`data/`, `masks*/`, `artifacts/`), and the steps above take you there in order:
+
+```bash
+bash scripts/download_data.sh                                                  # dataset arrays into data/
+python -m features.sensors.incremental_masks --out-dir masks2 --seed 20260522  # primary sensor sequence
+bash scripts/reproduce_all.sh                                                  # statistics and figures
+```
+
+The manuscript lives in its own repository, so the paper sources and the internal working notes stay out of the code history while the full numerical path remains reproducible from the public data sources listed above.
 
 ## Citation
 

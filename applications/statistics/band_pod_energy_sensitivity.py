@@ -21,12 +21,15 @@ if str(ROOT) not in sys.path:
 
 from applications.config import get_config  # noqa: E402
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
+from features.training.pod_sweep import split_indices  # noqa: E402
 from luna.core.constants import DEFAULT_LEVEL, DEFAULT_MODE  # noqa: E402
 from luna.pod.band_pod import fit_band_pod  # noqa: E402
 from luna.wavelet.metrics import compute_S_coh, compute_S_full  # noqa: E402
 
 RAW_SEQUENCE = ROOT / "data" / "cylinder2d_q1.npy"
-# : Fields used to fit the per-band bases, drawn from the training split.
+# : Fields used to fit the per-band bases, drawn from the training split of
+# : the reference run's training seed (the validation and test snapshots are
+# : excluded, as for every other basis in the study).
 BAND_POD_FIELDS = 400
 ETA_VALUES = [0.95, 0.99, 0.999]
 REFERENCE_ETA = 0.99
@@ -35,10 +38,9 @@ MODEL, SENSORS, SIGMA, SEED = "mlp", 30, 0.0, 0
 
 def training_fields() -> np.ndarray:
     """Training snapshots of the reference run, streamwise component."""
-    data = np.load(run_path(MODEL, SENSORS, SIGMA, SEED), allow_pickle=True)
-    test_indices = set(int(i) for i in data["test_indices"])
     sequence = np.load(RAW_SEQUENCE, mmap_mode="r")
-    train_indices = sorted(set(range(sequence.shape[0])) - test_indices)
+    split = split_indices(sequence.shape[0], SEED)
+    train_indices = sorted(int(i) for i in split["train"])
     rng = np.random.RandomState(7)
     subset = sorted(rng.choice(train_indices,
                               min(BAND_POD_FIELDS, len(train_indices)),

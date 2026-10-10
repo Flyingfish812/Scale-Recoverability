@@ -94,10 +94,14 @@ def block_bootstrap(
         if cids.size != n:
             raise ValueError("cluster_ids must match first axis of x")
         clusters = sorted(set(int(c) for c in cids))
+        groups = [np.flatnonzero(cids == c) for c in clusters]
         for b in range(n_resamples):
-            chosen = rng.choice(clusters, size=len(clusters), replace=True)
-            mask = np.isin(cids, chosen)
-            out[b] = float(stat_fn(x[mask]))
+            chosen = rng.choice(len(clusters), size=len(clusters), replace=True)
+            # A cluster drawn k times contributes its rows k times, which is
+            # what keep-with-multiplicity cluster resampling means; np.isin
+            # would collapse the k copies into one.
+            idx = np.concatenate([groups[int(c)] for c in chosen])
+            out[b] = float(stat_fn(x[idx]))
         return out
 
     for b in range(n_resamples):

@@ -2,10 +2,12 @@
 # ============================================================================
 # Scale-Recoverability — data acquisition helper
 
-# This repository intentionally does NOT ship raw data, derived arrays, trained models, or masks.  This script explains what is needed to reproduce the main-paper experiments and where to get the raw public
-# sources.  Files land in git-ignored directories (data/, masks*/, ...).
+# This script lists the public source of every array the experiments use and what
+# each one has to look like locally. Files land in git-ignored directories
+# (data/, masks*/, ...), so you can fetch and regenerate as much as you need.
 
-# The main-paper experiments run on the NC dataset; RDB and SST belong to experiments that are not part of this public pipeline.
+# The main-paper experiments run on the NC dataset; RDB and SST feed the
+# supplementary POD-rank checks.
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -28,12 +30,12 @@ echo "   Steps: download cylinder2d.nc from the page above, crop the spatial"
 echo "   domain to the 80x160 region used in the paper, and export it as"
 echo "   data/cylinder2d_q1.npy with shape (1501, 80, 160, 2)."
 echo ""
-echo "2) RDB — 2-D shallow-water radial dam break (NOT needed for main paper)"
+echo "2) RDB — 2-D shallow-water radial dam break (used by the supplementary POD-rank checks)"
 echo "   Raw source : PDEBench on DaRUS, DOI 10.18419/DARUS-2986"
 echo "   https://darus.uni-stuttgart.de/dataset.xhtml?persistentId=doi:10.18419/darus-2986"
 echo "   File: 2D/shallow-water/2D_rdb_NA_NA.h5 (128 x 128)."
 echo ""
-echo "3) SST — weekly sea-surface temperature (NOT needed for main paper)"
+echo "3) SST — weekly sea-surface temperature (used by the supplementary POD-rank checks)"
 echo "   Raw source : NOAA OISST, packaged in 'The Senseiver Dataset'"
 echo "   https://zenodo.org/records/8290040  (DOI 10.5281/zenodo.8290040)"
 echo "   File: sst_weekly.mat (180 x 360 weekly fields)."
@@ -41,6 +43,7 @@ echo ""
 echo "After placing the arrays, run:"
 echo "  python applications/pipelines/01_prepare_data.py"
 echo ""
-echo "NOTE: POD bases, sensor masks and all trained models are produced by"
-echo "the training code under features/training/ and stored under artifacts/;"
-echo "they are regenerated locally and never committed."
+echo "Next: POD bases, sensor masks and the trained models are yours to build"
+echo "locally — features/sensors/incremental_masks.py draws the masks from their"
+echo "seeds and the training code under features/training/ produces the runs into"
+echo "git-ignored directories, so nothing you generate enters the working tree."

@@ -113,7 +113,8 @@ def panel_pair(ax, records: list, pairs: dict) -> None:
     ax.set_ylabel("$E_{\\mathrm{direct}}(b)$", fontsize=TICK + 0.5)
     ax.tick_params(labelsize=TICK)
     rep = pairs["representative_pair"]
-    ax.set_title(f"matched pair, $\\mathrm{{GER}}_u$ {rep['GER_low']:.5f} in both",
+    ax.set_title(f"matched pair, $\\mathrm{{GER}}_u$ {rep['GER_low']:.5f} "
+                 f"(within {100 * GER_TOL:.0f}%)",
                  fontsize=6.8, pad=3)
     ax.legend(fontsize=TICK, loc="lower right", frameon=False, handlelength=1.0,
               handletextpad=0.4, borderaxespad=0.2)
@@ -148,22 +149,18 @@ def panel_ecdf(ax, pairs: dict) -> None:
 def panel_pooled(ax, pairs: dict) -> None:
     """(d) pooled medians of the matched pairs."""
     tests = {t["label"]: t for t in pairs["paired_statistics"]["tests"]}
-    boot = {r["label"]: r for r in pairs["cluster_bootstrap_ci"]["results"]}
-    metrics = [("W1", "W1_band_error", "W1_band_error_diff"),
-               ("Laplacian", "vorticity_RMSE", "vorticity_RMSE_diff"),
-               ("Gradient", "gradient_RMSE", "gradient_RMSE_diff")]
+    metrics = [("W1", "W1_band_error"),
+               ("Laplacian", "vorticity_RMSE"),
+               ("Gradient", "gradient_RMSE")]
     x = np.arange(len(metrics))
     width = 0.34
-    for i, (label, key, boot_key) in enumerate(metrics):
+    for i, (label, key) in enumerate(metrics):
         low = tests[key]["median_low_S_full"]
         high = tests[key]["median_high_S_full"]
         ax.bar(i - width / 2, low, width, color=ps.MODEL_COLORS["Ridge"],
                alpha=0.9, label="low $S_{\\mathrm{full}}$" if i == 0 else "")
         ax.bar(i + width / 2, high, width, color=ps.MODEL_COLORS["Gappy"],
                alpha=0.9, label="high $S_{\\mathrm{full}}$" if i == 0 else "")
-        p_val = boot[boot_key]["p_value_bootstrap"]
-        p_str = "$p$ < 0.001" if p_val < 0.001 else f"$p$ = {p_val:.3f}"
-        ax.text(i, max(low, high) * 1.30, p_str, ha="center", fontsize=TICK)
     ax.set_yscale("log")
     ax.set_ylim(1e-3, 4e-1)
     ax.set_xticks(x)

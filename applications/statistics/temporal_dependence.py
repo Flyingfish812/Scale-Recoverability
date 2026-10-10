@@ -96,7 +96,12 @@ def main() -> int:
     # Both fields come from load_run so that the estimator's stored unit convention (normalised for the convolutional model) is undone in one place; reading `target_nchw` directly would mismatch the reconstruction for any configuration that stores normalised fields.
     target, reconstruction = load_run(path)
     data = np.load(path, allow_pickle=True)
-    test_indices = np.asarray(sorted(set(data["test_indices"].tolist())), dtype=np.int64)
+    # The stored matrices follow the unsorted ``test_indices`` as saved, so the
+    # metric series must be reordered into time before block resampling; a block
+    # over the stored order would resample unrelated snapshots.
+    stored = np.asarray(data["test_indices"], dtype=np.int64)
+    order = np.argsort(stored)
+    test_indices = stored[order]
     gaps = np.diff(test_indices)
     gap_stats = {
         "min": int(gaps.min()),
@@ -108,7 +113,6 @@ def main() -> int:
     mean_gap = float(gaps.mean())
     block_in_test_units = max(3, int(round(block_length / mean_gap))) if mean_gap else block_length
 
-    order = np.argsort(test_indices)
     n = reconstruction.shape[0]
     if order.size != n:
         raise SystemExit(f"{n} snapshots but {order.size} snapshot times")

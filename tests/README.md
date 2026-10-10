@@ -21,3 +21,4 @@ python -m pytest tests/unit -q
 | `test_supplementary_statistics.py` | temporal dependence and the block bootstrap reproduce the reported interval | `features.statistics.temporal_dependence` |
 | `test_supplementary_denominator.py` | the band denominator audit is Parseval consistent | `features.metrics.band_error.denominator_audit` |
 | `test_supplementary_mask_registry.py` | every sensor mask resolves to the documented observation points | `features.sensors.mask_registry` |
+| `test_incremental_masks.py` | the cylinder section is no candidate and one draw of 50 points fixes a nested family | `features.sensors.incremental_masks` |

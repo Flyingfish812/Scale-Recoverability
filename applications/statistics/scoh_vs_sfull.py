@@ -22,6 +22,7 @@ if str(ROOT) not in sys.path:
 
 from applications.config import get_config  # noqa: E402
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
+from features.training.pod_sweep import split_indices  # noqa: E402
 from luna.core.constants import DEFAULT_LEVEL, DEFAULT_MODE  # noqa: E402
 from luna.pod.band_pod import fit_band_pod  # noqa: E402
 from luna.wavelet.metrics import compute_S_coh, compute_S_full  # noqa: E402
@@ -29,31 +30,53 @@ from luna.wavelet.metrics import compute_S_coh, compute_S_full  # noqa: E402
 RAW_SEQUENCE = ROOT / "data" / "cylinder2d_q1.npy"
 BAND_POD_FIELDS = 400
 BAND_POD_SEED = 7
+# : Training seed whose random split defines the fitting pool of the band-POD
+# : basis. The same seed reproduces the run's test set exactly (asserted below),
+# : so the basis is fitted on the training split alone.
+BAND_POD_TRAINING_SEED = 0
 N_RESAMPLES = 10_000
 CI_LEVEL = 0.95
 
 
-_BAND_POD_CACHE: dict | None = None
+_BAND_POD_CACHE: dict[int, dict] = {}
+
+
+def band_pod_models_for_seed(training_seed: int) -> dict:
+    """Per-band POD models fitted on the training split of one training seed.
+
+    The split is the ``torch`` random split of the run with this training seed
+    (``features.training.pod_sweep.split_indices``), so the fitting pool
+    excludes the validation and test snapshots. A fixed random draw of
+    ``BAND_POD_FIELDS`` training snapshots keeps the fit deterministic.
+    """
+    if training_seed in _BAND_POD_CACHE:
+        return _BAND_POD_CACHE[training_seed]
+
+    sequence = np.load(RAW_SEQUENCE, mmap_mode="r")
+    split = split_indices(sequence.shape[0], training_seed)
+    train_indices = np.sort(np.asarray(split["train"], dtype=np.int64))
+
+    rng = np.random.RandomState(BAND_POD_SEED)
+    subset = sorted(rng.choice(train_indices, min(BAND_POD_FIELDS, len(train_indices)),
+                               replace=False))
+    fields = np.asarray(sequence[subset])[:, :, :, 0].astype(np.float64)
+    _BAND_POD_CACHE[training_seed] = fit_band_pod(
+        fields, pod_energy_threshold=0.99, wavelet="db2",
+        level=DEFAULT_LEVEL, mode=DEFAULT_MODE)
+    return _BAND_POD_CACHE[training_seed]
 
 
 def band_pod_models(reference_run: Path) -> dict:
     """Per-band POD models fitted on the training split of the reference run."""
-    global _BAND_POD_CACHE
-    if _BAND_POD_CACHE is not None:
-        return _BAND_POD_CACHE
-
     data = np.load(reference_run, allow_pickle=True)
     test_indices = set(int(i) for i in data["test_indices"])
     sequence = np.load(RAW_SEQUENCE, mmap_mode="r")
-    train_indices = sorted(set(range(sequence.shape[0])) - test_indices)
-
-    rng = np.random.RandomState(BAND_POD_SEED)
-    subset = sorted(rng.choice(train_indices, min(BAND_POD_FIELDS, len(train_indices)),
-                              replace=False))
-    fields = np.asarray(sequence[subset])[:, :, :, 0].astype(np.float64)
-    _BAND_POD_CACHE = fit_band_pod(fields, pod_energy_threshold=0.99, wavelet="db2",
-                                   level=DEFAULT_LEVEL, mode=DEFAULT_MODE)
-    return _BAND_POD_CACHE
+    split = split_indices(sequence.shape[0], BAND_POD_TRAINING_SEED)
+    if set(int(i) for i in split["test"]) != test_indices:
+        raise RuntimeError(
+            "the reference run does not use the expected seed-0 random split; "
+            "check the training seed before fitting the band-POD basis")
+    return band_pod_models_for_seed(BAND_POD_TRAINING_SEED)
 
 
 def compare_configuration(job: tuple[str, int, float]) -> dict | None:

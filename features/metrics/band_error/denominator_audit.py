@@ -23,6 +23,8 @@ from typing import Dict, List, Sequence
 import numpy as np
 import pywt
 
+from luna.wavelet.transform import decompose_field_2d
+
 # Canonical paper configuration (must match s01_fix_figure3 / luna defaults)
 DEFAULT_WAVELET = "db2"
 DEFAULT_LEVEL = 4
@@ -144,4 +146,61 @@ def audit_band_denominators(
         "abs_norm_mean": float(np.mean(field_norms)),
         "n": int(n),
     }
+    return report
+
+
+def projected_denominators(
+    fields_2d: np.ndarray,
+    band_pod_models: Dict[str, Dict[str, np.ndarray]],
+    bands: Sequence[str] = DEFAULT_BANDS,
+    wavelet: str = DEFAULT_WAVELET,
+    level: int = DEFAULT_LEVEL,
+    mode: str = DEFAULT_MODE,
+    eps_abs: float = 1e-8,
+    eps_rel: float = 1e-6,
+) -> Dict[str, dict]:
+    """Stability audit of the projected norms that form the denominators of E_coh.
+
+    The denominator of E_coh is ``||Pi_b(W_b u)||_2`` with the affine projection
+    ``Pi_b(w) = mu_b + P_b(w - mu_b)`` onto the band's POD subspace stored in
+    ``band_pod_models``. The same near-zero tests as for the band norms are
+    applied to the projected norms: an absolute threshold on ``||Pi_b||`` and a
+    relative threshold on the projected energy fraction ``||Pi_b||^2 / ||u||^2``.
+    The squared-norm ratio ``||Pi_b||^2 / ||W_b u||^2`` (the quantity gamma_b of
+    the co-energy section) is also reported; it can lie on either side of one
+    because the projection is affine, so it is not compared with a threshold.
+    """
+    fields = np.asarray(fields_2d, dtype=np.float64)
+    n = fields.shape[0]
+
+    proj_norms: Dict[str, np.ndarray] = {b: np.empty(n, dtype=np.float64) for b in bands}
+    band_norms: Dict[str, np.ndarray] = {b: np.empty(n, dtype=np.float64) for b in bands}
+    field_norms = np.empty(n, dtype=np.float64)
+
+    for i in range(n):
+        coefficients = decompose_field_2d(fields[i], wavelet=wavelet, level=level, mode=mode)
+        field_norms[i] = float(np.linalg.norm(fields[i]))
+        for b in bands:
+            model = band_pod_models[b]
+            mean = np.asarray(model["mean"], dtype=np.float64).ravel()
+            basis = np.asarray(model["basis"], dtype=np.float64)
+            w = np.asarray(coefficients[b], dtype=np.float64).ravel()
+            projected = basis.T @ (basis @ (w - mean)) + mean
+            band_norms[b][i] = float(np.linalg.norm(w))
+            proj_norms[b][i] = float(np.linalg.norm(projected))
+
+    report: Dict[str, dict] = {}
+    for b in bands:
+        ratio = proj_norms[b] ** 2 / np.maximum(band_norms[b] ** 2, 1e-300)
+        energy = proj_norms[b] ** 2 / np.maximum(field_norms ** 2, 1e-300)
+        report[b] = {
+            "proj_norm": percentile_stats(proj_norms[b]),
+            "ratio": percentile_stats(ratio),
+            "energy_fraction": percentile_stats(energy),
+            "near_zero": {
+                "abs_count": int(np.sum(proj_norms[b] < eps_abs)),
+                "rel_count": int(np.sum(energy < eps_rel)),
+                "any_count": int(np.sum((proj_norms[b] < eps_abs) | (energy < eps_rel))),
+            },
+        }
     return report

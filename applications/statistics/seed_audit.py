@@ -42,8 +42,8 @@ from applications.config import get_config  # noqa: E402
 from features.training.estimator_runs import (  # noqa: E402
     load_run,
     run_path,
-    snapshot_indices,
 )
+from features.training.pod_sweep import split_indices  # noqa: E402
 from luna.core.constants import DEFAULT_LEVEL, DEFAULT_MODE, DEFAULT_WAVELET  # noqa: E402
 from luna.pod.band_pod import fit_band_pod  # noqa: E402
 from luna.wavelet.metrics import (  # noqa: E402
@@ -70,11 +70,11 @@ MODELS = ("mlp", "vcnn")
 # : Seeds of the main sweep and of the extended sample.
 SEEDS_MAIN = [0, 101, 202]
 SEEDS_EXTENDED = [0, 101, 202, 303, 404]
-# : Snapshots of the raw sequence used to fit the band-POD reference basis, and : the seed of the draw. The draw is the one of the main sensitivity analysis.
+# : Snapshots of the raw sequence used to fit the band-POD basis of each
+# : seed, and the seed of the draw. The draw is the one of the main
+# : sensitivity analysis.
 N_TRAIN_POD = 400
 BAND_POD_SEED = 7
-# : Sensor count and noise level whose test split defines the training snapshots.
-SPLIT_REFERENCE = ("mlp", 20, 0.0)
 # : Fields the paper reads from every block of the artifact.
 REPRODUCED_FIELDS = (
     "S_full_mean_3sd",
@@ -86,28 +86,36 @@ REPRODUCED_FIELDS = (
 VERIFY_TOLERANCE = 1e-9
 
 
-def band_pod_reference() -> dict:
-    """Band-POD basis of the coherent subspace, on the sweep's training split.
+# : Cache of the per-seed band-POD bases, keyed by training seed.
+_BAND_POD_BY_SEED: dict[int, dict] = {}
 
-    The coherent index needs a POD subspace per band. It is fitted once on the raw snapshots, on the complement of the test split of the reference configuration, and shared by every run of the audit.
+
+def band_pod_for_seed(training_seed: int) -> dict:
+    """Band-POD basis of the coherent subspace, on one run's training split.
+
+    The coherent index needs a POD subspace per band. It is fitted on the raw
+    snapshots of the run's own random split (``split_indices`` of the training
+    seed, so the validation and test snapshots are excluded) and reused by
+    every condition of that seed.
     """
-    path = run_path(*SPLIT_REFERENCE, seed=0)
-    if path is None:
-        raise SystemExit(f"missing reference run: {SPLIT_REFERENCE}")
-    test_indices = set(snapshot_indices(path).tolist())
+    if training_seed in _BAND_POD_BY_SEED:
+        return _BAND_POD_BY_SEED[training_seed]
     fields = np.load(DATA_ARRAY, mmap_mode="r")
-    train_indices = sorted(set(range(fields.shape[0])) - test_indices)
+    train_indices = sorted(
+        int(i) for i in split_indices(fields.shape[0], training_seed)["train"]
+    )
     rng = np.random.RandomState(BAND_POD_SEED)
     subset = sorted(
         rng.choice(train_indices, min(N_TRAIN_POD, len(train_indices)), replace=False)
     )
-    return fit_band_pod(
+    _BAND_POD_BY_SEED[training_seed] = fit_band_pod(
         np.asarray(fields[subset])[:, :, :, 0].astype(np.float64),
         pod_energy_threshold=get_config().eta,
         wavelet=DEFAULT_WAVELET,
         level=DEFAULT_LEVEL,
         mode=DEFAULT_MODE,
     )
+    return _BAND_POD_BY_SEED[training_seed]
 
 
 def per_run_metrics(path: Path, band_pod: dict, cfg) -> dict:
@@ -181,7 +189,6 @@ def audit_block(per_seed: dict[int, dict]) -> dict:
 def build_audit() -> dict:
     """Per-condition, per-estimator three-seed against five-seed comparison."""
     cfg = get_config()
-    band_pod = band_pod_reference()
     audit: dict[str, dict] = {}
     for label, sensor_count, sigma in CONDITIONS:
         audit[label] = {}
@@ -193,7 +200,7 @@ def build_audit() -> dict:
                     print(f"   [skip] {model} M={sensor_count} sigma={sigma} "
                           f"seed={seed}: no run on disk")
                     continue
-                per_seed[seed] = per_run_metrics(path, band_pod, cfg)
+                per_seed[seed] = per_run_metrics(path, band_pod_for_seed(seed), cfg)
             if not per_seed:
                 continue
             audit[label][model] = audit_block(per_seed)

@@ -1,6 +1,6 @@
 """Stability of the band norms used as denominators of the band errors.
 
-Every band error in the paper is a relative error, so a band whose coefficient norm is close to zero would inflate the ratio. This module audits the denominators of the 300 test snapshots: it reports the distribution of the band norms, their share of the total energy, and how many snapshots fall below an absolute or relative threshold.
+Every band error in the paper is a relative error, so a band whose coefficient norm is close to zero would inflate the ratio. This module audits the denominators of the 300 test snapshots: it reports the distribution of the band norms, their share of the total energy, and how many snapshots fall below an absolute or relative threshold. The same statistics are reported for the projected norms that form the denominators of E_coh, `||Pi_b(W_b u)||_2`, with the affine projection `Pi_b` onto the band's POD subspace of the reference training split.
 
 The quantities are evaluated in the wavelet coefficient domain, which is the domain in which the band errors of the paper are defined.
 
@@ -31,8 +31,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from applications.config import get_config  # noqa: E402
+from applications.statistics.scoh_vs_sfull import band_pod_models  # noqa: E402
 from features.metrics.band_error.denominator_audit import (  # noqa: E402
     audit_band_denominators,
+    projected_denominators,
 )
 from features.training.estimator_runs import load_run, run_path  # noqa: E402
 
@@ -43,11 +45,16 @@ OUTPUT_CSV = ROOT / "artifacts" / "statistics" / "band_denominator_check.csv"
 OUTPUT_TEX = ROOT / "artifacts" / "statistics" / "tables" / "band_denominator_check.tex"
 
 
-def test_targets() -> np.ndarray:
-    """Streamwise-component test targets, shape (n_snapshots, 80, 160)."""
+def reference_run() -> Path:
+    """Run whose test split provides the audited target fields."""
     path = run_path(*REFERENCE_RUN)
     if path is None:
         raise SystemExit(f"missing reference run {REFERENCE_RUN}")
+    return path
+
+
+def test_targets(path: Path) -> np.ndarray:
+    """Streamwise-component test targets, shape (n_snapshots, 80, 160)."""
     target, _ = load_run(path)
     return target[:, 0]
 
@@ -83,7 +90,7 @@ def main() -> int:
     start = time.time()
     print(f"== band denominator stability (bands={bands}, eps_abs={eps_abs}, "
           f"eps_rel={eps_rel})")
-    targets = test_targets()
+    targets = test_targets(reference_run())
     print(f"   targets: {targets.shape}")
 
     report = {
@@ -93,6 +100,16 @@ def main() -> int:
         ).items()
         if not key.startswith("_")
     }
+
+    projected = projected_denominators(
+        targets, band_pod_models(reference_run()), bands=bands,
+        wavelet=cfg.wavelet_family, level=cfg.wavelet_level, mode=cfg.wavelet_mode,
+        eps_abs=eps_abs, eps_rel=eps_rel,
+    )
+    worst_ratio = min(projected[b]["ratio"]["min"] for b in bands)
+    projected_near_zero = sum(projected[b]["near_zero"]["any_count"] for b in bands)
+    print(f"   projected norms: min squared-norm ratio {worst_ratio:.3f}, "
+          f"near-zero cases {projected_near_zero}")
 
     if args.verify:
         return _verify(report)
@@ -133,6 +150,7 @@ def main() -> int:
                 "domain": "wavelet coefficients",
             },
             "report": report,
+            "projected": projected,
             "runtime_s": round(time.time() - start, 2),
         }, indent=2),
         encoding="utf-8",

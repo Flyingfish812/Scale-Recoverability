@@ -1,7 +1,7 @@
 """
 Radial-spiral sensor mask generator.
 
-Ported verbatim from Ena `backend/sampling/masks.py` (generate_radial_spiral_mask_hw + _resolve_num_obs) so that `tools/prepare_incremental_masks.py` runs standalone inside Luna.
+Ported verbatim from Ena `backend/sampling/masks.py` (generate_radial_spiral_mask_hw + _resolve_num_obs) so that `features.sensors.incremental_masks` builds the nested mask families without extra dependencies.
 
 Only numpy is required; this module is self-contained.
 """

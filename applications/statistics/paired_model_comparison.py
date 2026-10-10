@@ -1,6 +1,6 @@
 """Paired comparison of the two learned estimators on identical inputs.
 
-The main text compares the POD-coefficient network (MLP) with the convolutional estimator (VCNN). Comparing two pools of runs with a rank test would treat snapshots of the same configuration as independent samples, so the comparison is made pair-wise instead: for every (snapshot, sensor count, noise level, training seed) the two estimators are evaluated on the very same measurement, and the per-snapshot difference of each metric is bootstrapped in time blocks to obtain a confidence interval that respects the temporal correlation of the flow.
+The main text compares the POD-coefficient network (MLP) with the convolutional estimator (VCNN). Comparing two pools of runs with a rank test would treat snapshots of the same configuration as independent samples, so the comparison is made pair-wise instead: for every (snapshot, sensor count, noise level, training seed) the two estimators are evaluated on the very same measurement, and the per-snapshot difference of each metric is bootstrapped in time blocks to obtain a confidence interval that respects the temporal correlation of the flow. For the aggregate across configurations the resampling unit is the snapshot identity: moving blocks of consecutive test identities are drawn and every record of a drawn identity -- across sensor counts, noise levels and training seeds -- enters with its multiplicity, so the repeated use of the same targets is respected.
 
 Reported metrics
     GER            relative L2 error over the full two-component state
@@ -42,20 +42,17 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from applications.config import get_config  # noqa: E402
-from applications.statistics.scoh_vs_sfull import band_pod_models  # noqa: E402
+from applications.statistics.scoh_vs_sfull import band_pod_models_for_seed  # noqa: E402
 from features.metrics.sample_metrics import compute_sample_metrics  # noqa: E402
 from features.statistics.block_bootstrap import block_bootstrap_ci  # noqa: E402
 from features.training.estimator_runs import (  # noqa: E402
     load_run,
     run_path,
-    snapshot_indices,
 )
 from luna.wavelet.metrics import compute_S_coh  # noqa: E402
 
 METRICS = ["GER", "S_full", "S_coh", "W1", "vorticity_RMSE", "gradient_RMSE"]
 BANDS = ["A4", "W4", "W3", "W2", "W1"]
-# : Training run that defines the band basis of the POD-dominant count.
-BAND_POD_REFERENCE = ("mlp", 20, 0.0, 0)
 OUTPUT = ROOT / "artifacts" / "statistics" / "paired_model_comparison.json"
 OUTPUT_CSV = ROOT / "artifacts" / "statistics" / "paired_model_comparison.csv"
 OUTPUT_TEX = ROOT / "artifacts" / "statistics" / "tables" / "paired_model_comparison.tex"
@@ -116,6 +113,131 @@ def paired_summary(
     }
 
 
+def identity_block_length(identities: np.ndarray, cfg) -> int:
+    """Block length in snapshot identities from the physical shedding period.
+
+    The identities of the aggregate are the union of the test splits of the
+training
+    seeds, so their mean gap in the full sequence sets how many identities make
+up
+    one shedding period. Blocks drawn over the identity array are therefore time
+    blocks, as in the single-run analysis.
+    """
+    candidates = [int(x) for x in cfg.block_bootstrap["candidate_block_lengths"]]
+    mean_gap = float(np.mean(np.diff(identities)))
+    period = 62 if 62 in candidates else candidates[-1]
+    return max(3, int(round(period / mean_gap)))
+
+
+def identity_block_summary(
+    diffs: list[np.ndarray], indices: list[np.ndarray],
+    block_length: int, n_resamples: int, seed: int,
+) -> dict:
+    """Mean paired difference with a snapshot-identity block-bootstrap interval.
+
+    Records are grouped by snapshot identity; a moving block of ``block_length``
+    consecutive identities is drawn with replacement, every record of a drawn
+    identity enters with its multiplicity, and the interval is the percentile
+    interval of the resampled mean over all pooled records.
+    """
+    unique = np.unique(np.concatenate(indices))
+    total = np.zeros(unique.size, dtype=np.float64)
+    count = np.zeros(unique.size, dtype=np.float64)
+    for idx, values in zip(indices, diffs):
+        position = np.searchsorted(unique, idx)
+        np.add.at(total, position, values)
+        np.add.at(count, position, 1.0)
+
+    rng = np.random.RandomState(seed)
+    n_blocks = int(np.ceil(unique.size / block_length))
+    offsets = np.arange(block_length)
+    distribution = np.empty(n_resamples, dtype=np.float64)
+    for b in range(n_resamples):
+        starts = rng.randint(0, unique.size - block_length + 1, size=n_blocks)
+        position = (starts[:, None] + offsets[None, :]).reshape(-1)[: unique.size]
+        weight = np.bincount(position, minlength=unique.size)
+        distribution[b] = (weight @ total) / (weight @ count)
+
+    pooled = np.concatenate(diffs)
+    mean = float(pooled.mean())
+    std = float(pooled.std())
+    return {
+        "n_pairs": int(pooled.size),
+        "mean_diff": mean,
+        "median_diff": float(np.median(pooled)),
+        "std_diff": std,
+        "effect_size": mean / std if std > 0 else float("nan"),
+        "win_rate_first": float(np.mean(pooled < 0)),
+        "ci_low": float(np.percentile(distribution, 2.5)),
+        "ci_high": float(np.percentile(distribution, 97.5)),
+        "spread_low": float(np.percentile(pooled, 2.5)),
+        "spread_high": float(np.percentile(pooled, 97.5)),
+    }
+
+
+def identity_block_length(identities: np.ndarray, cfg) -> int:
+    """Block length in snapshot identities from the physical shedding period.
+
+    The identities of the aggregate are the union of the test splits of the
+    training seeds, so their mean gap in the full sequence sets how many
+    identities make up one shedding period; blocks drawn over the identity
+    array are therefore time blocks, as in the single-run analysis.
+    """
+    candidates = [int(x) for x in cfg.block_bootstrap["candidate_block_lengths"]]
+    mean_gap = float(np.mean(np.diff(identities)))
+    period = 62 if 62 in candidates else candidates[-1]
+    return max(3, int(round(period / mean_gap)))
+
+
+def identity_block_summary(
+    diffs: list[np.ndarray], indices: list[np.ndarray],
+    block_length: int, n_resamples: int, seed: int,
+) -> dict:
+    """Mean paired difference with a snapshot-identity block-bootstrap interval.
+
+    The records are grouped by the snapshot identity they belong to; a moving
+    block of ``block_length`` consecutive identities is drawn with replacement,
+    every record of a drawn identity enters with its multiplicity, and the
+    interval is the percentile interval of the resampled mean over all pooled
+    records. A snapshot drawn several times therefore contributes its records
+    several times, and the records of one snapshot stay together across sensor
+    counts, noise levels and training seeds.
+    """
+    unique = np.unique(np.concatenate(indices))
+    total = np.zeros(unique.size, dtype=np.float64)
+    count = np.zeros(unique.size, dtype=np.float64)
+    for idx, values in zip(indices, diffs):
+        position = np.searchsorted(unique, idx)
+        np.add.at(total, position, values)
+        np.add.at(count, position, 1.0)
+
+    rng = np.random.RandomState(seed)
+    n_blocks = int(np.ceil(unique.size / block_length))
+    offsets = np.arange(block_length)
+    distribution = np.empty(n_resamples, dtype=np.float64)
+    for b in range(n_resamples):
+        starts = rng.randint(0, unique.size - block_length + 1, size=n_blocks)
+        position = (starts[:, None] + offsets[None, :]).reshape(-1)[: unique.size]
+        weight = np.bincount(position, minlength=unique.size)
+        distribution[b] = (weight @ total) / (weight @ count)
+
+    pooled = np.concatenate(diffs)
+    mean = float(pooled.mean())
+    std = float(pooled.std())
+    return {
+        "n_pairs": int(pooled.size),
+        "mean_diff": mean,
+        "median_diff": float(np.median(pooled)),
+        "std_diff": std,
+        "effect_size": mean / std if std > 0 else float("nan"),
+        "win_rate_first": float(np.mean(pooled < 0)),
+        "ci_low": float(np.percentile(distribution, 2.5)),
+        "ci_high": float(np.percentile(distribution, 97.5)),
+        "spread_low": float(np.percentile(pooled, 2.5)),
+        "spread_high": float(np.percentile(pooled, 97.5)),
+    }
+
+
 def compare_configuration(job: tuple) -> dict | None:
     """Metrics and paired differences of every snapshot of one configuration.
 
@@ -130,7 +252,9 @@ def compare_configuration(job: tuple) -> dict | None:
         print(f"   [skip] run absent (M={sensors}, sigma={sigma}, seed={seed})")
         return None
 
-    band_pod = band_pod_models(run_path(*BAND_POD_REFERENCE))
+    # Pairs are formed within a training seed, so the diagnostic band basis is
+    # the one fitted on that seed's training split.
+    band_pod = band_pod_models_for_seed(seed)
     target_mlp, out_mlp = load_run(mlp_path)
     target_vcnn, out_vcnn = load_run(vcnn_path)
 
@@ -152,11 +276,21 @@ def compare_configuration(job: tuple) -> dict | None:
             model_values["mlp"][m][i] = float(first[m])
             model_values["vcnn"][m][i] = float(second[m])
 
-    order = np.argsort(snapshot_indices(mlp_path)[:n])
+    # The stored matrices follow the unsorted ``test_indices`` as saved, so the
+    # metric series is reordered into time before any block resampling; blocks
+    # over the stored order would resample unrelated snapshots.
+    stored = np.asarray(np.load(mlp_path, allow_pickle=True)["test_indices"], dtype=np.int64)[:n]
+    order = np.argsort(stored)
+    sorted_indices = stored[order]
+    diffs = {m: diffs[m][order] for m in METRICS}
+    model_values = {
+        model: {m: model_values[model][m][order] for m in METRICS}
+        for model in ("mlp", "vcnn")
+    }
     rows = []
     for m in METRICS:
         stats = paired_summary(
-            diffs[m][order], block_len, min(n_resamples, 5000),
+            diffs[m], block_len, min(n_resamples, 5000),
             seed=int(bootstrap_seed) + sensors + int(sigma * 1000) + seed, method=method,
         )
         rows.append({
@@ -168,6 +302,7 @@ def compare_configuration(job: tuple) -> dict | None:
         "rows": rows,
         "diffs": diffs,
         "model_values": model_values,
+        "test_indices": sorted_indices,
     }
 
 
@@ -218,11 +353,13 @@ def main() -> int:
 
     rows: list[dict] = []
     collected: dict[str, list[np.ndarray]] = {m: [] for m in METRICS}
+    collected_idx: list[np.ndarray] = []
     model_values: dict[str, dict[str, list[np.ndarray]]] = {
         model: {m: [] for m in METRICS} for model in ("mlp", "vcnn")
     }
     for result in results:
         rows.extend(result["rows"])
+        collected_idx.append(result["test_indices"])
         for m in METRICS:
             collected[m].append(result["diffs"][m])
             for model in ("mlp", "vcnn"):
@@ -230,20 +367,23 @@ def main() -> int:
     n_configs = len(results)
     print(f"   configurations: {n_configs}")
 
+    identities = np.unique(np.concatenate(collected_idx))
+    identity_block = identity_block_length(identities, cfg)
+
     aggregate = {}
     for m in METRICS:
-        pooled = np.concatenate(collected[m])
-        stats = paired_summary(
-            pooled, block_len, n_resamples, int(bootstrap["seed"]), method=method
+        # ``ci_low``/``ci_high`` are the snapshot-identity block interval of the
+        # mean, as quoted in the paper; the spread of the individual paired
+        # differences is reported separately because it answers a different
+        # question.
+        stats = identity_block_summary(
+            collected[m], collected_idx, identity_block, n_resamples,
+            int(bootstrap["seed"]),
         )
         for model in ("mlp", "vcnn"):
             values = np.concatenate(model_values[model][m])
             stats[f"{model}_mean"] = float(values.mean())
             stats[f"{model}_median"] = float(np.median(values))
-        # ``ci_low``/``ci_high`` are the time-block interval of the mean, as
-        # quoted in the paper; the spread of the individual paired differences is reported separately because it answers a different question.
-        stats["spread_low"] = float(np.percentile(pooled, 2.5))
-        stats["spread_high"] = float(np.percentile(pooled, 97.5))
         aggregate[m] = stats
 
     result = {
@@ -258,6 +398,14 @@ def main() -> int:
         "block_bootstrap": {
             "block_length_test_units": block_len,
             "method": method,
+            "n_resamples": n_resamples,
+            "seed": int(bootstrap["seed"]),
+        },
+        "aggregate_resampling": {
+            "unit": "snapshot identity (union of the test splits of the training seeds)",
+            "block_length_identities": identity_block,
+            "n_identities": int(identities.size),
+            "mean_gap_snapshots": float(np.mean(np.diff(identities))),
             "n_resamples": n_resamples,
             "seed": int(bootstrap["seed"]),
         },

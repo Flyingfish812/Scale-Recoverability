@@ -32,6 +32,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from features.training.estimator_runs import load_run
+from features.training.pod_sweep import split_indices
 from luna.benchmarks.analytical_wake import (
     WakeParams, snapshot, scale_u_components, controlled_reconstructions,
     case_metrics,
@@ -59,11 +60,10 @@ N_TRAIN_POD = 400
 # ══════════════════════════════════════════════════════════════════════
 def audit_real_nc(wavelet: str, level: int, mode: str, tau: float) -> dict:
     """Compute per-model metrics for one wavelet at M=30, sigma=0."""
-    # band-POD on a training subset (excludes test indices), per wavelet
-    ref = np.load(NC_PATHS["mlp"])
-    test_indices = sorted(set(ref["test_indices"].tolist()))
+    # band-POD on a training subset of the seed-0 random split (validation and test snapshots excluded), per wavelet
     all_fields = np.load(NC_DATA)
-    train_idx = sorted(set(range(all_fields.shape[0])) - set(test_indices))
+    split = split_indices(all_fields.shape[0], 0)
+    train_idx = sorted(int(i) for i in split["train"])
     rng = np.random.RandomState(7)
     sub = sorted(rng.choice(train_idx, min(N_TRAIN_POD, len(train_idx)), replace=False))
     train_u = all_fields[sub][:, :, :, 0].astype(np.float64)
